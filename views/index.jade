@@ -1,0 +1,14 @@
+extends layout
+block content
+  h1= title
+  section: p Welcome to #{title}
+  section: strong: font(size="6") Turn 0 / NaN
+  .wrapper#master
+    -for(var i = 0; i < 5; i++){  
+      ul
+        -for(var j = 0; j < 5; j++){
+          -var ids = "mass" + i + "_" + j
+          li
+            div(class="square", id=ids): .center: .containtext: p 16
+        -}
+    -}
