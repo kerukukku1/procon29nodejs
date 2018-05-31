@@ -3,3 +3,8 @@ extends layout
 block content
   h1= title
   section: p Welcome to #{title}
+  .wrapper
+    form(action="/chatboard", method="post", class="board-form")
+      input(type="text", name="title", class="input", required)
+      br
+      button(type="submit", class="submit") ボード作成
