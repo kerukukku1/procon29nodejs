@@ -7,7 +7,7 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var battleRouter = require('./routes/battle');
-var chatboardRouter = require('./routes/chatboard');
+var questboardRouter = require('./routes/questboard');
 
 var app = express();
 var socket = require('./routes/module/module_socket.js');
@@ -25,7 +25,7 @@ app.use(express.static(path.join(__dirname, 'routes')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/chatboard', chatboardRouter)
+app.use('/questboard', questboardRouter)
 app.use('/battle', battleRouter)
 
 // catch 404 and forward to error handler

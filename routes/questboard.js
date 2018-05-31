@@ -6,8 +6,8 @@ var router = express.Router();
 router.get('/', function(req, res, next) {
   var query = 'SELECT *, DATE_FORMAT(createdAt, \'%Y年%m月%d日 %k時%i分%s秒\') AS createdAt FROM board';
   connection.query(query, function(err, rows) {
-    res.render('chatboard', {
-       title: 'ChatBoard',
+    res.render('questboard', {
+       title: 'questboard',
        boardList: rows
      });
   });
@@ -20,7 +20,7 @@ router.post('/', function(req, res, next) {
       + title + '", ' + '"' + createdAt + '")';
   console.log(query);
   connection.query(query, function(err, rows) {
-    res.redirect('chatboard');
+    res.redirect('questboard');
   });
   console.log(title);
   console.log(createdAt);
