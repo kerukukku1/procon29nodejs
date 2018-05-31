@@ -8,3 +8,7 @@ block content
       input(type="text", name="title", class="input", required)
       br
       button(type="submit", class="submit") ボード作成
+    - for (var i = 0; i < boardList.length; i++) {
+      li
+        a(href="../battle/#{i+1}") #{boardList[i].title}
+    - }
