@@ -1,5 +1,6 @@
 var socket = io.connect("http://localhost:8888/");
 var canvas = document.getElementById("myCanvas");
+// console.log(dir);
 var ctx = canvas.getContext("2d");
 var square_size = 50
 var w = square_size * 16;
@@ -7,6 +8,13 @@ var h = w;
 var pos;
 var state = [];
 
+//サーバにファイル要求を出してファイルを取得
+socket.on('connect', function() {
+  socket.emit('readfile', dir);
+  socket.on('filedata', function(data){
+    console.log(data.text);
+  });
+});
 canvas.width = w;
 canvas.height = h;
 ctx.strokeStyle = "#757575"
