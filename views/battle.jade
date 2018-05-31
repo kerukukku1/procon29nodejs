@@ -1,7 +1,7 @@
-extends battleroom_layout
+extends layout
 block content
-  h1= dir
-  section: p Welcome to #{title}
+  h1= title
+  center: p Welcome to #{title}
   center: canvas(id="myCanvas", height="800", width="800")
   script(src="http://localhost:8888/socket.io/socket.io.js")
   script(type='text/javascript').
