@@ -2,17 +2,36 @@ extends layout
 
 block content
   if usersession.userid
-    h1= title
-    section: p Welcome to #{title}
+    h1 問題一覧
+    script.
+      jQuery( function($) {
+        $('tbody tr[data-href]').addClass('clickable').click( function() {
+          window.location = $(this).attr('data-href');
+        }).find('a').hover( function() {
+          $(this).parents('tr').unbind('click');
+        }, function() {
+          $(this).parents('tr').click( function() {
+            window.location = $(this).attr('data-href');
+          });
+        });
+      });
     .wrapper
-      form(action="/questboard", method="post", class="board-form")
-        input(type="text", name="title", class="input", required)
-        br
-        button(type="submit", class="submit") ボード作成
-      - for (var i = 0; i < boardList.length; i++) {
-        li
-          a(href="../battle/#{i+1}") #{boardList[i].quest_name}
-      - }
+      table.table.table-striped.table-hover
+        thead
+          tr
+            th(scope='col') #
+            th(scope='col') 問題名
+            th(scope='col') 作成者
+            th(scope='col') 作成日
+        tbody
+        - for (var i = 0; i < boardList.length; i++) {
+            tr(data-href="/battle/#{i+1}")
+              th(scope='row')= boardList[i].quest_id
+              td= boardList[i].quest_name
+              td= boardList[i].author
+              td= boardList[i].createdAt
+        - }
   else
     div(class="alert alert-danger" role="alert")
       セッション情報がありません．ログインを行ってください．
+      JavaScript
