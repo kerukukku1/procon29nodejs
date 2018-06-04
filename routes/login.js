@@ -15,16 +15,18 @@ router.get('/', function(req, res, next) {
 router.post('/', function(req, res, next) {
   var email = req.body.email;
   var password = req.body.password;
-  var query = 'SELECT userid FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
+  var query = 'SELECT * FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
   console.log(query);
   connection.query(query, function(err, rows) {
     var userId = rows.length ? rows[0].userid : false;
     if (userId) {
       req.session.userid = userId;
+      req.session.username = rows[0].username;
       res.redirect('/');
     } else {
       res.render('login', {
         title: 'login',
+        isLogin : false,
         noUser: 'メールアドレスとパスワードが一致するユーザーはいません'
       });
     }

@@ -11,6 +11,7 @@ var usersRouter = require('./routes/users');
 var battleRouter = require('./routes/battle');
 var questboardRouter = require('./routes/questboard');
 var loginRouter = require('./routes/login');
+var logoutRouter = require('./routes/logout');
 
 var app = express();
 var socket = require('./routes/module/module_socket.js');
@@ -27,9 +28,13 @@ app.use(express.static(path.join(__dirname, 'node_modules')));
 app.use(express.static(path.join(__dirname, 'routes')));
 
 app.use(session({
-  secret: 'keyboard cat',
+  secret: 'hef028hc2093hdroic9023y',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  // an hour
+  cookie: {
+    maxAge: 60 * 60 * 1000
+  }
 }));
 
 app.use(function(req, res, next){
@@ -43,6 +48,7 @@ app.use('/questboard', questboardRouter);
 app.use('/battle', battleRouter);
 app.use('/register', registerRouter);
 app.use('/login', loginRouter);
+app.use('/logout', logoutRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

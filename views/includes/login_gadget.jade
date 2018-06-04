@@ -1,0 +1,12 @@
+ul.navbar-nav
+  if usersession.userid 
+    li.nav-item.active
+      a.btn.btn-primary(href='#'): strong #{usersession.username}
+    li.nav-item.active
+      a.btn.btn-primary(href='/logout'): strong Logout
+
+  else 
+    li.nav-item
+      a.btn.btn-primary(href='/register'): strong Register
+    li.nav-item
+      a.btn.btn-primary(href='/login'): strong Login

@@ -1,14 +1,18 @@
 extends layout
 
 block content
-  h1= title
-  section: p Welcome to #{title}
-  .wrapper
-    form(action="/questboard", method="post", class="board-form")
-      input(type="text", name="title", class="input", required)
-      br
-      button(type="submit", class="submit") ボード作成
-    - for (var i = 0; i < boardList.length; i++) {
-      li
-        a(href="../battle/#{i+1}") #{boardList[i].quest_name}
-    - }
+  if usersession.userid
+    h1= title
+    section: p Welcome to #{title}
+    .wrapper
+      form(action="/questboard", method="post", class="board-form")
+        input(type="text", name="title", class="input", required)
+        br
+        button(type="submit", class="submit") ボード作成
+      - for (var i = 0; i < boardList.length; i++) {
+        li
+          a(href="../battle/#{i+1}") #{boardList[i].quest_name}
+      - }
+  else
+    div(class="alert alert-danger" role="alert")
+      セッション情報がありません．ログインを行ってください．
