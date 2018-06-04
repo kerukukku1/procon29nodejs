@@ -32,6 +32,11 @@ app.use(session({
   saveUninitialized: true
 }));
 
+app.use(function(req, res, next){
+  res.locals.usersession = req.session;
+  next();
+});
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/questboard', questboardRouter);
