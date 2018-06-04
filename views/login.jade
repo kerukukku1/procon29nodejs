@@ -1,0 +1,14 @@
+extends layout
+block content
+  h1 Login Page
+  .wrapper
+    form(action="/login" method="post" class="board-form")
+      span(class="label") Email
+      input(type="email" name="email" class="input" required)
+      br
+      span(class="label") Password
+      input(type="password" name="password" class="input" required)
+      br
+      button(type="submit" class="submit") login
+      if noUser !== 'undefined'
+        p #{noUser}

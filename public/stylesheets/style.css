@@ -1,13 +1,25 @@
-body {
-  padding: 50px;
+.master {
+  padding: 30px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
-a {
-  color: #00B7FF;
+.whiter {
+  color: #000000;
 }
 
-section {
-  margin: 30px;
-  text-align: center;
+.navwrapper{
+  padding-top:4.5rem;
 }
+/*
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+    background-color: #334;
+    color: white;
+    font: 18px "Lucida Grande", Helvetica, Arial, sans-serif;
+} */

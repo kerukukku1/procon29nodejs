@@ -1,0 +1,17 @@
+extends layout
+block content
+  h1 #{title} Page
+  .wrapper
+    form(action="/register" method="post" class="board-form")
+      span(class="label") User Name
+      input(type="text" name="username" class="input" required)
+      br
+      span(class="label") Email
+      input(type="email" name="email" class="input" required)
+      br
+      span(class="label") Password
+      input(type="password" name="password" class="input" required)
+      br
+      button(type="submit" class="submit") register
+      if emailExists !== 'undefined'
+        p #{emailExists}
