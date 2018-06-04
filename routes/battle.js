@@ -15,7 +15,8 @@ router.get('/:room_id', function(req, res, next) {
     if(!err && board.length){
       res.render('battle', {
         title: board[0].quest_name,
-        filedir: board[0].filedir
+        filedir: board[0].filedir,
+        roomId: roomId
       });
     }else{
       res.render('error', {

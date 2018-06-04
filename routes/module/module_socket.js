@@ -15,9 +15,11 @@ server.listen(8888); //8888番ポートで起動
 io.sockets.on('connection', function(socket) {
   // この中でデータのやり取りを行う
   console.log('connected');
-  socket.on("square", function(data) {
+  socket.on("movePlayer", function(data) {
+    socket.join(data.roomId);
     console.log(data);
-    socket.broadcast.emit("square", data);
+    // socket.broadcast.emit("square", data);
+    io.sockets.in(data.roomId).emit("movePlayer", data);
   });
 
   socket.on("readfile", function(data) {

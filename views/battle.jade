@@ -6,6 +6,8 @@ block content
   script(src="http://localhost:8888/socket.io/socket.io.js")
   script(type='text/javascript').
     var dir = '#{filedir}';
+    var roomid = '#{roomId}';
+    var userid = '#{usersession.userid}'
   script(src="/module/action_socket.js")
   .wrapper
     a(href="/questboard", class="btn") Back to Top

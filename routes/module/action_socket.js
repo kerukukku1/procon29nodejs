@@ -7,6 +7,7 @@ var w;
 var h;
 var pos;
 var state = [];
+var colors = ["#FF4081", "#03A9F4", "#FFFFFF"];
 initCanvas();
 //サーバにファイル要求を出してファイルを取得
 function initCanvas() {
@@ -23,14 +24,13 @@ function initCanvas() {
     ctx.lineWidth = 0.5;
     ctx.translate(0.5, 0.5);
     ctx.textAlign = "center";
-    var colors = ["#FF4081", "#03A9F4", "#FFFFFF"];
     var i;
     for (i = 0; i < h; i++) {
       var row = arr[3 + i];
       var elems = row.split(' ');
       for (var j = 0; j < w; j++) {
         var score = elems[j];
-        paintCell(j*square_size, i*square_size, score, colors[2]);
+        paintCell(j*square_size, i*square_size, score, colors[2], "");
       }
       state.push(elems);
     }
@@ -38,17 +38,17 @@ function initCanvas() {
     i+=3;
     var npos;
     npos = arr[i].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0]);
+    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0], "A");
     npos = arr[i+1].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0]);
+    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0], "B");
     npos = arr[i+2].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1]);
+    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1], "A");
     npos = arr[i+3].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1]);
+    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1], "B");
   });
 }
 
-function paintCell(posx, posy, score, c){
+function paintCell(posx, posy, score, c, player){
   ctx.fillStyle = c;
   ctx.font = "20px bold";
   ctx.fillRect(posx, posy, square_size, square_size);
@@ -56,17 +56,20 @@ function paintCell(posx, posy, score, c){
   ctx.stroke();
   ctx.fillStyle = "#333333";
   ctx.fillText(score, posx + (square_size / 2), posy + (square_size / 2), 1000);
+  ctx.fillStyle = "#333333";
+  ctx.font = "15px bold";
+  ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
 }
 
 canvas.addEventListener("mousedown", function(event) {
-  pos = getPos(event);
-  console.log(pos);
-  socket.emit('square', pos);
+  d = getData(event);
+  console.log(d);
+  socket.emit('movePlayer', d);
 }, false);
 socket.on('connect', function() {
   console.log("CLIENT");
-  socket.on('square', function(data) {
-    console.log("on draw : " + data);
+  socket.on('movePlayer', function(data) {
+    console.log("on draw : " + data.roomId);
     var coord = whoSquare(data);
     var c = (state[coord.y][coord.x].color + 1) % 2;
     state[coord.y][coord.x].color = c;
@@ -102,11 +105,13 @@ function scrollY() {
   return document.documentElement.scrollTop || document.body.scrollTop;
 }
 
-function getPos(event) {
+function getData(event) {
   var mouseX = event.clientX - $(canvas).position().left + scrollX();
   var mouseY = event.clientY - $(canvas).position().top + scrollY();
   return {
     x: mouseX - 0.5,
-    y: mouseY - 0.5
+    y: mouseY - 0.5,
+    roomId: roomid,
+    userId: userid
   };
 }
