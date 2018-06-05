@@ -1,6 +1,15 @@
 var http = require('http');
 var fs = require('fs');
 const mongoose = require('mongoose');
+const Cat = mongoose.model('Cat', {
+  mapdata: [
+    [Number]
+  ],
+  roomid: {
+    type: Number
+  }
+});
+mongoose.connect('mongodb://localhost/test');
 //サーバインスタンス作成
 var server = http.createServer(function(req, res) {
   res.writeHead(200, {
@@ -16,15 +25,21 @@ server.listen(8888); //8888番ポートで起動
 io.sockets.on('connection', function(socket) {
   // この中でデータのやり取りを行う
   console.log('connected');
-  socket.on("movePlayer", function(data) {
+  socket.on("MapDataSync", function(data) {
+    console.log("start");
+    timeKeeper(3);
     socket.join(data.roomId);
     console.log(data);
     // socket.broadcast.emit("square", data);
     io.sockets.in(data.roomId).emit("movePlayer", data);
-    mongoose.connect('mongodb://localhost/test');
-    const Cat = mongoose.model('Cat', { name: [[String]] });
-    const kitty = new Cat({ name: data.maps });
-    kitty.save().then(() => console.log('meow'));
+    const kitty = new Cat({
+      mapdata: data.maps,
+      roomid: data.roomId
+    });
+    kitty.save(function(err) {
+      console.log('meow')
+      if (err) throw err;
+    });
   });
 
   socket.on("readfile", function(data) {
@@ -40,3 +55,11 @@ io.sockets.on('connection', function(socket) {
     });
   });
 });
+
+function timeKeeper(turn){
+  if(turn == 0)return;
+  setTimeout(function(){
+    console.log("stop");
+    timeKeeper(turn-1);
+  },15000);
+}

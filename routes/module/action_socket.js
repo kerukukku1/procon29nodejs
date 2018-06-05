@@ -66,7 +66,7 @@ function paintCell(posx, posy, score, c, player){
 canvas.addEventListener("mousedown", function(event) {
   d = getData(event);
   console.log(d);
-  socket.emit('movePlayer', d);
+  socket.emit('MapDataSync', d);
 }, false);
 socket.on('connect', function() {
   console.log("CLIENT");
