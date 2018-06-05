@@ -1,5 +1,6 @@
 var http = require('http');
 var fs = require('fs');
+const mongoose = require('mongoose');
 //サーバインスタンス作成
 var server = http.createServer(function(req, res) {
   res.writeHead(200, {
@@ -20,6 +21,10 @@ io.sockets.on('connection', function(socket) {
     console.log(data);
     // socket.broadcast.emit("square", data);
     io.sockets.in(data.roomId).emit("movePlayer", data);
+    mongoose.connect('mongodb://localhost/test');
+    const Cat = mongoose.model('Cat', { name: [[String]] });
+    const kitty = new Cat({ name: data.maps });
+    kitty.save().then(() => console.log('meow'));
   });
 
   socket.on("readfile", function(data) {

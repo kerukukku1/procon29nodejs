@@ -28,11 +28,13 @@ function initCanvas() {
     for (i = 0; i < h; i++) {
       var row = arr[3 + i];
       var elems = row.split(' ');
+      var _elems = [];
       for (var j = 0; j < w; j++) {
         var score = elems[j];
+        _elems[j] = parseInt(elems[j]);
         paintCell(j*square_size, i*square_size, score, colors[2], "");
       }
-      state.push(elems);
+      state.push(_elems);
     }
     //bias
     i+=3;
@@ -112,6 +114,7 @@ function getData(event) {
     x: mouseX - 0.5,
     y: mouseY - 0.5,
     roomId: roomid,
-    userId: userid
+    userId: userid,
+    maps: state
   };
 }
