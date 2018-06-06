@@ -9,5 +9,15 @@ block content
     var roomid = '#{roomId}';
     var userid = '#{usersession.userid}'
   script(src="/module/action_socket.js")
+  button.btn.btn-primary.btn-lg.btn-block(type='button')#startbutton: strong Game Start!
+
   .wrapper
     a(href="/questboard", class="btn") Back to Top
+
+  script.
+    window.onload = function(){ 
+      document.getElementById("startbutton").onclick = function() {
+        var d = {turn: 3, span: 1000};
+        socket.emit('gamestart', d);
+      };
+    };

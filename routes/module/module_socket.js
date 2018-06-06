@@ -26,8 +26,8 @@ io.sockets.on('connection', function(socket) {
   // この中でデータのやり取りを行う
   console.log('connected');
   socket.on("MapDataSync", function(data) {
-    console.log("start");
-    timeKeeper(3);
+    // console.log("start");
+    // timeKeeper(3);
     socket.join(data.roomId);
     console.log(data);
     // socket.broadcast.emit("square", data);
@@ -40,6 +40,10 @@ io.sockets.on('connection', function(socket) {
       console.log('meow')
       if (err) throw err;
     });
+  });
+
+  socket.on("gamestart", function(data){
+    timeKeeper(data.turn, data.span, data.turn);
   });
 
   socket.on("readfile", function(data) {
@@ -56,10 +60,10 @@ io.sockets.on('connection', function(socket) {
   });
 });
 
-function timeKeeper(turn){
+function timeKeeper(turn, span){
   if(turn == 0)return;
   setTimeout(function(){
-    console.log("stop");
-    timeKeeper(turn-1);
-  },15000);
+    console.log(turn);
+    timeKeeper(turn-1, span);
+  },span);
 }
