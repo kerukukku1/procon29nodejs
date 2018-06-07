@@ -10,52 +10,7 @@ block content
     var userid = '#{usersession.userid}'
     var username = '#{usersession.username}'
     
-  script.
-    window.onload = function(){ 
-      document.getElementById("startbutton").onclick = function() {
-        var d = {turn: 3, span: 1000};
-        socket.emit('gamestart', d);
-      };
-      var jblue = document.getElementById("joinBlue");
-      var jred = document.getElementById("joinRed");
-      var user_status = {
-        roomId: path,
-        userId: userid,
-        userName: username,
-        team: ""
-      };
-      jblue.onclick = function() {
-        console.log("blue click");
-        if(jblue.textContent=="Cancel"){
-          jblue.textContent = "Join Blue";
-          user_status.team = "blue";
-          socket.emit("Cancel", user_status);
-          user_status.team = "";
-          jred.disabled = false;
-        }else{
-          user_status.team = "blue";
-          socket.emit("Entry", user_status);
-          jblue.textContent = "Cancel";
-          jred.disabled = true;
-        }
-      };
-      jred.onclick = function() {
-        console.log("red click");
-        if(jred.textContent=="Cancel"){
-          jred.textContent = "Join Red";
-          user_status.team = "red";
-          socket.emit("Cancel", user_status);
-          user_status.team = "";
-          jblue.disabled = false;
-        }else{
-          user_status.team = "red";
-          socket.emit("Entry", user_status);
-          jred.textContent = "Cancel";
-          jblue.disabled = true;
-        }
-      };
-    };
-
+    
   script(src="/module/action_socket.js")
   div(class="box1")
     button.btn.btn-primary.btn-lg.btn-block(type='button')#joinBlue: strong Join Blue

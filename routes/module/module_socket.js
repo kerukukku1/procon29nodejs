@@ -32,6 +32,10 @@ io.sockets.on('connection', function(socket) {
       socket.leave(socket.data.roomId);
     }
     delete join_user_store[socket.data.userId];
+    if(player_user_store[socket.data.userId]){
+      socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", socket.data);
+      delete player_user_store[socket.data.userId];
+    }
     console.log(join_user_store);
   });
 
@@ -56,6 +60,7 @@ io.sockets.on('connection', function(socket) {
       player_user_store[socket.data.userId] = data;
       console.log("write");
     }
+    socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
     console.log(player_user_store);
   });
 
@@ -63,6 +68,7 @@ io.sockets.on('connection', function(socket) {
   socket.on("Cancel", function(data){
     console.log("Entry Cancel "+ data.userName + " RoomID : " + socket.data.roomId);
     delete player_user_store[socket.data.userId];
+    socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
     console.log(player_user_store);
   });
 
