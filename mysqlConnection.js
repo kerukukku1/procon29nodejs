@@ -2,8 +2,8 @@ var mysql = require('mysql');
 
 var dbConfig = {
   host : '127.0.0.1',
-  user: 'root',
-  password: 'x98tfggdhxr6',
+  user: 'procon',
+  password: '@Procon29',
   database: 'nodejs'
 };
 

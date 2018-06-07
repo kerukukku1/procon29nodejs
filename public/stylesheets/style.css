@@ -7,9 +7,16 @@
   color: #000000;
 }
 
-.navwrapper{
-  padding-top:4.5rem;
+.navwrapper {
+  padding-top: 4.5rem;
 }
+
+.box1, .box2 {
+  float: left;
+  width: 50%;
+  /** 横幅50% **/
+}
+
 /*
 ul {
     list-style-type: none;

@@ -7,6 +7,7 @@ var w;
 var h;
 var pos;
 var state = [];
+let path = location.pathname;
 var colors = ["#FF4081", "#03A9F4", "#FFFFFF"];
 initCanvas();
 //サーバにファイル要求を出してファイルを取得
@@ -18,8 +19,8 @@ function initCanvas() {
     var turn = parseInt(arr[0]);
     w = parseInt(arr[1]);
     h = parseInt(arr[2]);
-    canvas.width = w * square_size+1.5;
-    canvas.height = h * square_size+1;
+    canvas.width = w * square_size + 1.5;
+    canvas.height = h * square_size + 1;
     ctx.strokeStyle = "#757575"
     ctx.lineWidth = 0.5;
     ctx.translate(0.5, 0.5);
@@ -32,25 +33,25 @@ function initCanvas() {
       for (var j = 0; j < w; j++) {
         var score = elems[j];
         _elems[j] = parseInt(elems[j]);
-        paintCell(j*square_size, i*square_size, score, colors[2], "");
+        paintCell(j * square_size, i * square_size, score, colors[2], "");
       }
       state.push(_elems);
     }
     //bias
-    i+=3;
+    i += 3;
     var npos;
     npos = arr[i].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0], "A");
-    npos = arr[i+1].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[0], "B");
-    npos = arr[i+2].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1], "A");
-    npos = arr[i+3].split(' ').map(e => parseInt(e));
-    paintCell(npos[0]*square_size, npos[1]*square_size, state[npos[1]][npos[0]], colors[1], "B");
+    paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[0], "A");
+    npos = arr[i + 1].split(' ').map(e => parseInt(e));
+    paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[0], "B");
+    npos = arr[i + 2].split(' ').map(e => parseInt(e));
+    paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[1], "A");
+    npos = arr[i + 3].split(' ').map(e => parseInt(e));
+    paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[1], "B");
   });
 }
 
-function paintCell(posx, posy, score, c, player){
+function paintCell(posx, posy, score, c, player) {
   ctx.fillStyle = c;
   ctx.font = "20px bold";
   ctx.fillRect(posx, posy, square_size, square_size);
@@ -70,6 +71,12 @@ canvas.addEventListener("mousedown", function(event) {
 }, false);
 socket.on('connect', function() {
   console.log("CLIENT");
+  console.log(path);
+  socket.emit("join_to_room", {
+    roomId: path,
+    userId: userid,
+    userName: username
+  });
   socket.on('movePlayer', function(data) {
     console.log("on draw : " + data.roomId);
     var coord = whoSquare(data);
@@ -113,8 +120,9 @@ function getData(event) {
   return {
     x: mouseX - 0.5,
     y: mouseY - 0.5,
-    roomId: roomid,
+    roomId: path,
     userId: userid,
+    userName: username,
     maps: state
   };
 }
