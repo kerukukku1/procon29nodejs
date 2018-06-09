@@ -1,3 +1,5 @@
+const dx = [1, 1, 1, 0, -1, -1, -1, 0];
+const dy = [1, 0, -1, -1, -1, 0, 1, 1];
 window.onload = function() {
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
@@ -8,14 +10,26 @@ window.onload = function() {
   var pos;
   var state = [];
   let path = location.pathname;
-  var colors = ["#FF4081", "#03A9F4", "#FFFFFF"];
+  var colors = {
+    red: "#FF4081",
+    blue: "#03A9F4",
+    white: "#FFFFFF"
+  };
+  var jblue = document.getElementById("joinBlue");
+  var jred = document.getElementById("joinRed");
+  var user_status = {
+    roomId: path,
+    userId: userid,
+    userName: username,
+    team: ""
+  };
   initCanvas();
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
     socket.emit('readfile', dir);
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
-      console.log(arr);
+      // console.log(arr);
       var turn = parseInt(arr[0]);
       w = parseInt(arr[1]);
       h = parseInt(arr[2]);
@@ -32,8 +46,11 @@ window.onload = function() {
         var _elems = [];
         for (var j = 0; j < w; j++) {
           var score = elems[j];
-          _elems[j] = parseInt(elems[j]);
-          paintCell(j * square_size, i * square_size, score, colors[2], "");
+          _elems[j] = {
+            score: parseInt(elems[j]),
+            color: "white"
+          };
+          paintCell(j * square_size, i * square_size, _elems[j], "", "black");
         }
         state.push(_elems);
       }
@@ -41,28 +58,33 @@ window.onload = function() {
       i += 3;
       var npos;
       npos = arr[i].split(' ').map(e => parseInt(e));
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[0], "A");
+      state[npos[1]][npos[0]].color = colors.red;
+      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 1].split(' ').map(e => parseInt(e));
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[0], "B");
+      state[npos[1]][npos[0]].color = colors.red;
+      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
       npos = arr[i + 2].split(' ').map(e => parseInt(e));
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[1], "A");
+      state[npos[1]][npos[0]].color = colors.blue;
+      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 3].split(' ').map(e => parseInt(e));
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], colors[1], "B");
+      state[npos[1]][npos[0]].color = colors.blue;
+      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
     });
   }
 
-  function paintCell(posx, posy, score, c, player) {
-    ctx.fillStyle = c;
+  function paintCell(posx, posy, cell, player, textcolor) {
+    ctx.fillStyle = cell.color;
     ctx.font = "20px bold";
     ctx.fillRect(posx, posy, square_size, square_size);
     ctx.rect(posx, posy, square_size, square_size);
     ctx.stroke();
-    ctx.fillStyle = "#333333";
-    ctx.fillText(score, posx + (square_size / 2), posy + (square_size / 2), 1000);
-    ctx.fillStyle = "#333333";
+    ctx.fillStyle = textcolor;
+    ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
     ctx.font = "15px bold";
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
   }
+
+
 
   document.getElementById("startbutton").onclick = function() {
     var d = {
@@ -71,14 +93,6 @@ window.onload = function() {
     };
     socket.emit('gamestart', d);
   };
-  var jblue = document.getElementById("joinBlue");
-  var jred = document.getElementById("joinRed");
-  var user_status = {
-    roomId: path,
-    userId: userid,
-    userName: username,
-    team: ""
-  };
   jblue.onclick = function() {
     console.log("blue click");
     if (jblue.textContent == "Cancel") {
@@ -86,7 +100,7 @@ window.onload = function() {
       user_status.team = "blue";
       socket.emit("Cancel", user_status);
       user_status.team = "";
-      if(jred.textContent=="Join Red")jred.disabled = false;
+      if (jred.textContent == "Join Red") jred.disabled = false;
     } else {
       user_status.team = "blue";
       socket.emit("Entry", user_status);
@@ -101,7 +115,7 @@ window.onload = function() {
       user_status.team = "red";
       socket.emit("Cancel", user_status);
       user_status.team = "";
-      if(jblue.textContent=="Join Blue")jblue.disabled = false;
+      if (jblue.textContent == "Join Blue") jblue.disabled = false;
     } else {
       user_status.team = "red";
       socket.emit("Entry", user_status);
@@ -111,24 +125,37 @@ window.onload = function() {
   };
 
   canvas.addEventListener("mousedown", function(event) {
+    if (user_status == "") return;
     d = getData(event);
     console.log(d);
-    socket.emit('MapDataSync', d);
+    (function(data) {
+      var me = (user_status.team == "red") ? colors.red : colors.blue;
+      for (var i = 0; i < 8; i++) {
+        var ny = data.y + dy[i];
+        var nx = data.x + dx[i];
+        if (nx >= w || ny >= h || nx < 0 || ny < 0) continue;
+        if (me == state[ny][nx].color) {
+          return true;
+        }
+      }
+      return false;
+    })(d) && socket.emit('MapDataSync', d);
   }, false);
   socket.on('connect', function() {
-    console.log("CLIENT");
-    console.log(path);
     socket.emit("join_to_room", {
       roomId: path,
       userId: userid,
       userName: username
     });
     socket.on('movePlayer', function(data) {
-      console.log("on draw : " + data.roomId);
-      var coord = whoSquare(data);
-      var c = (state[coord.y][coord.x].color + 1) % 2;
+      if (!data.player) return;
+      var coord = {
+        x: data.status.x,
+        y: data.status.y
+      };
+      c = (data.player.team == "red") ? colors.red : colors.blue;
       state[coord.y][coord.x].color = c;
-      ctx.fillStyle = colors[c];
+      ctx.fillStyle = c;
       var nowx = coord.x * square_size;
       var nowy = coord.y * square_size;
       var score = state[coord.y][coord.x].score;
@@ -140,20 +167,20 @@ window.onload = function() {
       ctx.fillText(score, nowx + (square_size / 2), nowy + (square_size / 2), 1000);
     });
     socket.on('Someone_Entried', function(data) {
-      if(data.team == "red"){
-        if(user_status.team=="")jred.disabled = true;
+      if (data.team == "red") {
+        if (user_status.team == "") jred.disabled = true;
         jred.textContent = "Team Red : " + data.userName;
-      }else{
-        if(user_status.team=="")jblue.disabled = true;
+      } else {
+        if (user_status.team == "") jblue.disabled = true;
         jblue.textContent = "Team Blue : " + data.userName;
       }
     });
     socket.on('Someone_Canceled', function(data) {
-      if(data.team == "red"){
-        if(user_status.team=="")jred.disabled = false;
+      if (data.team == "red") {
+        if (user_status.team == "") jred.disabled = false;
         jred.textContent = "Join Red";
-      }else{
-        if(user_status.team=="")jblue.disabled = false;
+      } else {
+        if (user_status.team == "") jblue.disabled = false;
         jblue.textContent = "Join Blue";
       }
     });
@@ -179,11 +206,16 @@ window.onload = function() {
   }
 
   function getData(event) {
-    var mouseX = event.clientX - $(canvas).position().left + scrollX();
-    var mouseY = event.clientY - $(canvas).position().top + scrollY();
+    var bias = 0.5;
+    var mouseX = event.clientX - $(canvas).position().left + scrollX() - bias;
+    var mouseY = event.clientY - $(canvas).position().top + scrollY() - bias;
+    var tmp = whoSquare({
+      x: mouseX,
+      y: mouseY
+    });
     return {
-      x: mouseX - 0.5,
-      y: mouseY - 0.5,
+      x: tmp.x,
+      y: tmp.y,
       roomId: path,
       userId: userid,
       userName: username,

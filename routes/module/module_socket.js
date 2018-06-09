@@ -4,7 +4,10 @@ var fs = require('fs');
 const mongoose = require('mongoose');
 const Cat = mongoose.model('Cat', {
   mapdata: [
-    [Number]
+    [{
+      position: Number,
+      color: String
+    }]
   ],
   roomid: {
     type: Number
@@ -26,93 +29,95 @@ var join_user_store = {};
 var player_user_store = {};
 //接続確立時の処理
 io.sockets.on('connection', function(socket) {
-  //退出処理
-  socket.on('disconnect', function() {
-    if (join_user_store[socket.data.userId]) {
-      socket.leave(socket.data.roomId);
-    }
-    delete join_user_store[socket.data.userId];
-    if (player_user_store[socket.data.userId]) {
-      socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", socket.data);
-      delete player_user_store[socket.data.userId];
-    }
-    console.log(join_user_store);
-  });
-
-  //盤面情報の同期
-  socket.on("MapDataSync", function(data) {
-    // timeKeeper(3);
-    io.sockets.in(join_user_store[data.userId].roomId).emit("movePlayer", data);
-    const kitty = new Cat({
-      mapdata: data.maps,
-      roomId: data.roomId
-    });
-    kitty.save(function(err) {
-      console.log('meow')
-      if (err) throw err;
-    });
-  });
-
-  //バトルにエントリー
-  socket.on("Entry", function(data) {
-    console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
-    if (!player_user_store[socket.data.userId]) {
-      player_user_store[socket.data.userId] = data;
-      console.log("write");
-    }
-    socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
-    console.log(player_user_store);
-  });
-
-  //エントリーをキャンセル
-  socket.on("Cancel", function(data) {
-    console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
-    delete player_user_store[socket.data.userId];
-    socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
-    console.log(player_user_store);
-  });
-
-  //バトルルームに入った時の処理
-  socket.on("join_to_room", function(data) {
-    socket.data = data;
-    join_user_store[socket.data.userId] = data;
-    socket.join(socket.data.roomId);
-    // console.log(join_user_store);
-    console.log(socket.data.roomId);
-    console.log(join_user_store);
-    const result = Object.keys(player_user_store).filter((key) => {
-      return player_user_store[key].roomId === socket.data.roomId
-    });
-    for (let i = 0; i < result.length; i++) {
-      socket.emit("Someone_Entried", player_user_store[result[i]]);
-    }
-    console.log(result);
-  });
-
-  //ゲーム開始
-  socket.on("gamestart", function(data) {
-    timeKeeper(data.turn, data.span, data.turn);
-  });
-
-  //ファイル読み込み -> クライアントにデータを投げる
-  socket.on("readfile", function(data) {
-    var dir = process.cwd() + '/questdata/' + data;
-    console.log(process.cwd() + '/questdata/' + data);
-    fs.readFile(dir, 'utf8', function(err, text) {
-      console.log(text);
-      console.log(err);
-      socket.emit("filedata", {
-        text: text,
-        err: err
+      //退出処理
+      socket.on('disconnect', function() {
+        if (player_user_store[socket.data.userId]) {
+          socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", player_user_store[socket.data.userId]);
+          delete player_user_store[socket.data.userId];
+        }
+        if (join_user_store[socket.data.userId]) {
+          socket.leave(socket.data.roomId);
+        }
+        delete join_user_store[socket.data.userId];
+        console.log(join_user_store);
       });
-    });
-  });
-});
 
-function timeKeeper(turn, span) {
-  if (turn == 0) return;
-  setTimeout(function() {
-    console.log(turn);
-    timeKeeper(turn - 1, span);
-  }, span);
-}
+      //盤面情報の同期
+      socket.on("MapDataSync", function(data) {
+          // timeKeeper(3);
+          io.sockets.in(join_user_store[data.userId].roomId).emit("movePlayer", {
+              status: data,
+              player: player_user_store[data.userId]
+            });
+            const kitty = new Cat({
+              mapdata: data.maps,
+              roomId: data.roomId
+            }); kitty.save(function(err) {
+              console.log('meow')
+              if (err) throw err;
+            });
+          });
+
+        //バトルにエントリー
+        socket.on("Entry", function(data) {
+          console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
+          if (!player_user_store[socket.data.userId]) {
+            player_user_store[socket.data.userId] = data;
+            console.log("write");
+          }
+          socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
+          console.log(player_user_store);
+        });
+
+        //エントリーをキャンセル
+        socket.on("Cancel", function(data) {
+          console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
+          delete player_user_store[socket.data.userId];
+          socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
+          console.log(player_user_store);
+        });
+
+        //バトルルームに入った時の処理
+        socket.on("join_to_room", function(data) {
+          socket.data = data;
+          join_user_store[socket.data.userId] = data;
+          socket.join(socket.data.roomId);
+          // console.log(join_user_store);
+          console.log(socket.data.roomId);
+          console.log(join_user_store);
+          const result = Object.keys(player_user_store).filter((key) => {
+            return player_user_store[key].roomId === socket.data.roomId
+          });
+          for (let i = 0; i < result.length; i++) {
+            socket.emit("Someone_Entried", player_user_store[result[i]]);
+          }
+          console.log(result);
+        });
+
+        //ゲーム開始
+        socket.on("gamestart", function(data) {
+          timeKeeper(data.turn, data.span, data.turn);
+        });
+
+        //ファイル読み込み -> クライアントにデータを投げる
+        socket.on("readfile", function(data) {
+          var dir = process.cwd() + '/questdata/' + data;
+          console.log(process.cwd() + '/questdata/' + data);
+          fs.readFile(dir, 'utf8', function(err, text) {
+            console.log(text);
+            console.log(err);
+            socket.emit("filedata", {
+              text: text,
+              err: err
+            });
+          });
+        });
+      });
+
+    function timeKeeper(turn, span) {
+      if (turn == 0) return;
+      setTimeout(function() {
+        console.log(turn);
+        timeKeeper(turn - 1, span);
+      }, span);
+    }
