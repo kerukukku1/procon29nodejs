@@ -1,6 +1,28 @@
 const dx = [1, 1, 1, 0, -1, -1, -1, 0];
 const dy = [1, 0, -1, -1, -1, 0, 1, 1];
 window.onload = function() {
+  var players = {
+    red: {
+      A: {
+        x: -1,
+        y: -1
+      },
+      B: {
+        x: -1,
+        y: -1
+      }
+    },
+    blue: {
+      A: {
+        x: -1,
+        y: -1
+      },
+      B: {
+        x: -1,
+        y: -1
+      }
+    }
+  };
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
   var ctx = canvas.getContext("2d");
@@ -59,15 +81,31 @@ window.onload = function() {
       var npos;
       npos = arr[i].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.red;
+      players.red.A = {
+        x: npos[0],
+        y: npos[1]
+      };
       paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 1].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.red;
+      players.red.B = {
+        x: npos[0],
+        y: npos[1]
+      };
       paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
       npos = arr[i + 2].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.blue;
+      players.blue.A = {
+        x: npos[0],
+        y: npos[1]
+      };
       paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 3].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.blue;
+      players.blue.B = {
+        x: npos[0],
+        y: npos[1]
+      };
       paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
     });
   }
