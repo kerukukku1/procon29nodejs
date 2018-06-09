@@ -1,5 +1,5 @@
-const dx = [1, 1, 1, 0, -1, -1, -1, 0];
-const dy = [1, 0, -1, -1, -1, 0, 1, 1];
+const dx = [1, 1, 1, 0, -1, -1, -1, 0, 0];
+const dy = [1, 0, -1, -1, -1, 0, 1, 1, 0];
 window.onload = function() {
   var players = {
     red: {
@@ -72,7 +72,7 @@ window.onload = function() {
             score: parseInt(elems[j]),
             color: "white"
           };
-          paintCell(j * square_size, i * square_size, _elems[j], "", "black");
+          paintCell(j, i, _elems[j], "", "black");
         }
         state.push(_elems);
       }
@@ -85,32 +85,36 @@ window.onload = function() {
         x: npos[0],
         y: npos[1]
       };
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
+      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 1].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.red;
       players.red.B = {
         x: npos[0],
         y: npos[1]
       };
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
+      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
       npos = arr[i + 2].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.blue;
       players.blue.A = {
         x: npos[0],
         y: npos[1]
       };
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "A", "white");
+      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
       npos = arr[i + 3].split(' ').map(e => parseInt(e));
       state[npos[1]][npos[0]].color = colors.blue;
       players.blue.B = {
         x: npos[0],
         y: npos[1]
       };
-      paintCell(npos[0] * square_size, npos[1] * square_size, state[npos[1]][npos[0]], "B", "white");
+      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
     });
   }
 
-  function paintCell(posx, posy, cell, player, textcolor) {
+  function paintCell(nowx, nowy, cell, player, textcolor) {
+    //verify
+    if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
+    posx = nowx * square_size;
+    posy = nowy * square_size;
     ctx.fillStyle = cell.color;
     ctx.font = "20px bold";
     ctx.fillRect(posx, posy, square_size, square_size);
@@ -141,6 +145,16 @@ window.onload = function() {
       if (jred.textContent == "Join Red") jred.disabled = false;
     } else {
       user_status.team = "blue";
+      user_status.position = {
+        A: {
+          x: -1,
+          y: -1
+        },
+        B: {
+          x: -1,
+          y: -1
+        }
+      }
       socket.emit("Entry", user_status);
       jblue.textContent = "Cancel";
       jred.disabled = true;
@@ -156,6 +170,16 @@ window.onload = function() {
       if (jblue.textContent == "Join Blue") jblue.disabled = false;
     } else {
       user_status.team = "red";
+      user_status.position = {
+        A: {
+          x: -1,
+          y: -1
+        },
+        B: {
+          x: -1,
+          y: -1
+        }
+      }
       socket.emit("Entry", user_status);
       jred.textContent = "Cancel";
       jblue.disabled = true;
@@ -167,14 +191,17 @@ window.onload = function() {
     d = getData(event);
     (function(data) {
       var me = (user_status.team == "red") ? players.red : players.blue;
-      for (var i = 0; i < 8; i++) {
+      for (var i = 0; i < 9; i++) {
         var np = {
           x: data.x + dx[i],
           y: data.y + dy[i]
         };
         if (np.x >= w || np.y >= h || np.x < 0 || np.y < 0) continue;
-        if (JSON.stringify(me.A) == JSON.stringify(np) ||
-          JSON.stringify(me.B) == JSON.stringify(np)) {
+        if (JSON.stringify(me.A) == JSON.stringify(np)) {
+          d.group = "A";
+          return true;
+        } else if (JSON.stringify(me.B) == JSON.stringify(np)) {
+          d.group = "B";
           return true;
         }
       }
@@ -193,18 +220,27 @@ window.onload = function() {
         x: data.status.x,
         y: data.status.y
       };
+      var group = data.status.group;
+      if (group == "A") {
+        var tmpx = user_status.position.A.x;
+        var tmpy = user_status.position.A.y;
+        user_status.position.A = coord;
+        if (tmpx >= 0 || tmpy >= 0) paintCell(tmpx, tmpy, state[tmpy][tmpx], "", "black");
+      } else if (group == "B") {
+        var tmpx = user_status.position.B.x;
+        var tmpy = user_status.position.B.y;
+        user_status.position.B = coord;
+        if (tmpx >= 0 || tmpy >= 0) paintCell(tmpx, tmpy, state[tmpy][tmpx], "", "black");
+      }
       c = (data.player.team == "red") ? colors.red : colors.blue;
-      state[coord.y][coord.x].color = c;
-      ctx.fillStyle = c;
-      var nowx = coord.x * square_size;
-      var nowy = coord.y * square_size;
-      var score = state[coord.y][coord.x].score;
-      ctx.fillRect(nowx, nowy, square_size, square_size);
-      ctx.rect(nowx, nowy, square_size, square_size);
-      console.log(nowx, nowy);
-      ctx.stroke();
-      ctx.fillStyle = "white";
-      ctx.fillText(score, nowx + (square_size / 2), nowy + (square_size / 2), 1000);
+      // state[coord.y][coord.x].color = c;
+      var nowx = coord.x;
+      var nowy = coord.y;
+      var dummy = {
+        score: state[coord.y][coord.x].score,
+        color: c
+      };
+      paintCell(nowx, nowy, dummy, "*", "white");
     });
     socket.on('Someone_Entried', function(data) {
       if (data.team == "red") {
