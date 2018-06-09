@@ -23,6 +23,7 @@ window.onload = function() {
       }
     }
   };
+  var move_players = objectCopy(players);
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
   var ctx = canvas.getContext("2d");
@@ -197,10 +198,10 @@ window.onload = function() {
           y: data.y + dy[i]
         };
         if (np.x >= w || np.y >= h || np.x < 0 || np.y < 0) continue;
-        if (JSON.stringify(me.A) == JSON.stringify(np)) {
+        if (equalsObject(me.A, np)) {
           d.group = "A";
           return true;
-        } else if (JSON.stringify(me.B) == JSON.stringify(np)) {
+        } else if (equalsObject(me.B, np)) {
           d.group = "B";
           return true;
         }
@@ -220,19 +221,31 @@ window.onload = function() {
         x: data.status.x,
         y: data.status.y
       };
+      c = (data.player.team == "red") ? colors.red : colors.blue;
       var group = data.status.group;
       if (group == "A") {
-        var tmpx = user_status.position.A.x;
-        var tmpy = user_status.position.A.y;
-        user_status.position.A = coord;
-        if (tmpx >= 0 || tmpy >= 0) paintCell(tmpx, tmpy, state[tmpy][tmpx], "", "black");
+        var tmp = (data.player.team == "red") ? move_players.red.A : move_players.blue.A;
+        var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
+        console.log(tmp2, tmp);
+        if (tmp.x >= 0 || tmp.y >= 0) {
+          var flag = equalsObject(tmp, tmp2);
+          paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
+        }
+        if(data.player.team == "red"){
+          move_players.red.A = coord;
+        }else move_players.blue.A = coord;
       } else if (group == "B") {
-        var tmpx = user_status.position.B.x;
-        var tmpy = user_status.position.B.y;
-        user_status.position.B = coord;
-        if (tmpx >= 0 || tmpy >= 0) paintCell(tmpx, tmpy, state[tmpy][tmpx], "", "black");
+        var tmp = (data.player.team == "red") ? move_players.red.B : move_players.blue.B;
+        var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
+        console.log(tmp2, tmp);
+        var flag = equalsObject(tmp, tmp2);
+        if (tmp.x >= 0 || tmp.y >= 0) {
+          paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
+        }
+        if(data.player.team == "red"){
+          move_players.red.B = coord;
+        }else move_players.blue.B = coord;
       }
-      c = (data.player.team == "red") ? colors.red : colors.blue;
       // state[coord.y][coord.x].color = c;
       var nowx = coord.x;
       var nowy = coord.y;
@@ -297,6 +310,14 @@ window.onload = function() {
       userName: username,
       maps: state
     };
+  }
+
+  function objectCopy(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function equalsObject(obj1, obj2) {
+    return JSON.stringify(obj1) == JSON.stringify(obj2);
   }
 };
 // console.log(dir);
