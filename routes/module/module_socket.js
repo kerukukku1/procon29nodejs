@@ -45,7 +45,7 @@ io.sockets.on('connection', function(socket) {
       //盤面情報の同期
       socket.on("MapDataSync", function(data) {
           // timeKeeper(3);
-          io.sockets.in(join_user_store[data.userId].roomId).emit("movePlayer", {
+          io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
               status: data,
               player: player_user_store[data.userId]
             });

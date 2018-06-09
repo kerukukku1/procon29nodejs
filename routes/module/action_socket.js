@@ -163,16 +163,18 @@ window.onload = function() {
   };
 
   canvas.addEventListener("mousedown", function(event) {
-    if (user_status == "") return;
+    if (user_status.team == "") return;
     d = getData(event);
-    console.log(d);
     (function(data) {
-      var me = (user_status.team == "red") ? colors.red : colors.blue;
+      var me = (user_status.team == "red") ? players.red : players.blue;
       for (var i = 0; i < 8; i++) {
-        var ny = data.y + dy[i];
-        var nx = data.x + dx[i];
-        if (nx >= w || ny >= h || nx < 0 || ny < 0) continue;
-        if (me == state[ny][nx].color) {
+        var np = {
+          x: data.x + dx[i],
+          y: data.y + dy[i]
+        };
+        if (np.x >= w || np.y >= h || np.x < 0 || np.y < 0) continue;
+        if (JSON.stringify(me.A) == JSON.stringify(np) ||
+          JSON.stringify(me.B) == JSON.stringify(np)) {
           return true;
         }
       }
@@ -185,7 +187,7 @@ window.onload = function() {
       userId: userid,
       userName: username
     });
-    socket.on('movePlayer', function(data) {
+    socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var coord = {
         x: data.status.x,
