@@ -1,7 +1,7 @@
 extends layout
 block content
   h1= title
-  center: p Welcome to #{title}
+  //- center: p Welcome to #{title}
   center: canvas(id="myCanvas", height="800", width="800")
   script(src="http://localhost:8888/socket.io/socket.io.js")
   script(type='text/javascript').
@@ -9,14 +9,26 @@ block content
     var roomid = '#{roomId}';
     var userid = '#{usersession.userid}'
     var username = '#{usersession.username}'
-    
-    
+
   script(src="/module/action_socket.js")
   div(class="box1")
     button.btn.btn-primary.btn-lg.btn-block(type='button')#joinBlue: strong Join Blue
   div(class="box2")
     button.btn.btn-danger.btn-lg.btn-block(type='button')#joinRed: strong Join Red
   button.btn.btn-success.btn-lg.btn-block(type='button')#startbutton: strong Game Start!
+
+  #ConfirmModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true')
+    .modal-dialog(role='document')
+      .modal-content
+        .modal-header
+          h5#exampleModalLabel.modal-title Get Ready?
+          button.close(type='button', data-dismiss='modal', aria-label='Close')
+            span(aria-hidden='true') ×
+        .modal-body
+          | ...
+        .modal-footer
+          button.btn.btn-secondary(type='button', data-dismiss='modal') Close
+          button.btn.btn-primary(type='button') Save changes
 
   .wrapper
     a(href="/questboard", class="btn") Back to Top

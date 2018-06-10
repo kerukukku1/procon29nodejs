@@ -67,6 +67,13 @@ io.sockets.on('connection', function(socket) {
           }
           socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
           console.log(player_user_store);
+          const result = Object.keys(player_user_store).filter((key) => {
+            return player_user_store[key].roomId === socket.data.roomId
+          });
+          //roomに2人揃った場合
+          if(result.length == 2){
+            io.sockets.in(socket.data.roomId).emit("modal_show", result);
+          }
         });
 
         //エントリーをキャンセル

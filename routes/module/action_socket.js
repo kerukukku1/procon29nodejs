@@ -231,9 +231,9 @@ window.onload = function() {
           var flag = equalsObject(tmp, tmp2);
           paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
         }
-        if(data.player.team == "red"){
+        if (data.player.team == "red") {
           move_players.red.A = coord;
-        }else move_players.blue.A = coord;
+        } else move_players.blue.A = coord;
       } else if (group == "B") {
         var tmp = (data.player.team == "red") ? move_players.red.B : move_players.blue.B;
         var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
@@ -242,9 +242,9 @@ window.onload = function() {
         if (tmp.x >= 0 || tmp.y >= 0) {
           paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
         }
-        if(data.player.team == "red"){
+        if (data.player.team == "red") {
           move_players.red.B = coord;
-        }else move_players.blue.B = coord;
+        } else move_players.blue.B = coord;
       }
       // state[coord.y][coord.x].color = c;
       var nowx = coord.x;
@@ -272,6 +272,10 @@ window.onload = function() {
         if (user_status.team == "") jblue.disabled = false;
         jblue.textContent = "Join Blue";
       }
+    });
+    socket.on('modal_show', function(data) {
+      if(user_status.team == "")return;
+      $('#ConfirmModal').modal('show');
     });
   });
 
