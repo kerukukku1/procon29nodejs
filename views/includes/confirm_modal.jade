@@ -1,0 +1,33 @@
+#ConfirmModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true', data-backdrop="static", data-keyboard="false")
+  .modal-dialog(role='document')
+    .modal-content
+      .modal-header
+        h5#exampleModalLabel.modal-title Get Ready?
+        button.close(type='button', data-dismiss='modal', aria-label='Close')
+          span(aria-hidden='true') ×
+      .modal-body
+        | ゲームを開始してもよろしいですか?
+        br
+        | 双方のプレイヤーの承認が行われるとゲームが開始されます．
+      .modal-footer
+        button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+        button.btn.btn-primary(type='button')#confirmButton Confirm
+
+#WaitingModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true', data-backdrop="static", data-keyboard="false")
+  .modal-dialog(role='document')
+    .modal-content
+      .modal-header
+        h5#exampleModalLabel.modal-title Please Wait.
+        button.close(type='button', data-dismiss='modal', aria-label='Close')
+          span(aria-hidden='true') ×
+      .modal-body
+        | 相手の承認待ちです....
+      .modal-footer
+        button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+script.
+  $(document).ready(function(){
+      $("#confirmButton").click(function(){
+          $("#ConfirmModal").modal('hide');
+          $("#WaitingModal").modal('show');
+      });
+  });
