@@ -286,9 +286,9 @@ window.onload = function() {
       if(user_status.team == "")return;
       $('#ConfirmModal').modal('show');
     });
-    socket.on('client_gamestart', function(dummy){
-      console.log("Game Start!");
+    socket.on('client_gamestart', function(data){
       $("#WaitingModal").modal('hide');
+      $('#startbutton').trigger('click');
     });
   });
 
