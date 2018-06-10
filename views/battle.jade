@@ -3,26 +3,22 @@ block animecontent
   .anime
 block content
   include includes/confirm_modal.jade
-  h1= title
   //- center: p Welcome to #{title}
   script.
     jQuery(function($){
-      $(".anime").hide();
-      $(".anime").css({opacity:'0'});
       $('#startbutton').click(function(){
-        $(".anime").append('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif"></img>');
-        $(".anime").css({opacity:'1'});
-        $(".anime").show();
-        $(function(){
-          $(".wrapper").css({opacity:'0'});
-          setTimeout(function(){
-            $(".wrapper").css("display", "block");
-            $(".wrapper").stop().animate({opacity:'1'},300);
-          },1000);//約4秒後に
-        });
+        $(".anime").empty();
+        $('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif", id = "start"></img>').appendTo(".anime").hide().fadeIn(3000);
+        $(".wrapper").css({opacity:'0'});
+        setTimeout(function(){
+          $(".wrapper").css("display", "block");
+          $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
+          $(".anime").hide();
+        },3800);
       });
     });   
   .wrapper
+    h1= title
     center: canvas(id="myCanvas", height="800", width="800")
     script(src="http://localhost:8888/socket.io/socket.io.js")
     script(type='text/javascript').
