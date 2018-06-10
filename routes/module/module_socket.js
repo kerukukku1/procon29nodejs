@@ -113,11 +113,14 @@ io.sockets.on('connection', function(socket) {
   socket.on("confirm", function(data) {
     confirm_room_store[data.roomId] += 1;
     if (confirm_room_store[data.roomId] == 2) {
-      io.sockets.in(socket.data.roomId).emit("client_gamestart",
-        Object.keys(player_user_store).filter((key) => {
-          return player_user_store[key].roomId === socket.data.roomId
-        })
-      );
+      const result = Object.keys(player_user_store).filter((key) => {
+        return player_user_store[key].roomId === socket.data.roomId
+      });
+      var ret = {};
+      for (let i = 0; i < result.length; i++) {
+        ret[result[i]] = player_user_store[result[i]];
+      }
+      io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
 

@@ -128,15 +128,14 @@ window.onload = function() {
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
   }
 
+  // document.getElementById("startbutton").onclick = function() {
+  //   var d = {
+  //     turn: 3,
+  //     span: 1000
+  //   };
+  //   socket.emit('gamestart', d);
+  // };
 
-
-  document.getElementById("startbutton").onclick = function() {
-    var d = {
-      turn: 3,
-      span: 1000
-    };
-    socket.emit('gamestart', d);
-  };
   jblue.onclick = function() {
     console.log("blue click");
     if (jblue.textContent == "Cancel") {
@@ -283,12 +282,23 @@ window.onload = function() {
       }
     });
     socket.on('modal_show', function(data) {
-      if(user_status.team == "")return;
+      if (user_status.team == "") return;
       $('#ConfirmModal').modal('show');
     });
-    socket.on('client_gamestart', function(data){
+    socket.on('client_gamestart', function(data) {
+      console.log(data);
       $("#WaitingModal").modal('hide');
-      $('#startbutton').trigger('click');
+      const team_red = Object.keys(data).filter((key) => {
+        return data[key].team == "red";
+      });
+      const team_blu = Object.keys(data).filter((key) => {
+        return data[key].team == "blue";
+      });
+      console.log(data[team_red].userName, data[team_blu].userName);
+      battleStart({
+        red: data[team_red].userName,
+        blue: data[team_blu].userName
+      });
     });
   });
 
