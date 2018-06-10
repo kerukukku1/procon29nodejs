@@ -30,10 +30,11 @@ app.use(express.static(path.join(__dirname, 'routes')));
 app.use(session({
   secret: 'hef028hc2093hdroic9023y',
   resave: false,
+  rolling: true,
   saveUninitialized: true,
-  // an hour
+  // three hours
   cookie: {
-    maxAge: 60 * 60 * 1000
+    maxAge: 1000 * 60 * 60 * 3
   }
 }));
 

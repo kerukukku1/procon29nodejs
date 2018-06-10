@@ -112,9 +112,7 @@ io.sockets.on('connection', function(socket) {
 
   socket.on("confirm", function(data) {
     confirm_room_store[data.roomId] += 1;
-    console.log(confirm_room_store[data.roomId]);
     if (confirm_room_store[data.roomId] == 2) {
-      console.log("OK!");
       io.sockets.in(socket.data.roomId).emit("client_gamestart",
         Object.keys(player_user_store).filter((key) => {
           return player_user_store[key].roomId === socket.data.roomId
