@@ -40,6 +40,7 @@ window.onload = function() {
   };
   var jblue = document.getElementById("joinBlue");
   var jred = document.getElementById("joinRed");
+  var confirm = document.getElementById("confirmButton");
   var user_status = {
     roomId: path,
     userId: userid,
@@ -187,6 +188,14 @@ window.onload = function() {
     }
   };
 
+  confirm.onclick = function() {
+    $("#ConfirmModal").modal('hide');
+    $("#WaitingModal").modal('show');
+    setTimeout(function() {
+      socket.emit("confirm", user_status);
+    }, 1500);
+  };
+
   canvas.addEventListener("mousedown", function(event) {
     if (user_status.team == "") return;
     d = getData(event);
@@ -276,6 +285,10 @@ window.onload = function() {
     socket.on('modal_show', function(data) {
       if(user_status.team == "")return;
       $('#ConfirmModal').modal('show');
+    });
+    socket.on('client_gamestart', function(dummy){
+      console.log("Game Start!");
+      $("#WaitingModal").modal('hide');
     });
   });
 

@@ -24,10 +24,3 @@
         | 相手の承認待ちです....
       .modal-footer
         button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
-script.
-  $(document).ready(function(){
-      $("#confirmButton").click(function(){
-          $("#ConfirmModal").modal('hide');
-          $("#WaitingModal").modal('show');
-      });
-  });
