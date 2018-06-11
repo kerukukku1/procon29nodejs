@@ -50,6 +50,7 @@ window.onload = function() {
   initCanvas();
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
+    setQuality(3);
     socket.emit('readfile', dir);
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
@@ -57,8 +58,13 @@ window.onload = function() {
       var turn = parseInt(arr[0]);
       w = parseInt(arr[1]);
       h = parseInt(arr[2]);
-      canvas.width = w * square_size + 1.5;
-      canvas.height = h * square_size + 1;
+      _w = w * square_size + 1.5;
+      _h = h * square_size + 1;
+      canvas.height = 2*_h;
+      canvas.width = 2*_w;
+      canvas.style.height = _h + 'px';
+      canvas.style.width = _w + 'px';
+      ctx.scale(2,2);
       ctx.strokeStyle = "#757575"
       ctx.lineWidth = 0.5;
       ctx.translate(0.5, 0.5);
@@ -345,6 +351,12 @@ window.onload = function() {
 
   function equalsObject(obj1, obj2) {
     return JSON.stringify(obj1) == JSON.stringify(obj2);
+  }
+  function setQuality(value){
+    console.log("Quality : " + value);
+    ctx.scale(value, value);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
   }
 };
 // console.log(dir);
