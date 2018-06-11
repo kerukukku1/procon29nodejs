@@ -30,6 +30,7 @@ var player_user_store = {};
 var confirm_room_store = {};
 var handshake_room_store = {};
 var playing_user_store = {};
+var turn_manage_store = {};
 //接続確立時の処理
 io.sockets.on('connection', function(socket) {
   //退出処理
@@ -139,15 +140,27 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("handshake", function(data) {
-    console.log(data.status + " and step : " + data.step);
+    console.log(data.status.userName + " and step : " + data.step);
     handshake_room_store[socket.data.roomId] += 1;
     if (handshake_room_store[socket.data.roomId] == 2) {
       //prepare next handshake
       handshake_room_store[socket.data.roomId] = 0;
-      io.sockets.in(socket.data.roomId).emit("client_handshake", {
+      var gift = {
         users: playing_user_store[socket.data.roomId],
         step: data.step
-      });
+      };
+      if(data.step == 1){
+        //prepare next turn count
+        turn_manage_store[socket.data.roomId] = 0;
+      }else if(data.step == 2){
+        turn_manage_store[socket.data.roomId]++;
+        // console.log(turn_manage_store[socket.data.roomId]);
+        gift.turn = turn_manage_store[socket.data.roomId];
+        // io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
+      }else if(data.step == 3){
+        //nothing
+      }
+      io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
     }
   });
 });

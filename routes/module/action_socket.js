@@ -31,6 +31,8 @@ window.onload = function() {
   var w;
   var h;
   var pos;
+  var turn;
+  var now_turn = 0;
   var state = [];
   let path = location.pathname;
   var colors = {
@@ -54,7 +56,7 @@ window.onload = function() {
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
       // console.log(arr);
-      var turn = parseInt(arr[0]);
+      turn = parseInt(arr[0]);
       w = parseInt(arr[1]);
       h = parseInt(arr[2]);
       _w = w * square_size + 1.5;
@@ -296,9 +298,24 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      console.log("Server is returned handshake");
-      $('#progress-timer').timer(30, 'Strategy Phase');
-      console.log("End");
+      if(user_status=="")return;
+      console.log(data);
+      console.log(turn);
+      if (data.step == 1) {
+        $('#progress-timer').timer(10, 'Strategy Phase', 1);
+        console.log("phase1 end");
+      } else if (data.step == 2) {
+        if (data.turn >= turn) {
+          socket.emit("handshake", {
+            status: user_status,
+            step: data.step + 1
+          });
+        }else{
+          $('#progress-timer').timer(3, 'Declare Phase', 2);
+        }
+      } else if (data.step == 3) {
+        $('#progress-timer').timer(10, 'End Phase', 3);
+      }
     });
 
     socket.on('client_gamestart', function(data) {
@@ -398,14 +415,15 @@ window.onload = function() {
     Author : @ksugimori
     https://codepen.io/ksugimori/pen/ORvgVq
   */
-  ;(function($) {
-    $.fn.timer = function(totalTime, phase) {
+  ;
+  (function($) {
+    $.fn.timer = function(totalTime, phase, step) {
       // reset timer
       clearTimeout(this.data('id_of_settimeout'));
       this.empty();
 
       // initialize elements
-      this.append('<h4><strong>'+phase+' : </strong><span></span> seconds left.</h4>');
+      this.append('<h4><strong>' + phase + ' : </strong><span></span> seconds left.</h4>');
       this.append('<div class="progress"></div>');
       this.children('.progress').append('<div class="progress-bar bg-info"></div>');
       this.find('.progress-bar').css({
@@ -416,32 +434,51 @@ window.onload = function() {
       var countdown = (function(timeLeft) {
         var $header = this.children('h4');
         if (timeLeft <= 0) {
-          $header.empty().text(phase + ' is Over the time limit!').addClass('text-danger');
+          $header.empty().text(phase + ' is Over. Next Step is ' + (5 + timeLeft) + ' sec. later').addClass('text-danger');
           this.find('div.progress-bar').css({
-            width:'0%'
+            width: '0%'
           });
-          return;
+          if (timeLeft <= -5) {
+            var gift = {
+              status: user_status,
+              step: step
+            };
+            if (step == 1) {
+              //next step
+              gift.step += 1;
+            } else if (step == 2) {
+              //nothing
+            } else if (step == 3) {
+              return;
+            }
+            socket.emit("handshake", gift);
+            return;
+          } else {
+            var id = setTimeout((function() {
+              countdown(timeLeft - 1);
+            }), 1000);
+          }
+        }else{
+          $header.children('span').text(timeLeft);
+
+          var width = (timeLeft) * (100 / totalTime); // unit in '%'
+          if (width < 20) { // less than 20 %
+            this.find('div.progress-bar').removeClass('bg-info').addClass('bg-danger');
+          } else if (width < 50) { // less than 50 % (and more than 20 %)
+            this.find('div.progress-bar').removeClass('bg-info').addClass('bg-warning');
+          }
+          //- $progressBar.animate({
+          //-   width:  width + '%'
+          //- }, 1000, 'linear');
+          this.find('div.progress-bar').css({
+            width: width + '%'
+          });
+
+          var id = setTimeout((function() {
+            countdown(timeLeft - 1);
+          }), 1000);
+          this.data("id_of_settimeout", id);
         }
-
-        $header.children('span').text(timeLeft);
-
-        var width = (timeLeft) * (100/totalTime); // unit in '%'
-        if (width < 20) { // less than 20 %
-          this.find('div.progress-bar').removeClass('bg-info').addClass('bg-danger');
-        } else if (width < 50) { // less than 50 % (and more than 20 %)
-          this.find('div.progress-bar').removeClass('bg-info').addClass('bg-warning');
-        }
-        //- $progressBar.animate({
-        //-   width:  width + '%'
-        //- }, 1000, 'linear');
-        this.find('div.progress-bar').css({
-          width:width+'%'
-        });
-
-        var id = setTimeout((function() {
-          countdown(timeLeft - 1);
-        }), 1000);
-        this.data("id_of_settimeout", id);
       }).bind(this);
 
       countdown(totalTime);
