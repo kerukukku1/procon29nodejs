@@ -24,6 +24,7 @@ window.onload = function() {
     }
   };
   var move_players = objectCopy(players);
+  var org_move_players = objectCopy(players);
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
   var ctx = canvas.getContext("2d");
@@ -298,19 +299,38 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      if(user_status=="")return;
+      if (user_status == "") return;
       console.log(data);
       console.log(turn);
       if (data.step == 1) {
         $('#progress-timer').timer(10, 'Strategy Phase', 1);
         console.log("phase1 end");
       } else if (data.step == 2) {
+        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         if (data.turn >= turn) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1
           });
-        }else{
+        } else {
+          if (typeof data.next != "undefined") {
+            data.next = getVerifyNextData(data.next);
+            console.log(data.next);
+            paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
+            paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
+            paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
+            paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "", "white");
+            state[data.next.red.A.y][data.next.red.A.x].color = colors.red;
+            state[data.next.red.B.y][data.next.red.B.x].color = colors.red;
+            state[data.next.blue.A.y][data.next.blue.A.x].color = colors.blue;
+            state[data.next.blue.B.y][data.next.blue.B.x].color = colors.blue;
+            players = data.next;
+            paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
+            paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
+            paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
+            paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
+            move_players = objectCopy(org_move_players);
+          }
           $('#progress-timer').timer(3, 'Declare Phase', 2);
         }
       } else if (data.step == 3) {
@@ -344,6 +364,14 @@ window.onload = function() {
       x: chx,
       y: chy,
     }
+  }
+
+  function getVerifyNextData(next){
+    if(next.red.A.x==-1)next.red.A = players.red.A;
+    if(next.red.B.x==-1)next.red.B = players.red.B;
+    if(next.blue.A.x==-1)next.blue.A = players.blue.A;
+    if(next.blue.B.x==-1)next.blue.B = players.blue.B;
+    return next;
   }
 
   function scrollX() {
@@ -447,7 +475,7 @@ window.onload = function() {
               //next step
               gift.step += 1;
             } else if (step == 2) {
-              //nothing
+              gift.playerdata = move_players;
             } else if (step == 3) {
               return;
             }
@@ -458,7 +486,7 @@ window.onload = function() {
               countdown(timeLeft - 1);
             }), 1000);
           }
-        }else{
+        } else {
           $header.children('span').text(timeLeft);
 
           var width = (timeLeft) * (100 / totalTime); // unit in '%'

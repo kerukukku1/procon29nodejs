@@ -19,12 +19,13 @@ block animecontent
         path#svg_11.uYfoqRSv_8(stroke='#000', d='m247.000002,89.45061l20.608161,-20.850616l21.89173,22.149104l21.89173,-22.149104l20.608355,20.850616l-21.891735,22.149286l21.891735,22.149286l-20.608355,20.850812l-21.89173,-22.149291l-21.89173,22.149291l-20.608161,-20.850812l21.89155,-22.149286l-21.89155,-22.149286z', stroke-opacity='null', stroke-width='1.5', fill='#999999')
       style(data-made-with='vivus-instant').
         .uYfoqRSv_0{stroke-dasharray:1568 1570;stroke-dashoffset:1569;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_1{stroke-dasharray:400 402;stroke-dashoffset:401;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_2{stroke-dasharray:1670 1672;stroke-dashoffset:1671;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_3{stroke-dasharray:1000 1002;stroke-dashoffset:1001;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_4{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_5{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_6{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_7{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_8{stroke-dasharray:367 369;stroke-dashoffset:368;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}@keyframes uYfoqRSv_draw{100%{stroke-dashoffset:0;}}@keyframes uYfoqRSv_fade{0%{stroke-opacity:1;}94.44444444444444%{stroke-opacity:1;}100%{stroke-opacity:0;}}
-  div(class="svgbox")#playername
 block content
   include includes/confirm_modal.jade
   //- center: p Welcome to #{title}
   .wrapper
     h1= title
+    div(class="svgbox")#playername
+    div(class="flexbox")#turnlabel
     center: canvas(id="myCanvas", height="800", width="800")
     script(src="http://localhost:8888/socket.io/socket.io.js")
     script(type='text/javascript').
