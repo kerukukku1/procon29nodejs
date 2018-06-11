@@ -28,6 +28,8 @@ server.listen(8888); //8888番ポートで起動
 var join_user_store = {};
 var player_user_store = {};
 var confirm_room_store = {};
+var handshake_room_store = {};
+var playing_user_store = {};
 //接続確立時の処理
 io.sockets.on('connection', function(socket) {
   //退出処理
@@ -105,11 +107,6 @@ io.sockets.on('connection', function(socket) {
     console.log(result);
   });
 
-  //ゲーム開始
-  socket.on("gamestart", function(data) {
-    timeKeeper(data.turn, data.span, data.turn);
-  });
-
   socket.on("confirm", function(data) {
     confirm_room_store[data.roomId] += 1;
     if (confirm_room_store[data.roomId] == 2) {
@@ -120,6 +117,9 @@ io.sockets.on('connection', function(socket) {
       for (let i = 0; i < result.length; i++) {
         ret[result[i]] = player_user_store[result[i]];
       }
+      //initialize
+      handshake_room_store[socket.data.roomId] = 0;
+      playing_user_store[socket.data.roomId] = ret;
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
@@ -136,6 +136,19 @@ io.sockets.on('connection', function(socket) {
         err: err
       });
     });
+  });
+
+  socket.on("handshake", function(data) {
+    console.log(data.status + " and step : " + data.step);
+    handshake_room_store[socket.data.roomId] += 1;
+    if (handshake_room_store[socket.data.roomId] == 2) {
+      //prepare next handshake
+      handshake_room_store[socket.data.roomId] = 0;
+      io.sockets.in(socket.data.roomId).emit("client_handshake", {
+        users: playing_user_store[socket.data.roomId],
+        step: data.step
+      });
+    }
   });
 });
 

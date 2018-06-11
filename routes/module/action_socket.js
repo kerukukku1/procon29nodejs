@@ -50,7 +50,6 @@ window.onload = function() {
   initCanvas();
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
-    setQuality(3);
     socket.emit('readfile', dir);
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
@@ -60,11 +59,11 @@ window.onload = function() {
       h = parseInt(arr[2]);
       _w = w * square_size + 1.5;
       _h = h * square_size + 1;
-      canvas.height = 2*_h;
-      canvas.width = 2*_w;
+      canvas.height = 2 * _h;
+      canvas.width = 2 * _w;
       canvas.style.height = _h + 'px';
       canvas.style.width = _w + 'px';
-      ctx.scale(2,2);
+      ctx.scale(2, 2);
       ctx.strokeStyle = "#757575"
       ctx.lineWidth = 0.5;
       ctx.translate(0.5, 0.5);
@@ -223,6 +222,7 @@ window.onload = function() {
       return false;
     })(d) && socket.emit('MapDataSync', d);
   }, false);
+
   socket.on('connect', function() {
     socket.emit("join_to_room", {
       roomId: path,
@@ -269,6 +269,7 @@ window.onload = function() {
       };
       paintCell(nowx, nowy, dummy, "*", "white");
     });
+
     socket.on('Someone_Entried', function(data) {
       if (data.team == "red") {
         if (user_status.team == "") jred.disabled = true;
@@ -278,6 +279,7 @@ window.onload = function() {
         jblue.textContent = "Team Blue : " + data.userName;
       }
     });
+
     socket.on('Someone_Canceled', function(data) {
       if (data.team == "red") {
         if (user_status.team == "") jred.disabled = false;
@@ -287,10 +289,18 @@ window.onload = function() {
         jblue.textContent = "Join Blue";
       }
     });
+
     socket.on('modal_show', function(data) {
       if (user_status.team == "") return;
       $('#ConfirmModal').modal('show');
     });
+
+    socket.on('client_handshake', function(data) {
+      console.log("Server is returned handshake");
+      $('#progress-timer').timer(30, 'Strategy Phase');
+      console.log("End");
+    });
+
     socket.on('client_gamestart', function(data) {
       console.log(data);
       $("#WaitingModal").modal('hide');
@@ -352,11 +362,90 @@ window.onload = function() {
   function equalsObject(obj1, obj2) {
     return JSON.stringify(obj1) == JSON.stringify(obj2);
   }
-  function setQuality(value){
-    console.log("Quality : " + value);
-    ctx.scale(value, value);
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-  }
+
+  function battleStart(data) {
+    //initialize Bar
+    document.getElementById('playername').innerHTML =
+      '<strong><font color="#03A9F4", size = "20">' + data.blue + '</font> vs. <font color = "#FF4081", size = "20">' + data.red + "</font></strong>";
+    jQuery(function($) {
+      // $("#progressBar").css({
+      //   'width': '0%',
+      //   'transition-duration': '0s',
+      //   '-webkit-transition-duration': '0s',
+      //   '-moz-transition-duration': '0s',
+      //   '-o-transition-duration': '0s'
+      // });
+      $("#start_anime").show();
+      $("#playername").show();
+      new Vivus('start_anime').play();
+      //- $(".anime").empty();
+      //- $('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif", id = "start"></img>').appendTo(".anime").hide().fadeIn(3000);
+      $(".wrapper").hide()
+      setTimeout(function() {
+        //- $(".wrapper").css("display", "block");
+        $(".wrapper").show();
+        //- $(".wrapper").css("display", "block");
+        //- $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
+        $("#start_anime").hide();
+        socket.emit("handshake", {
+          status: user_status,
+          step: 1
+        });
+      }, 4000);
+    });
+  };
+  /*
+    Author : @ksugimori
+    https://codepen.io/ksugimori/pen/ORvgVq
+  */
+  ;(function($) {
+    $.fn.timer = function(totalTime, phase) {
+      // reset timer
+      clearTimeout(this.data('id_of_settimeout'));
+      this.empty();
+
+      // initialize elements
+      this.append('<h4><strong>'+phase+' : </strong><span></span> seconds left.</h4>');
+      this.append('<div class="progress"></div>');
+      this.children('.progress').append('<div class="progress-bar bg-info"></div>');
+      this.find('.progress-bar').css({
+        cssText: '-webkit-transition: none !important; transition: none !important;',
+        width: '100%'
+      });
+
+      var countdown = (function(timeLeft) {
+        var $header = this.children('h4');
+        if (timeLeft <= 0) {
+          $header.empty().text(phase + ' is Over the time limit!').addClass('text-danger');
+          this.find('div.progress-bar').css({
+            width:'0%'
+          });
+          return;
+        }
+
+        $header.children('span').text(timeLeft);
+
+        var width = (timeLeft) * (100/totalTime); // unit in '%'
+        if (width < 20) { // less than 20 %
+          this.find('div.progress-bar').removeClass('bg-info').addClass('bg-danger');
+        } else if (width < 50) { // less than 50 % (and more than 20 %)
+          this.find('div.progress-bar').removeClass('bg-info').addClass('bg-warning');
+        }
+        //- $progressBar.animate({
+        //-   width:  width + '%'
+        //- }, 1000, 'linear');
+        this.find('div.progress-bar').css({
+          width:width+'%'
+        });
+
+        var id = setTimeout((function() {
+          countdown(timeLeft - 1);
+        }), 1000);
+        this.data("id_of_settimeout", id);
+      }).bind(this);
+
+      countdown(totalTime);
+    };
+  })(jQuery);
 };
 // console.log(dir);

@@ -20,30 +20,9 @@ block animecontent
       style(data-made-with='vivus-instant').
         .uYfoqRSv_0{stroke-dasharray:1568 1570;stroke-dashoffset:1569;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_1{stroke-dasharray:400 402;stroke-dashoffset:401;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_2{stroke-dasharray:1670 1672;stroke-dashoffset:1671;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_3{stroke-dasharray:1000 1002;stroke-dashoffset:1001;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_4{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_5{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_6{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_7{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_8{stroke-dasharray:367 369;stroke-dashoffset:368;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}@keyframes uYfoqRSv_draw{100%{stroke-dashoffset:0;}}@keyframes uYfoqRSv_fade{0%{stroke-opacity:1;}94.44444444444444%{stroke-opacity:1;}100%{stroke-opacity:0;}}
   div(class="svgbox")#playername
-
 block content
   include includes/confirm_modal.jade
   //- center: p Welcome to #{title}
-  script.
-    function battleStart(data){
-      document.getElementById('playername').innerHTML = 
-      '<strong><font color="#03A9F4", size = "20">'+data.blue + '</font> vs. <font color = "#FF4081", size = "20">' + data.red + "</font></strong>";
-      jQuery(function($){
-        $("#start_anime").show();
-        $("#playername").show();
-        new Vivus('start_anime').play();
-        //- $(".anime").empty();
-        //- $('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif", id = "start"></img>').appendTo(".anime").hide().fadeIn(3000);
-        $(".wrapper").hide()
-        setTimeout(function(){
-          //- $(".wrapper").css("display", "block");
-          $(".wrapper").show();
-          //- $(".wrapper").css("display", "block");
-          //- $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
-          $("#start_anime").hide();
-        },4000);
-      });
-    };
   .wrapper
     h1= title
     center: canvas(id="myCanvas", height="800", width="800")
@@ -54,6 +33,7 @@ block content
       var userid = '#{usersession.userid}'
       var username = '#{usersession.username}'
     script(src="/module/action_socket.js")
+    div#progress-timer
     div(class="box1")
       button.btn.btn-primary.btn-lg.btn-block(type='button')#joinBlue: strong Join Blue
     div(class="box2")
