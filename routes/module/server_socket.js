@@ -154,6 +154,7 @@ io.sockets.on('connection', function(socket) {
     if(typeof tmp_moveplayer_store[socket.data.roomId] == "undefined"){
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     }else{
+      console.log(tmp_moveplayer_store[socket.data.roomId]);
       if(data.status.team == "red"){
         tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
       }else if(data.status.team == "blue"){
