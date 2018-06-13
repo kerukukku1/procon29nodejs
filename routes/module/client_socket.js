@@ -440,6 +440,8 @@ window.onload = function() {
         });
       }, 4000);
     });
+    $("#joinRed").prop('disabled', true);
+    $("#joinBlue").prop('disabled', true);
   };
   /*
     Author : @ksugimori

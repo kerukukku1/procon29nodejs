@@ -15,6 +15,10 @@ const Cat = mongoose.model('Cat', {
 });
 mongoose.connect('mongodb://localhost/test');
 
+process.on('uncaughtException', function(err) {
+    console.log(err);
+});
+
 //サーバインスタンス作成
 var server = http.createServer(function(req, res) {
   res.writeHead(200, {
@@ -111,13 +115,19 @@ io.sockets.on('connection', function(socket) {
     // console.log(socket.data.roomId);
     // console.log(join_user_store);
     // console.log(playing_user_store[socket.data.roomId]);
-    const result = Object.keys(player_user_store).filter((key) => {
+    const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
     });
-    for (let i = 0; i < result.length; i++) {
-      socket.emit("Someone_Entried", player_user_store[result[i]]);
+    for (let i = 0; i < result1.length; i++) {
+      socket.emit("Someone_Entried", player_user_store[result1[i]]);
     }
-    console.log(result);
+    const result2 = Object.keys(playing_user_store[socket.data.roomId]).filter((key) => {
+      return playing_user_store[socket.data.roomId][key].userId === socket.data.userId
+    });
+    for (let i = 0; i < result2.length; i++) {
+      player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
+      socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
+    }
   });
   socket.on("confirm", function(data) {
     confirm_room_store[data.roomId] += 1;
@@ -156,15 +166,29 @@ io.sockets.on('connection', function(socket) {
     if(typeof tmp_moveplayer_store[socket.data.roomId] == "undefined"){
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     }else{
-      console.log(tmp_moveplayer_store[socket.data.roomId]);
-      console.log("playerdata : ", data.playerdata);
-      if(data.status.team == "red" && !data.playerdata.red){
-        tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
-      }else if(data.status.team == "blue" && !data.playerdata.blue){
-        tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
+      try{
+        console.log(tmp_moveplayer_store[socket.data.roomId]);
+        console.log("playerdata : ", data.playerdata);
+        if(data.playerdata){
+          if(data.status.team == "red" && !data.playerdata.red){
+            tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
+          }else if(data.status.team == "blue" && !data.playerdata.blue){
+            tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
+          }
+        }
+      }catch (err){
+        console.log(err.name + ': ' + err.message);
+        return;
       }
     }
-    if (handshake_room_store[socket.data.roomId] == 2) {
+    const result = Object.keys(player_user_store).filter((key) => {
+      return player_user_store[key].roomId === socket.data.roomId
+    });
+    var threshold = 0;
+    for(var i = 0; i < result.length; i++){
+      if(join_user_store[result[i]].roomId == socket.data.roomId)threshold++;
+    }
+    if (threshold > 0 && handshake_room_store[socket.data.roomId] == threshold) {
       //prepare next handshake
       handshake_room_store[socket.data.roomId] = 0;
       var gift = {
