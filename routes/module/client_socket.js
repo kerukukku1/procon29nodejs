@@ -35,7 +35,8 @@ window.onload = function() {
   var turn;
   var now_turn = 0;
   var state = [];
-  let path = location.pathname;
+  var path = location.pathname;
+  var enableClick = false;
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
@@ -205,6 +206,7 @@ window.onload = function() {
 
   canvas.addEventListener("mousedown", function(event) {
     if (user_status.team == "") return;
+    if (!enableClick) return;
     d = getData(event);
     (function(data) {
       var me = (user_status.team == "red") ? players.red : players.blue;
@@ -366,11 +368,11 @@ window.onload = function() {
     }
   }
 
-  function getVerifyNextData(next){
-    if(next.red.A.x==-1)next.red.A = players.red.A;
-    if(next.red.B.x==-1)next.red.B = players.red.B;
-    if(next.blue.A.x==-1)next.blue.A = players.blue.A;
-    if(next.blue.B.x==-1)next.blue.B = players.blue.B;
+  function getVerifyNextData(next) {
+    if (next.red.A.x == -1) next.red.A = players.red.A;
+    if (next.red.B.x == -1) next.red.B = players.red.B;
+    if (next.blue.A.x == -1) next.blue.A = players.blue.A;
+    if (next.blue.B.x == -1) next.blue.B = players.blue.B;
     return next;
   }
 
@@ -449,7 +451,7 @@ window.onload = function() {
       // reset timer
       clearTimeout(this.data('id_of_settimeout'));
       this.empty();
-
+      if(step == 2)enableClick = true;
       // initialize elements
       this.append('<h4><strong>' + phase + ' : </strong><span></span> seconds left.</h4>');
       this.append('<div class="progress"></div>');
@@ -466,6 +468,7 @@ window.onload = function() {
           this.find('div.progress-bar').css({
             width: '0%'
           });
+          enableClick = false;
           if (timeLeft <= -5) {
             var gift = {
               status: user_status,
