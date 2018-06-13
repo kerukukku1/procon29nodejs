@@ -58,18 +58,20 @@ io.sockets.on('connection', function(socket) {
   //盤面情報の同期
   socket.on("MapDataSync", function(data) {
     // timeKeeper(3);
-    io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
-      status: data,
-      player: player_user_store[data.userId]
-    });
-    const kitty = new Cat({
-      mapdata: data.maps,
-      roomId: data.roomId
-    });
-    kitty.save(function(err) {
-      console.log('meow')
-      if (err) throw err;
-    });
+    if(join_user_store[data.userId]){
+      io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
+        status: data,
+        player: player_user_store[data.userId]
+      });
+      const kitty = new Cat({
+        mapdata: data.maps,
+        roomId: data.roomId
+      });
+      kitty.save(function(err) {
+        console.log('meow')
+        if (err) throw err;
+      });
+    }
   });
 
   //バトルにエントリー
@@ -155,9 +157,10 @@ io.sockets.on('connection', function(socket) {
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     }else{
       console.log(tmp_moveplayer_store[socket.data.roomId]);
-      if(data.status.team == "red"){
+      console.log("playerdata : ", data.playerdata);
+      if(data.status.team == "red" && !data.playerdata.red){
         tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
-      }else if(data.status.team == "blue"){
+      }else if(data.status.team == "blue" && !data.playerdata.blue){
         tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
       }
     }

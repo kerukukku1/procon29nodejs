@@ -14,7 +14,7 @@ var loginRouter = require('./routes/login');
 var logoutRouter = require('./routes/logout');
 
 var app = express();
-var socket = require('./routes/module/module_socket.js');
+var socket = require('./routes/module/server_socket.js');
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');

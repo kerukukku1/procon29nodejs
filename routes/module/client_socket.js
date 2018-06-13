@@ -473,6 +473,7 @@ window.onload = function() {
             };
             if (step == 1) {
               //next step
+              gift.playerdata = move_players;
               gift.step += 1;
             } else if (step == 2) {
               gift.playerdata = move_players;
