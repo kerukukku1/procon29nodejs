@@ -279,9 +279,11 @@ window.onload = function() {
       if (data.team == "red") {
         if (user_status.team == "") jred.disabled = true;
         jred.textContent = "Team Red : " + data.userName;
+        if(data.userId == user_status.userId)user_status.team = "red";
       } else {
         if (user_status.team == "") jblue.disabled = true;
         jblue.textContent = "Team Blue : " + data.userName;
+        if(data.userId == user_status.userId)user_status.team = "blue";
       }
     });
 
@@ -301,7 +303,7 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      if (user_status == "") return;
+      //プレーヤーでない場合にはハンドシェイクを行わない
       console.log(data);
       console.log(turn);
       if (data.step == 1) {
@@ -472,20 +474,20 @@ window.onload = function() {
           });
           enableClick = false;
           if (timeLeft <= -5) {
-            var gift = {
+            var sender = {
               status: user_status,
               step: step
             };
             if (step == 1) {
               //next step
-              gift.playerdata = move_players;
-              gift.step += 1;
+              sender.playerdata = move_players;
+              sender.step += 1;
             } else if (step == 2) {
-              gift.playerdata = move_players;
+              sender.playerdata = move_players;
             } else if (step == 3) {
               return;
             }
-            socket.emit("handshake", gift);
+            socket.emit("handshake", sender);
             return;
           } else {
             var id = setTimeout((function() {

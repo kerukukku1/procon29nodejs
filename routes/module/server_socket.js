@@ -57,7 +57,7 @@ io.sockets.on('connection', function(socket) {
     }
 
     delete join_user_store[socket.data.userId];
-    console.log(join_user_store);
+    // console.log(join_user_store);
 
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
@@ -69,9 +69,7 @@ io.sockets.on('connection', function(socket) {
       }
     }
     //二人とも退出している場合ゲーム情報をリセット
-    console.log("CNT : ", cnt);
     if (cnt == 2) delete playing_user_store[socket.data.roomId];
-    console.log("This room playing : ", playing_user_store[socket.data.roomId]);
   });
 
   //盤面情報の同期
@@ -136,12 +134,15 @@ io.sockets.on('connection', function(socket) {
     for (let i = 0; i < result1.length; i++) {
       socket.emit("Someone_Entried", player_user_store[result1[i]]);
     }
-    const result2 = Object.keys(playing_user_store[socket.data.roomId]).filter((key) => {
-      return playing_user_store[socket.data.roomId][key].userId === socket.data.userId
-    });
-    for (let i = 0; i < result2.length; i++) {
-      player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
-      socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
+    if(playing_user_store[socket.data.roomId]){
+      const result2 = Object.keys(playing_user_store[socket.data.roomId]).filter((key) => {
+        return playing_user_store[socket.data.roomId][key].userId === socket.data.userId
+      });
+      for (let i = 0; i < result2.length; i++) {
+        player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
+        socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
+        handshake_room_store[socket.data.roomId]++;
+      }
     }
   });
   socket.on("confirm", function(data) {
@@ -164,10 +165,10 @@ io.sockets.on('connection', function(socket) {
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
     var dir = process.cwd() + '/questdata/' + data;
-    console.log(process.cwd() + '/questdata/' + data);
+    // console.log(process.cwd() + '/questdata/' + data);
     fs.readFile(dir, 'utf8', function(err, text) {
-      console.log(text);
-      console.log(err);
+      // console.log(text);
+      // console.log(err);
       socket.emit("filedata", {
         text: text,
         err: err
@@ -176,8 +177,11 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("handshake", function(data) {
-    console.log(data.status.userName + " and step : " + data.step);
+    if (data.status.team == "") return;
+    // console.log(data.status.userName + " and step : " + data.step);
+    //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
+    //step2(設置フェーズ)においてのプレイヤーの情報
     if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     } else {
@@ -196,6 +200,7 @@ io.sockets.on('connection', function(socket) {
         return;
       }
     }
+
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
     });
@@ -206,33 +211,21 @@ io.sockets.on('connection', function(socket) {
     if (threshold > 0 && handshake_room_store[socket.data.roomId] == threshold) {
       //prepare next handshake
       handshake_room_store[socket.data.roomId] = 0;
-      var gift = {
+      var sender = {
         users: playing_user_store[socket.data.roomId],
         step: data.step
       };
       if (data.step == 1) {
         //prepare next turn count
         turn_manage_store[socket.data.roomId] = 0;
-        io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
+        io.sockets.in(socket.data.roomId).emit("client_handshake", sender);
       } else if (data.step == 2) {
         turn_manage_store[socket.data.roomId]++;
-        // console.log(turn_manage_store[socket.data.roomId]);
-        gift.turn = turn_manage_store[socket.data.roomId];
-        gift.next = tmp_moveplayer_store[socket.data.roomId];
-        //盤面情報の保持
-        // const kitty = new Cat({
-        //   movedata: data.maps,
-        //   roomId: data.roomId
-        // });
-        // kitty.save(function(err) {
-        //   console.log('meow')
-        //   if (err) throw err;
-        // });
-        // io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
-
+        sender.turn = turn_manage_store[socket.data.roomId];
+        sender.next = tmp_moveplayer_store[socket.data.roomId];
         //次ターンのための削除
         console.log(tmp_moveplayer_store[socket.data.roomId]);
-        io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
+        io.sockets.in(socket.data.roomId).emit("client_handshake", sender);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
         //nothing
