@@ -16,7 +16,7 @@ const Cat = mongoose.model('Cat', {
 mongoose.connect('mongodb://localhost/test');
 
 process.on('uncaughtException', function(err) {
-    console.log(err);
+  console.log(err);
 });
 
 //サーバインスタンス作成
@@ -47,7 +47,7 @@ var turn_manage_store = {};
 io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
-    if(!socket.data)return;
+    if (!socket.data) return;
     if (player_user_store[socket.data.userId]) {
       socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", player_user_store[socket.data.userId]);
       delete player_user_store[socket.data.userId];
@@ -55,14 +55,29 @@ io.sockets.on('connection', function(socket) {
     if (join_user_store[socket.data.userId]) {
       socket.leave(socket.data.roomId);
     }
+
     delete join_user_store[socket.data.userId];
     console.log(join_user_store);
+
+    //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
+    var cnt = 0;
+    for (var key in playing_user_store[socket.data.roomId]) {
+      console.log(key)
+      if (!join_user_store[key] ||
+        (join_user_store[key].roomId != socket.data.roomId)) {
+        cnt++;
+      }
+    }
+    //二人とも退出している場合ゲーム情報をリセット
+    console.log("CNT : ", cnt);
+    if (cnt == 2) delete playing_user_store[socket.data.roomId];
+    console.log("This room playing : ", playing_user_store[socket.data.roomId]);
   });
 
   //盤面情報の同期
   socket.on("MapDataSync", function(data) {
     // timeKeeper(3);
-    if(join_user_store[data.userId]){
+    if (join_user_store[data.userId]) {
       io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
         status: data,
         player: player_user_store[data.userId]
@@ -163,20 +178,20 @@ io.sockets.on('connection', function(socket) {
   socket.on("handshake", function(data) {
     console.log(data.status.userName + " and step : " + data.step);
     handshake_room_store[socket.data.roomId] += 1;
-    if(typeof tmp_moveplayer_store[socket.data.roomId] == "undefined"){
+    if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
-    }else{
-      try{
+    } else {
+      try {
         console.log(tmp_moveplayer_store[socket.data.roomId]);
         console.log("playerdata : ", data.playerdata);
-        if(data.playerdata){
-          if(data.status.team == "red" && !data.playerdata.red){
+        if (data.playerdata) {
+          if (data.status.team == "red" && !data.playerdata.red) {
             tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
-          }else if(data.status.team == "blue" && !data.playerdata.blue){
+          } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
         }
-      }catch (err){
+      } catch (err) {
         console.log(err.name + ': ' + err.message);
         return;
       }
@@ -185,8 +200,8 @@ io.sockets.on('connection', function(socket) {
       return player_user_store[key].roomId === socket.data.roomId
     });
     var threshold = 0;
-    for(var i = 0; i < result.length; i++){
-      if(join_user_store[result[i]].roomId == socket.data.roomId)threshold++;
+    for (var i = 0; i < result.length; i++) {
+      if (join_user_store[result[i]].roomId == socket.data.roomId) threshold++;
     }
     if (threshold > 0 && handshake_room_store[socket.data.roomId] == threshold) {
       //prepare next handshake
@@ -195,11 +210,11 @@ io.sockets.on('connection', function(socket) {
         users: playing_user_store[socket.data.roomId],
         step: data.step
       };
-      if(data.step == 1){
+      if (data.step == 1) {
         //prepare next turn count
         turn_manage_store[socket.data.roomId] = 0;
         io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
-      }else if(data.step == 2){
+      } else if (data.step == 2) {
         turn_manage_store[socket.data.roomId]++;
         // console.log(turn_manage_store[socket.data.roomId]);
         gift.turn = turn_manage_store[socket.data.roomId];
@@ -219,7 +234,7 @@ io.sockets.on('connection', function(socket) {
         console.log(tmp_moveplayer_store[socket.data.roomId]);
         io.sockets.in(socket.data.roomId).emit("client_handshake", gift);
         delete tmp_moveplayer_store[socket.data.roomId]
-      }else if(data.step == 3){
+      } else if (data.step == 3) {
         //nothing
       }
     }
