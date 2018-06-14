@@ -318,8 +318,8 @@ window.onload = function() {
           });
         } else {
           if (typeof data.next != "undefined") {
-            data.next = getVerifyNextData(data.next);
             console.log(data.next);
+            data.next = getVerifyNextData(data.next);
             paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
             paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
             paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
