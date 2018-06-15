@@ -223,9 +223,11 @@ io.sockets.on('connection', function(socket) {
         turn: -1,
         next: tmp_moveplayer_store[socket.data.roomId]
       };
+    }else{
+      //逐次更新
+      quest_manage_store[socket.data.roomId].step = data.step;
+      quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
-    //ステップを逐次更新
-    quest_manage_store[socket.data.roomId].step = data.step;
 
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId

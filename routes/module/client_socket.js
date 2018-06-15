@@ -306,6 +306,7 @@ window.onload = function() {
       //プレーヤーでない場合にはハンドシェイクを行わない
       console.log(data);
       console.log(turn);
+      console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(10, 'Strategy Phase', 1);
         console.log("phase1 end");
