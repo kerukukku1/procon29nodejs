@@ -56,93 +56,6 @@ window.onload = function() {
     userName: username,
     team: ""
   };
-  initCanvas();
-  //サーバにファイル要求を出してファイルを取得
-  function initCanvas() {
-    socket.emit('readfile', dir);
-    socket.on('filedata', function(data) {
-      var arr = data.text.split('\n');
-      // console.log(arr);
-      turn = parseInt(arr[0]);
-      w = parseInt(arr[1]);
-      h = parseInt(arr[2]);
-      _w = w * square_size + 1.5;
-      _h = h * square_size + 1;
-      canvas.height = 2 * _h;
-      canvas.width = 2 * _w;
-      canvas.style.height = _h + 'px';
-      canvas.style.width = _w + 'px';
-      ctx.scale(2, 2);
-      ctx.strokeStyle = "#757575"
-      ctx.lineWidth = 0.5;
-      ctx.translate(0.5, 0.5);
-      ctx.textAlign = "center";
-      var i;
-      for (i = 0; i < h; i++) {
-        var row = arr[3 + i];
-        var elems = row.split(' ');
-        var _elems = [];
-        for (var j = 0; j < w; j++) {
-          var score = elems[j];
-          _elems[j] = {
-            score: parseInt(elems[j]),
-            color: "white"
-          };
-          paintCell(j, i, _elems[j], "", "black");
-        }
-        state.push(_elems);
-      }
-      //bias
-      i += 3;
-      var npos;
-      npos = arr[i].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.red;
-      players.red.A = {
-        x: npos[0],
-        y: npos[1]
-      };
-      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
-      npos = arr[i + 1].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.red;
-      players.red.B = {
-        x: npos[0],
-        y: npos[1]
-      };
-      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
-      npos = arr[i + 2].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.blue;
-      players.blue.A = {
-        x: npos[0],
-        y: npos[1]
-      };
-      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
-      npos = arr[i + 3].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.blue;
-      players.blue.B = {
-        x: npos[0],
-        y: npos[1]
-      };
-      paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
-    });
-  }
-
-  function paintCell(nowx, nowy, cell, player, textcolor) {
-    //verify
-    if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
-    //canvasの一部分削除
-    ctx.clearRect(nowx*square_size, nowy*square_size, square_size, square_size);
-    posx = nowx * square_size;
-    posy = nowy * square_size;
-    ctx.fillStyle = cell.color;
-    ctx.font = "20px bold";
-    ctx.fillRect(posx, posy, square_size, square_size);
-    ctx.rect(posx, posy, square_size, square_size);
-    ctx.stroke();
-    ctx.fillStyle = textcolor;
-    ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
-    ctx.font = "15px bold";
-    ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
-  }
 
   // document.getElementById("startbutton").onclick = function() {
   //   var d = {
@@ -241,6 +154,9 @@ window.onload = function() {
       userId: userid,
       userName: username
     });
+    socket.on("init_MapState", function(data) {
+      initCanvas(data);
+    });
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var coord = {
@@ -285,13 +201,13 @@ window.onload = function() {
         console.log("STROKE LINE");
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.moveTo(nowx*square_size, nowy*square_size);
-        ctx.lineTo((nowx+1)*square_size, (nowy+1)*square_size);
+        ctx.moveTo(nowx * square_size, nowy * square_size);
+        ctx.lineTo((nowx + 1) * square_size, (nowy + 1) * square_size);
         ctx.closePath();
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo((nowx+1)*square_size, nowy*square_size);
-        ctx.lineTo(nowx*square_size, (nowy+1)*square_size);
+        ctx.moveTo((nowx + 1) * square_size, nowy * square_size);
+        ctx.lineTo(nowx * square_size, (nowy + 1) * square_size);
         ctx.closePath();
         ctx.stroke();
       }
@@ -518,17 +434,19 @@ window.onload = function() {
           if (timeLeft <= -5) {
             var sender = {
               status: user_status,
-              step: step
+              step: step,
+              maps: state
             };
             if (step == 1) {
               //next step
-              sender.playerdata = move_players;
+              sender.playerdata = getVerifyNextData(move_players);
               sender.step += 1;
             } else if (step == 2) {
-              sender.playerdata = move_players;
+              sender.playerdata = getVerifyNextData(move_players);
             } else if (step == 3) {
               return;
             }
+            console.log("playerdata : " , sender.playerdata);
             socket.emit("handshake", sender);
             return;
           } else {
@@ -562,5 +480,104 @@ window.onload = function() {
       countdown(totalTime);
     };
   })(jQuery);
+
+  //サーバにファイル要求を出してファイルを取得
+  function initCanvas(_data) {
+    socket.emit('readfile', dir);
+    socket.on('filedata', function(data) {
+      var arr = data.text.split('\n');
+      // console.log(arr);
+      turn = parseInt(arr[0]);
+      w = parseInt(arr[1]);
+      h = parseInt(arr[2]);
+      _w = w * square_size + 1.5;
+      _h = h * square_size + 1;
+      canvas.height = 2 * _h;
+      canvas.width = 2 * _w;
+      canvas.style.height = _h + 'px';
+      canvas.style.width = _w + 'px';
+      ctx.scale(2, 2);
+      ctx.strokeStyle = "#757575"
+      ctx.lineWidth = 0.5;
+      ctx.translate(0.5, 0.5);
+      ctx.textAlign = "center";
+      console.log(_data);
+      if(_data){
+        state = $.extend({}, _data.maps);
+        players = $.extend({}, _data.currentPlayerPosition);
+        for (var i = 0; i < h; i++) {
+          for (var j = 0; j < w; j++) {
+            paintCell(j, i, state[i][j], "", state[i][j].color=="white"?"black":"white");
+          }
+        }
+      }else{
+        for (var i = 0; i < h; i++) {
+          var row = arr[3 + i];
+          var elems = row.split(' ');
+          var _elems = [];
+          for (var j = 0; j < w; j++) {
+            var score = elems[j];
+            _elems[j] = {
+              score: parseInt(elems[j]),
+              color: "white"
+            };
+            paintCell(j, i, _elems[j], "", "black");
+          }
+          state.push(_elems);
+        }
+        //bias
+        i += 3;
+        var npos;
+        npos = arr[i].split(' ').map(e => parseInt(e));
+        state[npos[1]][npos[0]].color = colors.red;
+        players.red.A = {
+          x: npos[0],
+          y: npos[1]
+        };
+        npos = arr[i + 1].split(' ').map(e => parseInt(e));
+        state[npos[1]][npos[0]].color = colors.red;
+        players.red.B = {
+          x: npos[0],
+          y: npos[1]
+        };
+        npos = arr[i + 2].split(' ').map(e => parseInt(e));
+        state[npos[1]][npos[0]].color = colors.blue;
+        players.blue.A = {
+          x: npos[0],
+          y: npos[1]
+        };
+        npos = arr[i + 3].split(' ').map(e => parseInt(e));
+        state[npos[1]][npos[0]].color = colors.blue;
+        players.blue.B = {
+          x: npos[0],
+          y: npos[1]
+        };
+      }
+      //全プレーヤーの位置を描画
+      paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
+      paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
+      paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
+      paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
+    });
+  }
+
+  function paintCell(nowx, nowy, cell, player, textcolor) {
+    //verify
+    if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
+    //canvasの一部分削除
+    ctx.clearRect(nowx * square_size, nowy * square_size, square_size, square_size);
+    posx = nowx * square_size;
+    posy = nowy * square_size;
+    ctx.fillStyle = cell.color;
+    ctx.font = "20px bold";
+    ctx.fillRect(posx, posy, square_size, square_size);
+    ctx.rect(posx, posy, square_size, square_size);
+    ctx.stroke();
+    ctx.fillStyle = textcolor;
+    ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
+    ctx.font = "15px bold";
+    ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
+  }
+
 };
 // console.log(dir);

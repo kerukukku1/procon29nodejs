@@ -1,5 +1,6 @@
 var http = require('http');
 var fs = require('fs');
+var extend = require('extend');
 
 const mongoose = require('mongoose');
 const Cat = mongoose.model('Cat', {
@@ -75,6 +76,7 @@ io.sockets.on('connection', function(socket) {
     //二人とも退出している場合ゲーム情報をリセット
     if (cnt == 2) {
       delete playing_user_store[socket.data.roomId];
+      delete quest_manage_store[socket.data.roomId];
       if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
       delete timeout_store[socket.data.roomId]
     }
@@ -155,6 +157,7 @@ io.sockets.on('connection', function(socket) {
         handshake_room_store[socket.data.roomId]++;
       }
     }
+    socket.emit("init_MapState", quest_manage_store[socket.data.roomId]);
   });
   socket.on("confirm", function(data) {
     if(!socket.data)return;
@@ -221,7 +224,7 @@ io.sockets.on('connection', function(socket) {
         users: playing_user_store[socket.data.roomId],
         step: data.step,
         turn: -1,
-        next: tmp_moveplayer_store[socket.data.roomId]
+        next: tmp_moveplayer_store[socket.data.roomId],
       };
     }else{
       //逐次更新
@@ -245,9 +248,11 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
         quest_manage_store[socket.data.roomId].turn++;
-        //次ターンのための削除
-        console.log(tmp_moveplayer_store[socket.data.roomId]);
+        //extendを用いて複数階層の連想配列をコピー
+        quest_manage_store[socket.data.roomId].maps = data.maps;
+        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({},tmp_moveplayer_store[socket.data.roomId]);
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
+        //tmpは毎回削除
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
         //nothing
