@@ -40,8 +40,13 @@ window.onload = function() {
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
-    white: "#FFFFFF"
+    white: "#FFFFFF",
   };
+  var types = {
+    draw: 1,
+    clear: 2
+  }
+  var paintType = types.draw;
   var jblue = document.getElementById("joinBlue");
   var jred = document.getElementById("joinRed");
   var confirm = document.getElementById("confirmButton");
@@ -124,6 +129,8 @@ window.onload = function() {
   function paintCell(nowx, nowy, cell, player, textcolor) {
     //verify
     if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
+    //canvasの一部分削除
+    ctx.clearRect(nowx*square_size, nowy*square_size, square_size, square_size);
     posx = nowx * square_size;
     posy = nowy * square_size;
     ctx.fillStyle = cell.color;
@@ -242,6 +249,7 @@ window.onload = function() {
       };
       c = (data.player.team == "red") ? colors.red : colors.blue;
       var group = data.status.group;
+      //一回前の描画を消すための処理
       if (group == "A") {
         var tmp = (data.player.team == "red") ? move_players.red.A : move_players.blue.A;
         var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
@@ -273,17 +281,31 @@ window.onload = function() {
         color: c
       };
       paintCell(nowx, nowy, dummy, "*", "white");
+      if (data.status.paintType == types.clear) {
+        console.log("STROKE LINE");
+        ctx.strokeStyle = "black";
+        ctx.beginPath();
+        ctx.moveTo(nowx*square_size, nowy*square_size);
+        ctx.lineTo((nowx+1)*square_size, (nowy+1)*square_size);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo((nowx+1)*square_size, nowy*square_size);
+        ctx.lineTo(nowx*square_size, (nowy+1)*square_size);
+        ctx.closePath();
+        ctx.stroke();
+      }
     });
 
     socket.on('Someone_Entried', function(data) {
       if (data.team == "red") {
         if (user_status.team == "") jred.disabled = true;
         jred.textContent = "Team Red : " + data.userName;
-        if(data.userId == user_status.userId)user_status.team = "red";
+        if (data.userId == user_status.userId) user_status.team = "red";
       } else {
         if (user_status.team == "") jblue.disabled = true;
         jblue.textContent = "Team Blue : " + data.userName;
-        if(data.userId == user_status.userId)user_status.team = "blue";
+        if (data.userId == user_status.userId) user_status.team = "blue";
       }
     });
 
@@ -360,6 +382,24 @@ window.onload = function() {
     });
   });
 
+  window.document.onkeydown = function() {
+    if (event.key == "Shift") {
+      console.log(paintType);
+      paintType = types.clear;
+      //透過処理
+      ctx.globalAlpha = 0.5;
+    }
+  };
+
+  window.document.onkeyup = function() {
+    if (event.key == "Shift") {
+      console.log("up");
+      paintType = types.draw;
+      ctx.globalAlpha = 1.0;
+    }
+  };
+
+
   function whoSquare(data) {
     var x = parseInt(data.x, 10);
     var y = parseInt(data.y, 10);
@@ -401,7 +441,8 @@ window.onload = function() {
       roomId: path,
       userId: userid,
       userName: username,
-      maps: state
+      maps: state,
+      paintType: paintType
     };
   }
 
@@ -456,7 +497,7 @@ window.onload = function() {
       // reset timer
       clearTimeout(this.data('id_of_settimeout'));
       this.empty();
-      if(step == 2)enableClick = true;
+      if (step == 2) enableClick = true;
       // initialize elements
       this.append('<h4><strong>' + phase + ' : </strong><span></span> seconds left.</h4>');
       this.append('<div class="progress"></div>');
