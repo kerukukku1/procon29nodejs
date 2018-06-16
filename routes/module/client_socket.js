@@ -43,8 +43,8 @@ window.onload = function() {
     white: "#FFFFFF",
   };
   var types = {
-    draw: 1,
-    clear: 2
+    clear: 0,
+    draw: 1
   }
   var paintType = types.draw;
   var jblue = document.getElementById("joinBlue");
@@ -129,14 +129,20 @@ window.onload = function() {
     if (!enableClick) return;
     d = getData(event);
     console.log(state[d.y][d.x].color);
+    //自陣以外は入れない
     if(user_status.team == "red"){
       if(state[d.y][d.x].color == colors.blue)return;
     }else{
       if(state[d.y][d.x].color == colors.red)return;
     }
+    if(paintType == types.clear){
+      //白なら削除する必要なし
+      if(state[d.y][d.x].color == "white")return;
+    }
     (function(data) {
       var me = (user_status.team == "red") ? players.red : players.blue;
-      for (var i = 0; i < 9; i++) {
+      //paintType != clearなら+1されて9近傍を見る
+      for (var i = 0; i < 8+paintType; i++) {
         var np = {
           x: data.x + dx[i],
           y: data.y + dy[i]
@@ -246,8 +252,6 @@ window.onload = function() {
 
     socket.on('client_handshake', function(data) {
       //プレーヤーでない場合にはハンドシェイクを行わない
-      console.log(data);
-      console.log(turn);
       console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(10, 'Strategy Phase', 1);

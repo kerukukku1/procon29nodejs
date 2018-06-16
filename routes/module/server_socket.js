@@ -77,6 +77,7 @@ io.sockets.on('connection', function(socket) {
     if (cnt == 2) {
       delete playing_user_store[socket.data.roomId];
       delete quest_manage_store[socket.data.roomId];
+      delete tmp_moveplayer_store[socket.data.roomId]
       if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
       delete timeout_store[socket.data.roomId]
     }
@@ -199,6 +200,8 @@ io.sockets.on('connection', function(socket) {
   socket.on("handshake", function(data) {
     if(!socket.data)return;
     if (data.status.team == "") return;
+    console.log("Handsheke : ");
+    console.log(data.step);
     //正常にハンドシェイクが行われている場合巡回を停止
     if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
@@ -236,7 +239,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
-
+    console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
