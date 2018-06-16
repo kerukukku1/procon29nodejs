@@ -1,7 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var extend = require('extend');
-
+var moment = require('moment');
 const mongoose = require('mongoose');
 const Cat = mongoose.model('Cat', {
   mapdata: [
@@ -83,6 +83,10 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
+  socket.on("Migration", function(data){
+    io.sockets.in(socket.data.roomId).emit("Migration", data);
+  });
+
   //盤面情報の同期
   socket.on("MapDataSync", function(data) {
     // timeKeeper(3);
@@ -155,9 +159,11 @@ io.sockets.on('connection', function(socket) {
       });
       //自分が対戦中ユーザだった場合
       for (let i = 0; i < result2.length; i++) {
+        quest_manage_store[socket.data.roomId].nowTime = moment().unix();
         player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
         socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
         handshake_room_store[socket.data.roomId]++;
+        // socket.emit("client_handshake", quest_manage_store[socket.data.roomId]);
       }
     }
     //クライアントに盤面を渡す
@@ -251,6 +257,10 @@ io.sockets.on('connection', function(socket) {
     if (threshold > 0 && handshake_room_store[socket.data.roomId] == threshold) {
       //prepare next handshake
       handshake_room_store[socket.data.roomId] = 0;
+      //ハンドシェイクの開始時間をメモ
+      let now = moment().unix();
+      quest_manage_store[socket.data.roomId].startTime = now;
+      quest_manage_store[socket.data.roomId].nowTime = now;
       if (data.step == 1) {
         //prepare next turn count
         quest_manage_store[socket.data.roomId].turn = 0;
@@ -271,7 +281,7 @@ io.sockets.on('connection', function(socket) {
       console.log("Handshake is mistake!! reshake.");
       handshake_room_store[socket.data.roomId] = 0;
       io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
-    }).bind(null, data.step), (data.step == 1)?20000:10000);
+    }).bind(null, data.step), (data.step == 1)?15000:5000);
   });
 });
 

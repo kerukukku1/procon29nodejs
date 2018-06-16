@@ -251,10 +251,11 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      //プレーヤーでない場合にはハンドシェイクを行わない
       console.log("next : ", data.next);
+      let time_offset = data.startTime - data.nowTime;
+      console.log(time_offset);
       if (data.step == 1) {
-        $('#progress-timer').timer(10, 'Strategy Phase', 1);
+        $('#progress-timer').timer(10 - time_offset, 'Strategy Phase', 1);
         console.log("phase1 end");
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
@@ -282,10 +283,10 @@ window.onload = function() {
             paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
             move_players = objectCopy(org_move_players);
           }
-          $('#progress-timer').timer(3, 'Declare Phase', 2);
+          $('#progress-timer').timer(3 - time_offset, 'Declare Phase', 2);
         }
       } else if (data.step == 3) {
-        $('#progress-timer').timer(10, 'End Phase', 3);
+        $('#progress-timer').timer(10 - time_offset, 'End Phase', 3);
       }
     });
 
@@ -510,7 +511,7 @@ window.onload = function() {
       ctx.translate(0.5, 0.5);
       ctx.textAlign = "center";
       console.log(_data);
-      if(_data){
+      if(_data.state){
         state = $.extend({}, _data.maps);
         players = $.extend({}, _data.currentPlayerPosition);
         for (var i = 0; i < h; i++) {
