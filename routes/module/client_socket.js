@@ -128,6 +128,12 @@ window.onload = function() {
     if (user_status.team == "") return;
     if (!enableClick) return;
     d = getData(event);
+    console.log(state[d.y][d.x].color);
+    if(user_status.team == "red"){
+      if(state[d.y][d.x].color == colors.blue)return;
+    }else{
+      if(state[d.y][d.x].color == colors.red)return;
+    }
     (function(data) {
       var me = (user_status.team == "red") ? players.red : players.blue;
       for (var i = 0; i < 9; i++) {
@@ -159,10 +165,12 @@ window.onload = function() {
     });
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
+
       var coord = {
         x: data.status.x,
         y: data.status.y
       };
+
       c = (data.player.team == "red") ? colors.red : colors.blue;
       var group = data.status.group;
       //一回前の描画を消すための処理
@@ -198,18 +206,14 @@ window.onload = function() {
       };
       paintCell(nowx, nowy, dummy, "*", "white");
       if (data.status.paintType == types.clear) {
-        console.log("STROKE LINE");
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.moveTo(nowx * square_size, nowy * square_size);
-        ctx.lineTo((nowx + 1) * square_size, (nowy + 1) * square_size);
-        ctx.closePath();
+        ctx.moveTo(coord.x * square_size, coord.y * square_size);
+        ctx.lineTo((coord.x + 1) * square_size, (coord.y + 1) * square_size);
+        ctx.lineTo((coord.x) * square_size, (coord.y + 1) * square_size);
+        ctx.lineTo((coord.x + 1) * square_size, (coord.y) * square_size);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo((nowx + 1) * square_size, nowy * square_size);
-        ctx.lineTo(nowx * square_size, (nowy + 1) * square_size);
-        ctx.closePath();
-        ctx.stroke();
+        ctx.strokeStyle = "#757575";
       }
     });
 
@@ -565,11 +569,12 @@ window.onload = function() {
     //verify
     if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
     //canvasの一部分削除
-    ctx.clearRect(nowx * square_size, nowy * square_size, square_size, square_size);
     posx = nowx * square_size;
     posy = nowy * square_size;
     ctx.fillStyle = cell.color;
     ctx.font = "20px bold";
+    ctx.beginPath();
+    ctx.clearRect(posx, posy, square_size, square_size);
     ctx.fillRect(posx, posy, square_size, square_size);
     ctx.rect(posx, posy, square_size, square_size);
     ctx.stroke();

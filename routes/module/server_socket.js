@@ -30,6 +30,7 @@ var server = http.createServer(function(req, res) {
 var io = require('socket.io').listen(server);
 
 server.listen(8888); //8888番ポートで起動
+
 //入場者IDの保持
 var join_user_store = {};
 //エントリーしたユーザの保持
@@ -67,7 +68,6 @@ io.sockets.on('connection', function(socket) {
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
     for (var key in playing_user_store[socket.data.roomId]) {
-      console.log(key)
       if (!join_user_store[key] ||
         (join_user_store[key].roomId != socket.data.roomId)) {
         cnt++;
@@ -91,14 +91,14 @@ io.sockets.on('connection', function(socket) {
         status: data,
         player: player_user_store[data.userId]
       });
-      const kitty = new Cat({
-        mapdata: data.maps,
-        roomId: data.roomId
-      });
-      kitty.save(function(err) {
-        console.log('meow')
-        if (err) throw err;
-      });
+      // const kitty = new Cat({
+      //   mapdata: data.maps,
+      //   roomId: data.roomId
+      // });
+      // kitty.save(function(err) {
+      //   console.log('meow')
+      //   if (err) throw err;
+      // });
     }
   });
 
@@ -107,10 +107,11 @@ io.sockets.on('connection', function(socket) {
     if(!socket.data)return;
     //エントリー毎に承認をリセット
     confirm_room_store[socket.data.roomId] = 0;
-    console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
+    // console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
+    //
     if (!player_user_store[socket.data.userId]) {
       player_user_store[socket.data.userId] = data;
-      console.log("write");
+      // console.log("write");
     }
     socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
     console.log(player_user_store);
@@ -126,10 +127,10 @@ io.sockets.on('connection', function(socket) {
   //エントリーをキャンセル
   socket.on("Cancel", function(data) {
     if(!socket.data)return;
-    console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
+    // console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
     delete player_user_store[socket.data.userId];
     socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
-    console.log(player_user_store);
+    // console.log(player_user_store);
   });
 
   //バトルルームに入った時の処理
@@ -137,31 +138,35 @@ io.sockets.on('connection', function(socket) {
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
-    // console.log(join_user_store);
-    // console.log(socket.data.roomId);
-    // console.log(join_user_store);
-    // console.log(playing_user_store[socket.data.roomId]);
+
+    //他プレイヤーが入室した場合に参加済ユーザをボタンにセット
     const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
     });
     for (let i = 0; i < result1.length; i++) {
       socket.emit("Someone_Entried", player_user_store[result1[i]]);
     }
+
+    //もしゲームが進行していた場合
     if (playing_user_store[socket.data.roomId]) {
       const result2 = Object.keys(playing_user_store[socket.data.roomId]).filter((key) => {
         return playing_user_store[socket.data.roomId][key].userId === socket.data.userId
       });
+      //自分が対戦中ユーザだった場合
       for (let i = 0; i < result2.length; i++) {
         player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
         socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
         handshake_room_store[socket.data.roomId]++;
       }
     }
+    //クライアントに盤面を渡す
     socket.emit("init_MapState", quest_manage_store[socket.data.roomId]);
   });
+
   socket.on("confirm", function(data) {
     if(!socket.data)return;
     confirm_room_store[data.roomId] += 1;
+    //双方が承認した場合
     if (confirm_room_store[data.roomId] == 2) {
       const result = Object.keys(player_user_store).filter((key) => {
         return player_user_store[key].roomId === socket.data.roomId
@@ -196,7 +201,6 @@ io.sockets.on('connection', function(socket) {
     if (data.status.team == "") return;
     //正常にハンドシェイクが行われている場合巡回を停止
     if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
-    // console.log(data.status.userName + " and step : " + data.step);
     //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
     //step2(設置フェーズ)においてのプレイヤーの情報
@@ -219,6 +223,7 @@ io.sockets.on('connection', function(socket) {
       }
     }
 
+    //プレイ中のクエスト情報の保持
     if (!quest_manage_store[socket.data.roomId]) {
       quest_manage_store[socket.data.roomId] = {
         users: playing_user_store[socket.data.roomId],
@@ -232,6 +237,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
 
+    //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
     });
@@ -252,20 +258,17 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({},tmp_moveplayer_store[socket.data.roomId]);
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
-        //tmpは毎回削除
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
         //nothing
       }
     }
-
     //10秒ごとに巡回．停止されているかどうかの確認
     timeout_store[socket.data.roomId] = setTimeout((function(now) {
       console.log("Handshake is mistake!! reshake.");
       handshake_room_store[socket.data.roomId] = 0;
       io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
     }).bind(null, data.step), (data.step == 1)?20000:10000);
-
   });
 });
 
