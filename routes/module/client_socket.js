@@ -43,10 +43,16 @@ window.onload = function() {
     blue: "#03A9F4",
     white: "#FFFFFF",
   };
+  var targets = {
+    A: 0,
+    B: 1
+  };
+
+  var mytar = targets.A;
   var types = {
     clear: 0,
     draw: 1
-  }
+  };
   var paintType = types.draw;
   var jblue = document.getElementById("joinBlue");
   var jred = document.getElementById("joinRed");
@@ -140,8 +146,19 @@ window.onload = function() {
       //白なら削除する必要なし
       if (state[d.y][d.x].color == "white") return;
     }
+    var check = {
+      x: d.x,
+      y: d.y
+    };
+    var me = (user_status.team == "red") ? players.red : players.blue;
+    if (equalsObject(check, me.A)) {
+      mytar = targets.A;
+      console.log("TARGET : A");
+    } else if (equalsObject(check, me.B)) {
+      mytar = targets.B;
+      console.log("TARGET : B");
+    }
     (function(data) {
-      var me = (user_status.team == "red") ? players.red : players.blue;
       //paintType != clearなら+1されて9近傍を見る
       for (var i = 0; i < 8 + paintType; i++) {
         var np = {
@@ -162,14 +179,17 @@ window.onload = function() {
   }, false);
 
   socket.on('connect', function() {
+
     socket.on("init_MapState", function(data) {
       initCanvas(data);
     });
+
     socket.emit("join_to_room", {
       roomId: path,
       userId: userid,
       userName: username
     });
+
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
 
@@ -374,7 +394,7 @@ window.onload = function() {
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
         if (!isEmpty(tmp_state)) state = tmp_state;
-        if (!isEmpty(tmp_players)){
+        if (!isEmpty(tmp_players)) {
           players = tmp_players;
         }
       }

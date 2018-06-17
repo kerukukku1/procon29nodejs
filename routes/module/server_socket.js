@@ -88,6 +88,9 @@ io.sockets.on('connection', function(socket) {
     // timeKeeper(3);
     if(!socket.data)return;
     if (join_user_store[data.userId]) {
+      if(quest_manage_store[socket.data.roomId]){
+        quest_manage_store[socket.data.roomId].maps = data.maps;
+      }
       io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
         status: data,
         player: player_user_store[data.userId]
