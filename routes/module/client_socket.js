@@ -131,19 +131,19 @@ window.onload = function() {
     d = getData(event);
     console.log(state[d.y][d.x].color);
     //自陣以外は入れない
-    if(user_status.team == "red"){
-      if(state[d.y][d.x].color == colors.blue)return;
-    }else{
-      if(state[d.y][d.x].color == colors.red)return;
+    if (user_status.team == "red") {
+      if (state[d.y][d.x].color == colors.blue) return;
+    } else {
+      if (state[d.y][d.x].color == colors.red) return;
     }
-    if(paintType == types.clear){
+    if (paintType == types.clear) {
       //白なら削除する必要なし
-      if(state[d.y][d.x].color == "white")return;
+      if (state[d.y][d.x].color == "white") return;
     }
     (function(data) {
       var me = (user_status.team == "red") ? players.red : players.blue;
       //paintType != clearなら+1されて9近傍を見る
-      for (var i = 0; i < 8+paintType; i++) {
+      for (var i = 0; i < 8 + paintType; i++) {
         var np = {
           x: data.x + dx[i],
           y: data.y + dy[i]
@@ -251,22 +251,21 @@ window.onload = function() {
       $('#ConfirmModal').modal('show');
     });
 
-    socket.on("reshake", function(data){
+    socket.on("reshake", function(data) {
       let time_offset = data.startTime - data.nowTime;
       console.log("offset : ", time_offset);
-      if(data.step==1)$('#progress-timer').timer(10 + time_offset, 'Strategy Phase', 1);
-      if(data.step==2){
+      if (data.step == 1) $('#progress-timer').timer(10 + time_offset, 'Strategy Phase', 1);
+      if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(3 + time_offset, 'Declare Phase', 2);
       }
-      if(data.step==3)$('#progress-timer').timer(0 + time_offset, 'End Phase', 3);
+      if (data.step == 3) $('#progress-timer').timer(0 + time_offset, 'End Phase', 3);
     });
 
     socket.on('client_handshake', function(data) {
       console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(10, 'Strategy Phase', 1);
-        console.log("phase1 end");
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         if (data.turn >= turn) {
@@ -344,7 +343,6 @@ window.onload = function() {
             score: parseInt(elems[j]),
             color: "white"
           };
-          paintCell(j, i, _elems[j], "", "black");
         }
         state.push(_elems);
       }
@@ -352,36 +350,43 @@ window.onload = function() {
       i += 3;
       var npos;
       npos = arr[i].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.red;
       players.red.A = {
         x: npos[0],
         y: npos[1]
       };
       npos = arr[i + 1].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.red;
       players.red.B = {
         x: npos[0],
         y: npos[1]
       };
       npos = arr[i + 2].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.blue;
       players.blue.A = {
         x: npos[0],
         y: npos[1]
       };
       npos = arr[i + 3].split(' ').map(e => parseInt(e));
-      state[npos[1]][npos[0]].color = colors.blue;
       players.blue.B = {
         x: npos[0],
         y: npos[1]
       };
-
-      if(data.status){
+      if (data.status) {
+        console.log(data.status);
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
-        if(!isEmpty(tmp_state))state = tmp_state;
-        if(!isEmpty(tmp_players))players = tmp_players;
+        if (!isEmpty(tmp_state)) state = tmp_state;
+        if (!isEmpty(tmp_players)){
+          players = tmp_players;
+        }
       }
+      for (var i = 0; i < h; i++) {
+        for (var j = 0; j < w; j++) {
+          paintCell(j, i, state[i][j], "", state[i][j].color != "white" ? "white" : "black");
+        }
+      }
+      state[players.red.A.y][players.red.A.x].color = colors.red;
+      state[players.red.B.y][players.red.B.x].color = colors.red;
+      state[players.blue.A.y][players.blue.A.x].color = colors.blue;
+      state[players.blue.B.y][players.blue.B.x].color = colors.blue;
       console.log(players);
       //全プレーヤーの位置を描画
       paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
@@ -540,7 +545,7 @@ window.onload = function() {
             } else if (step == 3) {
               return;
             }
-            console.log("playerdata : " , sender.playerdata);
+            console.log("playerdata : ", sender.playerdata);
             socket.emit("handshake", sender);
             return;
           } else {
@@ -577,7 +582,7 @@ window.onload = function() {
 
   //サーバにファイル要求を出してファイルを取得
   function initCanvas(_data) {
-    if(isInit)return;
+    if (isInit) return;
     isInit = true;
     socket.emit('readfile', dir);
   }
@@ -600,7 +605,8 @@ window.onload = function() {
     ctx.font = "15px bold";
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
   }
-  function isEmpty(obj){
+
+  function isEmpty(obj) {
     return !Object.keys(obj).length;
   }
 

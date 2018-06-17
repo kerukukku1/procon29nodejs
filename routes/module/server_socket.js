@@ -272,11 +272,11 @@ io.sockets.on('connection', function(socket) {
       }
     }
     //10秒ごとに巡回．停止されているかどうかの確認
-    timeout_store[socket.data.roomId] = setTimeout((function(now) {
-      console.log("Handshake is mistake!! reshake.");
-      handshake_room_store[socket.data.roomId] = 0;
-      io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
-    }).bind(null, data.step), (data.step == 1)?20000:10000);
+    // timeout_store[socket.data.roomId] = setTimeout((function(now) {
+    //   console.log("Handshake is mistake!! reshake.");
+    //   handshake_room_store[socket.data.roomId] = 0;
+    //   io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
+    // }).bind(null, data.step), (data.step == 1)?20000:10000);
   });
 });
 
