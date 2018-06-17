@@ -83,10 +83,6 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on("Migration", function(data){
-    io.sockets.in(socket.data.roomId).emit("Migration", data);
-  });
-
   //盤面情報の同期
   socket.on("MapDataSync", function(data) {
     // timeKeeper(3);
@@ -143,7 +139,7 @@ io.sockets.on('connection', function(socket) {
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
-
+    socket.emit("init_MapState", quest_manage_store[socket.data.roomId]);
     //他プレイヤーが入室した場合に参加済ユーザをボタンにセット
     const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
@@ -162,12 +158,10 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].nowTime = moment().unix();
         player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
         socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
-        handshake_room_store[socket.data.roomId]++;
-        // socket.emit("client_handshake", quest_manage_store[socket.data.roomId]);
+        // handshake_room_store[socket.data.roomId]++;
+        socket.emit("reshake", quest_manage_store[socket.data.roomId]);
       }
     }
-    //クライアントに盤面を渡す
-    socket.emit("init_MapState", quest_manage_store[socket.data.roomId]);
   });
 
   socket.on("confirm", function(data) {
@@ -198,7 +192,8 @@ io.sockets.on('connection', function(socket) {
       // console.log(err);
       socket.emit("filedata", {
         text: text,
-        err: err
+        err: err,
+        status: quest_manage_store[socket.data.roomId]
       });
     });
   });
@@ -207,7 +202,7 @@ io.sockets.on('connection', function(socket) {
     if(!socket.data)return;
     if (data.status.team == "") return;
     console.log("Handsheke : ");
-    console.log(data.step);
+    // console.log("step : ", data.step);
     //正常にハンドシェイクが行われている場合巡回を停止
     if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
@@ -245,7 +240,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
-    console.log(quest_manage_store[socket.data.roomId].turn);
+    // console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
@@ -281,7 +276,7 @@ io.sockets.on('connection', function(socket) {
       console.log("Handshake is mistake!! reshake.");
       handshake_room_store[socket.data.roomId] = 0;
       io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
-    }).bind(null, data.step), (data.step == 1)?15000:5000);
+    }).bind(null, data.step), (data.step == 1)?20000:10000);
   });
 });
 
