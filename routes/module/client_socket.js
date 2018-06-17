@@ -45,7 +45,8 @@ window.onload = function() {
   };
   var targets = {
     A: 0,
-    B: 1
+    B: 1,
+    NONE: -1
   };
 
   var mytar = targets.A;
@@ -153,9 +154,13 @@ window.onload = function() {
     var me = (user_status.team == "red") ? players.red : players.blue;
     if (equalsObject(check, me.A)) {
       mytar = targets.A;
+      paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
+      paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
       console.log("TARGET : A");
     } else if (equalsObject(check, me.B)) {
       mytar = targets.B;
+      paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
+      paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
       console.log("TARGET : B");
     }
     (function(data) {
@@ -204,7 +209,6 @@ window.onload = function() {
       if (group == "A") {
         var tmp = (data.player.team == "red") ? move_players.red.A : move_players.blue.A;
         var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
-        console.log(tmp2, tmp);
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
           paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
@@ -215,9 +219,8 @@ window.onload = function() {
       } else if (group == "B") {
         var tmp = (data.player.team == "red") ? move_players.red.B : move_players.blue.B;
         var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
-        console.log(tmp2, tmp);
-        var flag = equalsObject(tmp, tmp2);
         if (tmp.x >= 0 || tmp.y >= 0) {
+          var flag = equalsObject(tmp, tmp2);
           paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
         }
         if (data.player.team == "red") {
@@ -296,6 +299,8 @@ window.onload = function() {
         } else {
           if (typeof data.next != "undefined") {
             data.next = getVerifyNextData(data.next);
+            var tmp = mytar;
+            mytar = targets.NONE;
             paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
             paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
             paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
@@ -304,6 +309,7 @@ window.onload = function() {
             state[data.next.red.B.y][data.next.red.B.x].color = colors.red;
             state[data.next.blue.A.y][data.next.blue.A.x].color = colors.blue;
             state[data.next.blue.B.y][data.next.blue.B.x].color = colors.blue;
+            mytar = tmp;
             players = data.next;
             paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
             paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
@@ -622,11 +628,12 @@ window.onload = function() {
     if (user_status.team != "") {
       console.log("player fill");
       var me = (user_status.team == "red") ? players.red : players.blue;
-      var check1 = (mytar == targets.A) ? me.A : me.B;
+      var check1 = (mytar == targets.A) ? me.A : (mytar == targets.B) ? me.B : {};
       var check2 = {
         x: nowx,
         y: nowy
       };
+      console.log(check1);
       if (equalsObject(check1, check2)) {
         ctx.strokeStyle = "yellow";
         ctx.lineWidth = 1.5;
