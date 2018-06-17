@@ -74,7 +74,7 @@ window.onload = function() {
   // };
 
   jblue.onclick = function() {
-    console.log("blue click");
+    //console.log("blue click");
     if (jblue.textContent == "Cancel") {
       jblue.textContent = "Join Blue";
       user_status.team = "blue";
@@ -99,7 +99,7 @@ window.onload = function() {
     }
   };
   jred.onclick = function() {
-    console.log("red click");
+    //console.log("red click");
     if (jred.textContent == "Cancel") {
       jred.textContent = "Join Red";
       user_status.team = "red";
@@ -136,7 +136,7 @@ window.onload = function() {
     if (user_status.team == "") return;
     if (!enableClick) return;
     d = getData(event);
-    console.log(state[d.y][d.x].color);
+    //console.log(state[d.y][d.x].color);
     //自陣以外は入れない
     if (user_status.team == "red") {
       if (state[d.y][d.x].color == colors.blue) return;
@@ -156,15 +156,18 @@ window.onload = function() {
       mytar = targets.A;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      console.log("TARGET : A");
+      d.group = "A";
+      //console.log("TARGET : A");
     } else if (equalsObject(check, me.B)) {
       mytar = targets.B;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      console.log("TARGET : B");
+      d.group = "B";
+      //console.log("TARGET : B");
     }
+    if(mytar == targets.NONE)return;
     (function(data) {
-      //paintType != clearなら+1されて9近傍を見る
+      // paintType != clearなら+1されて9近傍を見る
       for (var i = 0; i < 8 + paintType; i++) {
         var np = {
           x: data.x + dx[i],
@@ -172,9 +175,11 @@ window.onload = function() {
         };
         if (np.x >= w || np.y >= h || np.x < 0 || np.y < 0) continue;
         if (equalsObject(me.A, np)) {
+          if(mytar != targets.A)continue;
           d.group = "A";
           return true;
         } else if (equalsObject(me.B, np)) {
+          if(mytar != targets.B)continue;
           d.group = "B";
           return true;
         }
@@ -234,7 +239,7 @@ window.onload = function() {
         score: state[coord.y][coord.x].score,
         color: c
       };
-      paintCell(nowx, nowy, dummy, "*", "white");
+      paintCell(nowx, nowy, dummy, (mytar==targets.A)?"A*":"B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
       if (data.status.paintType == types.clear) {
         ctx.strokeStyle = "black";
         ctx.beginPath();
@@ -276,7 +281,7 @@ window.onload = function() {
 
     socket.on("reshake", function(data) {
       let time_offset = data.startTime - data.nowTime;
-      console.log("offset : ", time_offset);
+      //console.log("offset : ", time_offset);
       if (data.step == 1) $('#progress-timer').timer(10 + time_offset, 'Strategy Phase', 1);
       if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
@@ -286,7 +291,7 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      console.log("next : ", data.next);
+      //console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(10, 'Strategy Phase', 1);
       } else if (data.step == 2) {
@@ -325,7 +330,7 @@ window.onload = function() {
     });
 
     socket.on('client_gamestart', function(data) {
-      console.log(data);
+      //console.log(data);
       $("#WaitingModal").modal('hide');
       const team_red = Object.keys(data).filter((key) => {
         return data[key].team == "red";
@@ -333,7 +338,7 @@ window.onload = function() {
       const team_blu = Object.keys(data).filter((key) => {
         return data[key].team == "blue";
       });
-      console.log(data[team_red].userName, data[team_blu].userName);
+      //console.log(data[team_red].userName, data[team_blu].userName);
       battleStart({
         red: data[team_red].userName,
         blue: data[team_blu].userName
@@ -342,7 +347,7 @@ window.onload = function() {
 
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
-      // console.log(arr);
+      // //console.log(arr);
       turn = parseInt(arr[0]);
       w = parseInt(arr[1]);
       h = parseInt(arr[2]);
@@ -357,8 +362,8 @@ window.onload = function() {
       ctx.lineWidth = 0.5;
       ctx.translate(0.5, 0.5);
       ctx.textAlign = "center";
-      console.log("data:");
-      console.log(data.status);
+      //console.log("data:");
+      //console.log(data.status);
       for (var i = 0; i < h; i++) {
         var row = arr[3 + i];
         var elems = row.split(' ');
@@ -396,7 +401,7 @@ window.onload = function() {
         y: npos[1]
       };
       if (data.status) {
-        console.log(data.status);
+        //console.log(data.status);
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
         if (!isEmpty(tmp_state)) state = tmp_state;
@@ -413,7 +418,7 @@ window.onload = function() {
       state[players.red.B.y][players.red.B.x].color = colors.red;
       state[players.blue.A.y][players.blue.A.x].color = colors.blue;
       state[players.blue.B.y][players.blue.B.x].color = colors.blue;
-      console.log(players);
+      //console.log(players);
       //全プレーヤーの位置を描画
       paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
       paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
@@ -425,7 +430,7 @@ window.onload = function() {
 
   window.document.onkeydown = function() {
     if (event.key == "Shift") {
-      console.log(paintType);
+      //console.log(paintType);
       paintType = types.clear;
       //透過処理
       ctx.globalAlpha = 0.5;
@@ -434,7 +439,7 @@ window.onload = function() {
 
   window.document.onkeyup = function() {
     if (event.key == "Shift") {
-      console.log("up");
+      //console.log("up");
       paintType = types.draw;
       ctx.globalAlpha = 1.0;
     }
@@ -571,7 +576,7 @@ window.onload = function() {
             } else if (step == 3) {
               return;
             }
-            console.log("playerdata : ", sender.playerdata);
+            //console.log("playerdata : ", sender.playerdata);
             socket.emit("handshake", sender);
             return;
           } else {
@@ -626,17 +631,17 @@ window.onload = function() {
     ctx.fillRect(posx, posy, square_size, square_size);
     var offset = 0;
     if (user_status.team != "") {
-      console.log("player fill");
+      //console.log("player fill");
       var me = (user_status.team == "red") ? players.red : players.blue;
       var check1 = (mytar == targets.A) ? me.A : (mytar == targets.B) ? me.B : {};
       var check2 = {
         x: nowx,
         y: nowy
       };
-      console.log(check1);
+      //console.log(check1);
       if (equalsObject(check1, check2)) {
-        ctx.strokeStyle = "yellow";
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = (user_status.team == "red") ? "#1AFF8C" : (user_status.team == "blue") ? "#FFB31A" : "#757575";
+        ctx.lineWidth = 3;
         offset = 1;
       }
     }
@@ -655,4 +660,4 @@ window.onload = function() {
   }
 
 };
-// console.log(dir);
+// //console.log(dir);
