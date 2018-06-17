@@ -618,8 +618,25 @@ window.onload = function() {
     ctx.beginPath();
     ctx.clearRect(posx, posy, square_size, square_size);
     ctx.fillRect(posx, posy, square_size, square_size);
-    ctx.rect(posx, posy, square_size, square_size);
+    var offset = 0;
+    if (user_status.team != "") {
+      console.log("player fill");
+      var me = (user_status.team == "red") ? players.red : players.blue;
+      var check1 = (mytar == targets.A) ? me.A : me.B;
+      var check2 = {
+        x: nowx,
+        y: nowy
+      };
+      if (equalsObject(check1, check2)) {
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 1.5;
+        offset = 1;
+      }
+    }
+    ctx.rect(posx + offset, posy + offset, square_size - (offset * 2), square_size - (offset * 2));
     ctx.stroke();
+    ctx.strokeStyle = "#757575";
+    ctx.lineWidth = 0.5;
     ctx.fillStyle = textcolor;
     ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
     ctx.font = "15px bold";
