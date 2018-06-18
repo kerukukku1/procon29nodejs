@@ -2,6 +2,10 @@ var http = require('http');
 var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
+var types = {
+  clear: 0,
+  draw: 1
+};
 const mongoose = require('mongoose');
 const Cat = mongoose.model('Cat', {
   mapdata: [
@@ -78,7 +82,7 @@ io.sockets.on('connection', function(socket) {
       delete playing_user_store[socket.data.roomId];
       delete quest_manage_store[socket.data.roomId];
       delete tmp_moveplayer_store[socket.data.roomId]
-      if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
+      if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
       delete timeout_store[socket.data.roomId]
     }
   });
@@ -86,10 +90,30 @@ io.sockets.on('connection', function(socket) {
   //盤面情報の同期
   socket.on("MapDataSync", function(data) {
     // timeKeeper(3);
-    if(!socket.data)return;
+    if (!socket.data) return;
     if (join_user_store[data.userId]) {
-      if(quest_manage_store[socket.data.roomId]){
+      if (quest_manage_store[socket.data.roomId]) {
         quest_manage_store[socket.data.roomId].maps = data.maps;
+        //まだ押されてない場合
+        if (!quest_manage_store[socket.data.roomId].method) {
+          quest_manage_store[socket.data.roomId].method = {
+            red: {
+              A: types.draw,
+              B: types.draw
+            },
+            blue: {
+              A: types.draw,
+              B: types.draw
+            }
+          };
+        }
+        if (data.team == "red") {
+          if (data.group == "A") quest_manage_store[socket.data.roomId].method.red.A = data.paintType;
+          if (data.group == "B") quest_manage_store[socket.data.roomId].method.red.B = data.paintType;
+        } else {
+          if (data.group == "A") quest_manage_store[socket.data.roomId].method.blue.A = data.paintType;
+          if (data.group == "B") quest_manage_store[socket.data.roomId].method.blue.B = data.paintType;
+        }
       }
       io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
         status: data,
@@ -108,7 +132,7 @@ io.sockets.on('connection', function(socket) {
 
   //バトルにエントリー
   socket.on("Entry", function(data) {
-    if(!socket.data)return;
+    if (!socket.data) return;
     //エントリー毎に承認をリセット
     confirm_room_store[socket.data.roomId] = 0;
     // console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
@@ -130,7 +154,7 @@ io.sockets.on('connection', function(socket) {
 
   //エントリーをキャンセル
   socket.on("Cancel", function(data) {
-    if(!socket.data)return;
+    if (!socket.data) return;
     // console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
     delete player_user_store[socket.data.userId];
     socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
@@ -168,7 +192,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("confirm", function(data) {
-    if(!socket.data)return;
+    if (!socket.data) return;
     confirm_room_store[data.roomId] += 1;
     //双方が承認した場合
     if (confirm_room_store[data.roomId] == 2) {
@@ -202,12 +226,12 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("handshake", function(data) {
-    if(!socket.data)return;
+    if (!socket.data) return;
     if (data.status.team == "") return;
     console.log("Handsheke : ");
     // console.log("step : ", data.step);
     //正常にハンドシェイクが行われている場合巡回を停止
-    if(timeout_store[socket.data.roomId])clearTimeout(timeout_store[socket.data.roomId]);
+    if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
     //step2(設置フェーズ)においてのプレイヤーの情報
@@ -237,8 +261,18 @@ io.sockets.on('connection', function(socket) {
         step: data.step,
         turn: -1,
         next: tmp_moveplayer_store[socket.data.roomId],
+        method: {
+          red: {
+            A: types.draw,
+            B: types.draw
+          },
+          blue: {
+            A: types.draw,
+            B: types.draw
+          }
+        }
       };
-    }else{
+    } else {
       //逐次更新
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
@@ -267,7 +301,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
-        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({},tmp_moveplayer_store[socket.data.roomId]);
+        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {

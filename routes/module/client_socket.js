@@ -138,34 +138,40 @@ window.onload = function() {
     d = getData(event);
     //console.log(state[d.y][d.x].color);
     //自陣以外は入れない
-    if (user_status.team == "red") {
-      if (state[d.y][d.x].color == colors.blue) return;
-    } else {
-      if (state[d.y][d.x].color == colors.red) return;
-    }
-    if (paintType == types.clear) {
-      //白なら削除する必要なし
-      if (state[d.y][d.x].color == "white") return;
-    }
     var check = {
       x: d.x,
       y: d.y
     };
+    if (paintType == types.draw) {
+      if (user_status.team == "red") {
+        if (state[d.y][d.x].color == colors.blue) return;
+      } else {
+        if (state[d.y][d.x].color == colors.red) return;
+      }
+    } else if (paintType == types.clear) {
+      //白なら削除する必要なし
+      if (state[d.y][d.x].color == "white") return;
+      for (var key1 in players) {
+        for(var key2 in players[String(key1)]){
+          if(equalsObject(players[String(key1)][String(key2)],check)){
+            return false;
+          }
+        }
+      }
+    }
     var me = (user_status.team == "red") ? players.red : players.blue;
     if (equalsObject(check, me.A)) {
       mytar = targets.A;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      d.group = "A";
       //console.log("TARGET : A");
     } else if (equalsObject(check, me.B)) {
       mytar = targets.B;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      d.group = "B";
       //console.log("TARGET : B");
     }
-    if(mytar == targets.NONE)return;
+    if (mytar == targets.NONE) return;
     (function(data) {
       // paintType != clearなら+1されて9近傍を見る
       for (var i = 0; i < 8 + paintType; i++) {
@@ -175,11 +181,11 @@ window.onload = function() {
         };
         if (np.x >= w || np.y >= h || np.x < 0 || np.y < 0) continue;
         if (equalsObject(me.A, np)) {
-          if(mytar != targets.A)continue;
+          if (mytar != targets.A) continue;
           d.group = "A";
           return true;
         } else if (equalsObject(me.B, np)) {
-          if(mytar != targets.B)continue;
+          if (mytar != targets.B) continue;
           d.group = "B";
           return true;
         }
@@ -239,7 +245,7 @@ window.onload = function() {
         score: state[coord.y][coord.x].score,
         color: c
       };
-      paintCell(nowx, nowy, dummy, (mytar==targets.A)?"A*":"B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
+      paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
       if (data.status.paintType == types.clear) {
         ctx.strokeStyle = "black";
         ctx.beginPath();
@@ -303,19 +309,56 @@ window.onload = function() {
           });
         } else {
           if (typeof data.next != "undefined") {
+            // var method = (user_status.team == "red") ? data.method.red : data.method.blue;
+            // data.next = getVerifyNextData(data.next, data.method);
+            // console.log(data.next);
+            // var tmp = mytar;
+            // mytar = targets.NONE;
+            var dummy = {
+              A: types.draw,
+              B: types.draw
+            }
+            // //現在地点のユーザラベル(A,B)を全て剥がす
+            // paintPlayer(players.red, "", "", dummy, colors.red);
+            // paintPlayer(players.blue, "", "", dummy, colors.blue);
+            // mytar = tmp;
+            // players = data.next;
+            // //対応するようラベルを付け替え
+            // paintPlayer(players.red, "A", "B", data.method.red, colors.red);
+            // paintPlayer(players.blue, "A", "B", data.method.blue, colors.blue);
+            // //次の動きを初期化
+            // move_players = objectCopy(org_move_players);
+
+
             data.next = getVerifyNextData(data.next);
             var tmp = mytar;
             mytar = targets.NONE;
+            //現在のプレイヤーラベルを同一色で剥がす
             paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
             paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
             paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
             paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "", "white");
-            state[data.next.red.A.y][data.next.red.A.x].color = colors.red;
-            state[data.next.red.B.y][data.next.red.B.x].color = colors.red;
-            state[data.next.blue.A.y][data.next.blue.A.x].color = colors.blue;
-            state[data.next.blue.B.y][data.next.blue.B.x].color = colors.blue;
+            //次のパネルをセット
+            state[data.next.red.A.y][data.next.red.A.x].color = (data.method.red.A != types.clear) ? colors.red : colors.white;
+            state[data.next.red.B.y][data.next.red.B.x].color = (data.method.red.B != types.clear) ? colors.red : colors.white;
+            state[data.next.blue.A.y][data.next.blue.A.x].color = (data.method.blue.A != types.clear) ? colors.blue : colors.white;
+            state[data.next.blue.B.y][data.next.blue.B.x].color = (data.method.blue.B != types.clear) ? colors.blue : colors.white;
+            //次のパネルに移動
             mytar = tmp;
-            players = data.next;
+            //削除があった場合の対策
+            if (data.method.red.A == types.clear) {
+              paintCell(data.next.red.A.x, data.next.red.A.y, state[data.next.red.A.y][data.next.red.A.x], "", "black");
+            }
+            if (data.method.red.B == types.clear) {
+              paintCell(data.next.red.B.x, data.next.red.B.y, state[data.next.red.B.y][data.next.red.B.x], "", "black");
+            }
+            if (data.method.blue.A == types.clear) {
+              paintCell(data.next.blue.A.x, data.next.blue.A.y, state[data.next.blue.A.y][data.next.blue.A.x], "", "black");
+            }
+            if (data.method.blue.B == types.clear) {
+              paintCell(data.next.blue.B.x, data.next.blue.B.y, state[data.next.blue.B.y][data.next.blue.B.x], "", "black");
+            }
+            players = getVerifyNextData2(data.next, data.method);
             paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
             paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
             paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
@@ -445,6 +488,35 @@ window.onload = function() {
     }
   };
 
+  function paintPlayer(data, textA, textB, c) {
+    ctx.strokeStyle = "#757575";
+    ctx.lineWidth = 0.5;
+    paintCell(data.A.x, data.A.y, state[data.A.y][data.A.x], textA, "white");
+    state[data.A.y][data.A.x].color = c;
+    paintCell(data.B.x, data.B.y, state[data.B.y][data.B.x], textB, "white");
+    state[data.B.y][data.B.x].color = c;
+    // if (type.A == types.draw) {
+    //   paintCell(data.A.x, data.A.y, state[data.A.y][data.A.x], textA, "white");
+    //   state[data.A.y][data.A.x].color = c;
+    // } else if (type.A == types.clear) {
+    //   ctx.beginPath();
+    //   ctx.clearRect(data.A.x * square_size, data.A.y * square_size, square_size, square_size);
+    //   ctx.rect(data.A.x * square_size, data.A.y * square_size, square_size, square_size);
+    //   ctx.stroke();
+    //   state[data.A.y][data.A.x].color = colors.white;
+    // }
+    // if (type.B == types.draw) {
+    //   paintCell(data.B.x, data.B.y, state[data.B.y][data.B.x], textB, "white");
+    //   state[data.B.y][data.B.x].color = c;
+    // } else if (type.B == types.clear) {
+    //   ctx.beginPath();
+    //   ctx.clearRect(data.B.x * square_size, data.B.y * square_size, square_size, square_size);
+    //   ctx.rect(data.B.x * square_size, data.B.y * square_size, square_size, square_size);
+    //   ctx.stroke();
+    //   state[data.B.y][data.B.x].color = colors.white;
+    // }
+  }
+
 
   function whoSquare(data) {
     var x = parseInt(data.x, 10);
@@ -455,6 +527,29 @@ window.onload = function() {
       x: chx,
       y: chy,
     }
+  }
+
+  function getVerifyNextData2(next, method) {
+    // console.log(method);
+    // if (next.red.A.x == -1) {
+    //   next.red.A = players.red.A;
+    // }
+    // if (next.red.B.x == -1) {
+    //   next.red.B = players.red.B;
+    // }
+    // if (next.blue.A.x == -1) {
+    //   next.blue.A = players.blue.A;
+    // }
+    // if (next.blue.B.x == -1) {
+    //   next.blue.B = players.blue.B;
+    // }
+    if (method) {
+      if (method.red.A == types.clear) next.red.A = players.red.A;
+      if (method.red.B == types.clear) next.red.B = players.red.B;
+      if (method.blue.A == types.clear) next.blue.A = players.blue.A;
+      if (method.blue.B == types.clear) next.blue.B = players.blue.B;
+    }
+    return next;
   }
 
   function getVerifyNextData(next) {
@@ -487,6 +582,7 @@ window.onload = function() {
       roomId: path,
       userId: userid,
       userName: username,
+      team: user_status.team,
       maps: state,
       paintType: paintType
     };
