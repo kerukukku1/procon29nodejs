@@ -87,8 +87,34 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  //盤面情報の同期
   socket.on("MapDataSync", function(data) {
+    //step2(設置フェーズ)においてのプレイヤーの情報
+    if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
+      tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
+    } else {
+      try {
+        console.log(tmp_moveplayer_store[socket.data.roomId]);
+        console.log("playerdata : ", data.playerdata);
+        if (data.playerdata) {
+          if (data.status.team == "red" && !data.playerdata.red) {
+            tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
+          } else if (data.status.team == "blue" && !data.playerdata.blue) {
+            tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
+          }
+        }
+      } catch (err) {
+        console.log(err.name + ': ' + err.message);
+        return;
+      }
+    }
+    if (quest_manage_store[socket.data.roomId]) {
+      quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
+    }
+    socket.emit("MapDataSync", quest_manage_store[socket.data.roomId]);
+  });
+
+  //盤面情報の一時的な同期
+  socket.on("tmp_MapDataSync", function(data) {
     // timeKeeper(3);
     if (!socket.data) return;
     if (join_user_store[data.userId]) {
@@ -234,25 +260,6 @@ io.sockets.on('connection', function(socket) {
     if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
-    //step2(設置フェーズ)においてのプレイヤーの情報
-    if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
-      tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
-    } else {
-      try {
-        console.log(tmp_moveplayer_store[socket.data.roomId]);
-        console.log("playerdata : ", data.playerdata);
-        if (data.playerdata) {
-          if (data.status.team == "red" && !data.playerdata.red) {
-            tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
-          } else if (data.status.team == "blue" && !data.playerdata.blue) {
-            tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
-          }
-        }
-      } catch (err) {
-        console.log(err.name + ': ' + err.message);
-        return;
-      }
-    }
 
     //プレイ中のクエスト情報の保持
     if (!quest_manage_store[socket.data.roomId]) {
