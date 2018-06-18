@@ -365,6 +365,8 @@ window.onload = function() {
             paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
             move_players = objectCopy(org_move_players);
           }
+          let ret = calcScore(state, w, h, colors);
+          console.log("score : ", ret);
           $('#progress-timer').timer(3, 'Declare Phase', 2);
         }
       } else if (data.step == 3) {
