@@ -19,11 +19,16 @@ function calcScore(mapData, mapWidth, mapHeight, colordata) {
   }
 
   //領域スコアの計算
-  var used = prep3D(21, 21, 3);
+  var used = {};
+  for(var key in colordata){
+    used[String(key)] = prep2D(21,21);
+  }
   for (var nowY = 0; nowY < mapHeight; nowY++) {
     for (var nowX = 0; nowX < mapWidth; nowX++) {
-      for (var nowTeam = 1; nowTeam <= 2; nowTeam++) {
-        if (used[nowY][nowX][nowTeam]) {
+      for(var nowTeam in colordata){
+        nowTeam = String(nowTeam);
+        if(nowTeam == "white")continue;
+        if (used[nowTeam][nowY][nowX]) {
           continue;
         }
         var nowScore = 0;
@@ -41,10 +46,10 @@ function calcScore(mapData, mapWidth, mapHeight, colordata) {
             noneScoreFlag = true;
             continue;
           }
-          if (used[nowP.y][nowP.x][nowTeam]) continue;
-          if (mapData[nowP.y][nowP.x].color == ((nowTeam == 1) ? colordata.red : colordata.blue)) continue;
-          used[nowP.y][nowP.x][nowTeam] = true;
-          nowScore += Math.abs(mapData[nowP.y][nowP.x]);
+          if (used[nowTeam][nowP.y][nowP.x]) continue;
+          if (mapData[nowP.y][nowP.x].color == colordata[nowTeam]) continue;
+          used[nowTeam][nowP.y][nowP.x] = true;
+          nowScore += Math.abs(mapData[nowP.y][nowP.x].score);
 
           for (var i = 0; i < 4; i++) {
             var tx = nowP.x + dx4[i];
@@ -55,8 +60,8 @@ function calcScore(mapData, mapWidth, mapHeight, colordata) {
               continue;
             }
 
-            if (mapData[nowP.y][nowP.x].color == ((nowTeam == 1) ? colordata.red : colordata.blue)) continue;
-            if (used[tx][ty][nowTeam] == true) continue;
+            if (mapData[nowP.y][nowP.x].color == colordata[nowTeam]) continue;
+            if (used[nowTeam][ty][tx] == true) continue;
             que.push({
               x: tx,
               y: ty
@@ -64,9 +69,9 @@ function calcScore(mapData, mapWidth, mapHeight, colordata) {
           }
         }
         if (noneScoreFlag) nowScore = 0;
-        if (nowTeam == 1) {
+        if (nowTeam == "red") {
           player1TerritoryScore += nowScore;
-        } else if (nowTeam == 2) {
+        } else if (nowTeam == "blue") {
           player2TerritoryScore += nowScore;
         }
       }
@@ -76,6 +81,14 @@ function calcScore(mapData, mapWidth, mapHeight, colordata) {
     red: player1TileScore + player1TerritoryScore,
     blue: player2TileScore + player2TerritoryScore
   }
+}
+
+function prep2D(x, y) {
+  var a = [];
+  for (var i = 0; i < x; i++) {
+    a[i] = new Array(y);
+  }
+  return a;
 }
 
 function prep3D(x, y, z) {

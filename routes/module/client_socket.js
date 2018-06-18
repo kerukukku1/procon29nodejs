@@ -361,6 +361,24 @@ window.onload = function() {
       }
       let ret = calcScore(state, w, h, colors);
       console.log("score : ", ret);
+      var diff = ret.blue - ret.red;
+      var redpar = 50;
+      var bluepar = 50;
+      if(diff != 0){
+        var bias = 0;
+        if(Math.min(ret.red, ret.blue) < 0){
+          bias = Math.abs(Math.min(ret.red, ret.blue));
+        }
+        var _red = ret.red + bias;
+        var _blue = ret.blue + bias;
+        var sum = _red + _blue;
+        redpar = _red / sum;
+        bluepar = _blue / sum;
+      }
+      $('#blueScore').empty().text(String(ret.blue)+"pt");
+      $('#redScore').empty().text(String(ret.red)+"pt");
+      $('#blueBar').width(bluepar*100 + "%").attr('aria-valuenow', bluepar*100);
+      $('#redBar').width(redpar*100 + "%").attr('aria-valuenow', redpar*100);
     });
 
     socket.on('client_gamestart', function(data) {
@@ -604,11 +622,12 @@ window.onload = function() {
       //- $(".anime").empty();
       //- $('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif", id = "start"></img>').appendTo(".anime").hide().fadeIn(3000);
       $(".wrapper").hide()
+      $(".wrapper").css({opacity:'0'}); //800ms かけて再表示
       setTimeout(function() {
         //- $(".wrapper").css("display", "block");
         $(".wrapper").show();
         //- $(".wrapper").css("display", "block");
-        //- $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
+        - $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
         $("#start_anime").hide();
         socket.emit("handshake", {
           status: user_status,
