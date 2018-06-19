@@ -197,7 +197,7 @@ window.onload = function() {
   socket.on('connect', function() {
 
     socket.on("init_MapState", function(data) {
-      initCanvas(data);
+      initCanvas();
     });
 
     socket.emit("join_to_room", {
@@ -721,7 +721,7 @@ window.onload = function() {
   })(jQuery);
 
   //サーバにファイル要求を出してファイルを取得
-  function initCanvas(_data) {
+  function initCanvas() {
     if (isInit) return;
     isInit = true;
     socket.emit('readfile', dir);

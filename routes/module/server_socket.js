@@ -192,7 +192,7 @@ io.sockets.on('connection', function(socket) {
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
-    socket.emit("init_MapState", quest_manage_store[socket.data.roomId]);
+    socket.emit("init_MapState", {});
     //他プレイヤーが入室した場合に参加済ユーザをボタンにセット
     const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
