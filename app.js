@@ -8,6 +8,7 @@ var session = require('express-session');
 var indexRouter = require('./routes/index');
 var registerRouter = require('./routes/register');
 var usersRouter = require('./routes/users');
+var roomsRouter = require('./routes/rooms');
 var battleRouter = require('./routes/battle');
 var questboardRouter = require('./routes/questboard');
 var loginRouter = require('./routes/login');
@@ -50,6 +51,7 @@ app.use('/battle', battleRouter);
 app.use('/register', registerRouter);
 app.use('/login', loginRouter);
 app.use('/logout', logoutRouter);
+app.use('/rooms', roomsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

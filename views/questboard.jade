@@ -3,6 +3,8 @@ extends layout
 block content
   if usersession.userid
     h1 問題一覧
+    hr
+    br
     script.
       jQuery( function($) {
         $('tbody tr[data-href]').addClass('clickable').click( function() {
