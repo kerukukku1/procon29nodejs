@@ -36,8 +36,9 @@ block content
       var username = '#{usersession.username}'
     script(src="/module/client_socket.js")
     script(src="/module/calcScore.js")
+    hr
     .card
-      .card-header.bg-success.text-white
+      .card-header.bg-dark.text-white
         strong: font(size="3") Status Board
       .card-body
         div#progress-timer

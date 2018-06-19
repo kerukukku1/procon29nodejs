@@ -18,4 +18,9 @@ router.get('/:room_id', function(req, res, next) {
   }
 });
 
+router.post('/:roomId', function(req, res, next) {
+  console.log("POST!!!");
+  console.log(req.body);
+});
+
 module.exports = router;

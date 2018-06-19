@@ -2,8 +2,19 @@ extends layout
 block content
   h1 Active Room
   hr
+  include includes/confirm_modal.jade
   .card
-    .card-header
-      a
+    .card-header.bg-primary.text-white
+      button.btn.btn-primary(type='button'): strong RoomList
+      button.btn.btn-success(type='button', id="makeroom").float-right: strong Make
     .card-body
       div#progress-timer
+
+  script.
+    $('#makeroom').click(function() {
+      $('#RoomMakeModal').modal('show');
+    });
+    $('#makeRoomButton').click(function() {
+      $('#submitRoomDetails').submit();
+      $('#RoomMakeModal').modal('hide');
+    });

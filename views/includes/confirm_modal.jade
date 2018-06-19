@@ -24,3 +24,65 @@
         | 相手の承認待ちです....
       .modal-footer
         button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+
+#RoomMakeModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true', data-backdrop="static", data-keyboard="false")
+  .modal-dialog(role='document')
+    .modal-content
+      .modal-header
+        h5#exampleModalLabel.modal-title Detail
+        button.close(type='button', data-dismiss='modal', aria-label='Close')
+          span(aria-hidden='true') ×
+        
+      .modal-body
+        form(action="#" method="post" class="board-form")#submitRoomDetails
+          fieldset
+            .form-row
+              .form-group.col-md-6
+                label(for='inputAddress') 部屋名
+                input.form-control(type='text', placeholder='はじめてのルーム', name="room_name")
+              .form-group.col-md-6
+                label(for='inputAddress') 内容
+                input.form-control(type='text', placeholder='誰でも参加OK', name="comment")
+            .form-row
+              .form-group.col-md-4
+                label(for='inputState') 戦術時間
+                select#inputState.form-control(type='text', name="strategy_time")
+                  option(selected='') 30
+                  option 40
+                  option 50
+                  option 60
+              .form-group.col-md-4
+                label(for='inputState') 行動選択時間
+                select#inputState.form-control(type='text', name="declere_time")
+                  option(selected='') 10
+                  option 11
+                  option 12
+                  option 13
+                  option 14
+                  option 15
+                  option 16
+                  option 17
+                  option 18
+                  option 19
+                  option 20
+              .form-group.col-md-4
+                label(for='inputState') 待機時間
+                select#inputState.form-control(type='text', name="move_time")
+                  option(selected='') 3
+                  option 4
+                  option 5
+                  option 6
+                  option 7
+                  option 8
+                  option 9
+                  option 10
+                  option 11
+                  option 12
+                  option 13
+                  option 14
+                  option 15
+
+            .text-danger ※想定時間より多めに取ること推奨
+          .modal-footer
+            button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+            button.btn.btn-primary(type='button')#makeRoomButton Make
