@@ -28,6 +28,7 @@ block content
     div(class="svgbox")#playername
     div(class="flexbox")#turnlabel
     center: canvas(id="myCanvas", height="800", width="800")
+    div#progress-timer
     script(src="http://localhost:8888/socket.io/socket.io.js")
     script(type='text/javascript').
       var dir = '#{filedir}';
@@ -41,7 +42,6 @@ block content
       .card-header.bg-dark.text-white
         strong: font(size="3") Status Board
       .card-body
-        div#progress-timer
         .progress(style='height: 30px;')
           .progress-bar.progress-bar-striped.progress-bar-animated(role='progressbar', style='width: 50%', aria-valuenow='50', aria-valuemin='0', aria-valuemax='100')#blueBar 
             strong: font(size="4px"): span#blueScore 0pt

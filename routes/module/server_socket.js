@@ -239,22 +239,15 @@ io.sockets.on('connection', function(socket) {
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
     var dir = process.cwd() + '/questdata/' + data;
-    // console.log(process.cwd() + '/questdata/' + data);
+    console.log(process.cwd() + '/questdata/' + data);
     fs.readFile(dir, 'utf8', function(err, text) {
       // console.log(text);
       // console.log(err);
-      if (!socket.data) {
-        socket.emit("filedata", {
-          text: text,
-          err: err
-        });
-      } else {
-        socket.emit("filedata", {
-          text: text,
-          err: err,
-          status: quest_manage_store[socket.data.roomId]
-        });
-      }
+      socket.emit("filedata", {
+        text: text,
+        err: err,
+        status: quest_manage_store[socket.data.roomId]
+      });
     });
   });
 
