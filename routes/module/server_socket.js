@@ -254,7 +254,7 @@ io.sockets.on('connection', function(socket) {
   socket.on("handshake", function(data) {
     if (!socket.data) return;
     if (data.status.team == "") return;
-    console.log("Handsheke : ");
+    // console.log("Handsheke : ");
     // console.log("step : ", data.step);
     //正常にハンドシェイクが行われている場合巡回を停止
     if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);

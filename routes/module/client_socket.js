@@ -172,6 +172,11 @@ window.onload = function() {
       //console.log("TARGET : B");
     }
     if (mytar == targets.NONE) return;
+    var _check = getVerifyNextData(move_players)
+    if(equalsObject(_check[user_status.team][(mytar == targets.A)?"B":"A"], check)){
+      console.log("equal");
+      return ;
+    }
     (function(data) {
       // paintType != clearなら+1されて9近傍を見る
       for (var i = 0; i < 8 + paintType; i++) {
@@ -208,7 +213,11 @@ window.onload = function() {
 
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
-
+      var _paintflag = true;
+      if(user_status.team != "")
+        console.log(data.player.team);
+        console.log(user_status.team);
+        _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
@@ -222,7 +231,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
+          _paintflag&&paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.A = coord;
@@ -232,7 +241,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
+          _paintflag&&paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.B = coord;
@@ -245,8 +254,8 @@ window.onload = function() {
         score: state[coord.y][coord.x].score,
         color: c
       };
-      paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
-      if (data.status.paintType == types.clear) {
+      _paintflag&&paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
+      if (data.status.paintType == types.clear && _paintflag) {
         ctx.strokeStyle = "black";
         ctx.beginPath();
         ctx.moveTo(coord.x * square_size, coord.y * square_size);
