@@ -1,15 +1,20 @@
 extends layout
 block content
-  h1 Active Room
-  hr
-  include includes/confirm_modal.jade
-  .card
-    .card-header.bg-primary.text-white
-      button.btn.btn-primary(type='button'): strong RoomList
-      button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
-    .card-body
-      div#progress-timer
-
+  if usersession.userid
+    h1 Active Room
+    hr
+    include includes/confirm_modal.jade
+    .card
+      .card-header.bg-primary.text-white
+        button.btn.btn-primary(type='button'): strong RoomList
+        button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
+      .card-body
+        div#progress-timer
+  else
+    div(class="alert alert-danger" role="alert")
+      セッション情報がありません．ログインを行ってください．
+      JavaScript
+  
   script.
       $("#MakeRoomDecide").on("click",function  (e) {
         e.preventDefault();
