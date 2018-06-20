@@ -243,11 +243,18 @@ io.sockets.on('connection', function(socket) {
     fs.readFile(dir, 'utf8', function(err, text) {
       // console.log(text);
       // console.log(err);
-      socket.emit("filedata", {
-        text: text,
-        err: err,
-        status: quest_manage_store[socket.data.roomId]
-      });
+      if (!socket.data) {
+        socket.emit("filedata", {
+          text: text,
+          err: err
+        });
+      } else {
+        socket.emit("filedata", {
+          text: text,
+          err: err,
+          status: quest_manage_store[socket.data.roomId]
+        });
+      }
     });
   });
 

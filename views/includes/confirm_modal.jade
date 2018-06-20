@@ -39,21 +39,21 @@
             .form-row
               .form-group.col-md-6
                 label(for='inputAddress') 部屋名
-                input.form-control(type='text', placeholder='はじめてのルーム', name="room_name")
+                input.form-control(type='text', placeholder='はじめてのルーム', name="room_name", required)
               .form-group.col-md-6
                 label(for='inputAddress') 内容
-                input.form-control(type='text', placeholder='誰でも参加OK', name="comment")
+                input.form-control(type='text', placeholder='誰でも参加OK', name="comment", required)
             .form-row
               .form-group.col-md-4
-                label(for='inputState') 戦術時間
+                label(for='inputState') 作戦ステップ(秒)
                 select#inputState.form-control(type='text', name="strategy_time")
                   option(selected='') 30
                   option 40
                   option 50
                   option 60
               .form-group.col-md-4
-                label(for='inputState') 行動選択時間
-                select#inputState.form-control(type='text', name="declere_time")
+                label(for='inputState') 意思表示ステップ(秒)
+                select#inputState.form-control(type='text', name="declare_time")
                   option(selected='') 10
                   option 11
                   option 12
@@ -66,7 +66,7 @@
                   option 19
                   option 20
               .form-group.col-md-4
-                label(for='inputState') 待機時間
+                label(for='inputState') 行動ステップ（秒）
                 select#inputState.form-control(type='text', name="move_time")
                   option(selected='') 3
                   option 4

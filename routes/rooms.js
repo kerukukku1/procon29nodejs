@@ -9,8 +9,17 @@ router.get('/:room_id', function(req, res, next) {
       roomid_error: true
     });
   }
-  res.render('rooms', {
-    roomId: roomId
+  var query = `SELECT *, DATE_FORMAT(createdAt, \'%Y年%m月%d日 %k時%i分%s秒\') AS createdAt FROM room_table WHERE org_quest_id = ${roomId}`;
+  var query2 = `SELECT *, DATE_FORMAT(createdAt, \'%Y年%m月%d日 %k時%i分%s秒\') AS createdAt FROM quest_board where quest_id = ${roomId}`;
+  connection.query(query2, function(err, rows) {
+    filedir = rows[0].filedir
+  });
+  connection.query(query, function(err, rows) {
+    res.render('rooms', {
+      room_id: roomId,
+      roomList: rows,
+      filedir: filedir
+    });
   });
 });
 
@@ -20,7 +29,32 @@ router.post('/:room_id', function(req, res, next) {
   console.log(req.session.userid);
   console.log(req.session.username);
   var roomId = req.params.room_id;
-  res.redirect('/rooms/'+String(roomId));
+  console.log("roomid: " + roomId);
+  const query = `
+  INSERT INTO room_table
+             (room_name,
+              comment,
+              master,
+              user_id,
+              org_quest_id,
+              strategy_time,
+              move_time,
+              declare_time,
+              createdAt)
+  VALUES    ('${req.body.room_name}',
+             '${req.body.comment}',
+             '${req.session.username}',
+             '${req.session.userid}',
+             '${roomId}',
+             '${req.body.strategy_time}',
+             '${req.body.move_time}',
+             '${req.body.declare_time}',
+             now())
+  `;
+  console.log(query);
+  connection.query(query, function(err, rows) {
+    res.redirect('/rooms/' + String(roomId));
+  });
 });
 
 module.exports = router;

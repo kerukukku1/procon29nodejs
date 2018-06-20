@@ -1,26 +1,139 @@
 extends layout
 block content
   if usersession.userid
-    h1 Active Room
+    h1 Quest Room
     hr
     include includes/confirm_modal.jade
-    .card
-      .card-header.bg-primary.text-white
-        button.btn.btn-primary(type='button'): strong RoomList
-        button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
-      .card-body
-        div#progress-timer
-  else
-    div(class="alert alert-danger" role="alert")
-      セッション情報がありません．ログインを行ってください．
-      JavaScript
-  
-  script.
+    button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
+    .text-danger ※注意 1日以上試合が行われない部屋は自動的に一覧から削除されます．
+    table.table.table-striped.table-hover
+      thead
+        tr
+          th #
+          th 部屋名
+          th 内容
+          th 作成者
+          th 作戦/意思表示/行動 (sec.)
+          th 作成日時
+      //- tbody
+      //-   tr
+      //-     td Default
+      //-     td Defaultson
+      //-     td def@somemail.com
+      tbody
+      - for (var i = 0; i < roomList.length; i++) {
+        tr(data-href="/battle/#{roomList[i].room_id}")
+          th(scope='row')= roomList[i].room_id
+          td= roomList[i].room_name
+          td= roomList[i].comment
+          td= roomList[i].master
+          td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
+          td= roomList[i].createdAt
+      - }
+    h5 QuestData
+    hr
+    center: canvas(id="myCanvas", height="800", width="800")
+    script(src="http://localhost:8888/socket.io/socket.io.js")
+    script.
+      window.onload = function() {
+        var colors = {
+          red: "#FF4081",
+          blue: "#03A9F4",
+          white: "#FFFFFF",
+        };
+        var socket = io.connect("http://localhost:8888/");
+        var state = [];
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        var square_size = 50;
+        socket.on('connect', function() {
+          var dir = '#{filedir}';
+          console.log(dir);
+          socket.emit('readfile', dir);
+          socket.on('filedata', function(data){
+            var arr = data.text.split('\n');
+            w = parseInt(arr[1]);
+            h = parseInt(arr[2]);
+            _w = w * square_size + 1.5;
+            _h = h * square_size + 1;
+            canvas.height = 2 * _h;
+            canvas.width = 2 * _w;
+            canvas.style.height = _h + 'px';
+            canvas.style.width = _w + 'px';
+            ctx.scale(2, 2);
+            ctx.strokeStyle = "#757575"
+            ctx.lineWidth = 0.5;
+            ctx.translate(0.5, 0.5);
+            ctx.textAlign = "center";
+            for (var i = 0; i < h; i++) {
+              var row = arr[3 + i];
+              var elems = row.split(' ');
+              var _elems = [];
+              for (var j = 0; j < w; j++) {
+                var score = elems[j];
+                _elems[j] = {
+                  score: parseInt(elems[j]),
+                  color: "white"
+                };
+                paintCell(j,i,_elems[j],"","black");
+              }
+              state.push(_elems);
+            }
+            i += 3;var npos;
+            npos = arr[i + 0].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.red;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
+            npos = arr[i + 1].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.red;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+            npos = arr[i + 2].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.blue;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
+            npos = arr[i + 3].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.blue;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+          });
+        });
+        function paintCell(nowx, nowy, cell, player, textcolor) {
+          //verify
+          if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
+          //canvasの一部分削除
+          posx = nowx * square_size;
+          posy = nowy * square_size;
+          ctx.fillStyle = cell.color;
+          ctx.font = "20px bold";
+          ctx.beginPath();
+          ctx.fillRect(posx, posy, square_size, square_size);
+          ctx.rect(posx, posy, square_size, square_size);
+          ctx.stroke();
+          ctx.strokeStyle = "#757575";
+          ctx.lineWidth = 0.5;
+          ctx.fillStyle = textcolor;
+          ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
+          ctx.font = "15px bold";
+          ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
+        }
+      };
       $("#MakeRoomDecide").on("click",function  (e) {
         e.preventDefault();
         $('#submitRoomDetails').submit();
-        $('#RoomMakeModal').modal('hide');
+        //- $('#RoomMakeModal').modal('hide');
       });
       $('#MakeRoom').click(function() {
         $('#RoomMakeModal').modal('show');
       });
+      jQuery( function($) {
+        $('tbody tr[data-href]').addClass('clickable').click( function() {
+          window.location = $(this).attr('data-href');
+        }).find('a').hover( function() {
+          $(this).parents('tr').unbind('click');
+        }, function() {
+          $(this).parents('tr').click( function() {
+            window.location = $(this).attr('data-href');
+          });
+        });
+      });
+
+  else
+    div(class="alert alert-danger" role="alert")
+      セッション情報がありません．ログインを行ってください．

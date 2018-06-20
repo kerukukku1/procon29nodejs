@@ -4,7 +4,6 @@ block content
   if usersession.userid
     h1 問題一覧
     hr
-    br
     script.
       jQuery( function($) {
         $('tbody tr[data-href]').addClass('clickable').click( function() {
@@ -27,7 +26,7 @@ block content
             th(scope='col') 作成日
         tbody
         - for (var i = 0; i < boardList.length; i++) {
-            tr(data-href="/battle/#{i+1}")
+            tr(data-href="/rooms/#{i+1}")
               th(scope='row')= boardList[i].quest_id
               td= boardList[i].quest_name
               td= boardList[i].author
@@ -35,4 +34,4 @@ block content
         - }
   else
     div(class="alert alert-danger" role="alert")
-      セッション情報がありません．ログインを行ってください．
+      |セッション情報がありません．ログインを行ってください．
