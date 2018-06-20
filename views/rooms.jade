@@ -6,15 +6,16 @@ block content
   .card
     .card-header.bg-primary.text-white
       button.btn.btn-primary(type='button'): strong RoomList
-      button.btn.btn-success(type='button', id="makeroom").float-right: strong Make
+      button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
     .card-body
       div#progress-timer
 
   script.
-    $('#makeroom').click(function() {
-      $('#RoomMakeModal').modal('show');
-    });
-    $('#makeRoomButton').click(function() {
-      $('#submitRoomDetails').submit();
-      $('#RoomMakeModal').modal('hide');
-    });
+      $("#MakeRoomDecide").on("click",function  (e) {
+        e.preventDefault();
+        $('#submitRoomDetails').submit();
+        $('#RoomMakeModal').modal('hide');
+      });
+      $('#MakeRoom').click(function() {
+        $('#RoomMakeModal').modal('show');
+      });
