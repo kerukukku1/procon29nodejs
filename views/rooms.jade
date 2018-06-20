@@ -30,12 +30,22 @@ block content
           td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
           td= roomList[i].createdAt
       - }
-    h5 QuestData
+    form
+      h5 Chat
+      .form-group
+        textarea#ChatComment.form-control(rows='5', readonly)
+      .input-group.mb-3
+        .input-group-prepend
+          span#basic-addon1.input-group-text >
+        input.form-control(type='text', placeholder='Enter Chat Content', aria-label='Username', aria-describedby='basic-addon1')#ChatForm
+
+    h5 Preview
     hr
     center: canvas(id="myCanvas", height="800", width="800")
     script(src="http://localhost:8888/socket.io/socket.io.js")
     script.
       window.onload = function() {
+        $('#ChatComment').css({resize: "none"});
         var colors = {
           red: "#FF4081",
           blue: "#03A9F4",
@@ -50,6 +60,11 @@ block content
           var dir = '#{filedir}';
           console.log(dir);
           socket.emit('readfile', dir);
+          socket.on('refresh_chat', function(data){
+            if(data.path != location.pathname)return;
+            $('#ChatComment').append(data.comment);
+            $('#ChatForm').val('');
+          });
           socket.on('filedata', function(data){
             var arr = data.text.split('\n');
             w = parseInt(arr[1]);
@@ -93,6 +108,7 @@ block content
             state[npos[1]][npos[0]].color = colors.blue;
             paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
           });
+
         });
         function paintCell(nowx, nowy, cell, player, textcolor) {
           //verify
@@ -113,6 +129,24 @@ block content
           ctx.font = "15px bold";
           ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
         }
+        $(function() {
+          $(document).on("keypress", "input:not(.allow_submit)", function(event) {
+            if(event.which == 13){
+              var username = '#{usersession.username}';
+              var tm= new Date();
+              var hour = tm.getHours();
+              hour = (hour<10)?'0'+hour:hour;
+              var minute = tm.getMinutes();
+              minute = (minute<10)?'0'+minute:minute;
+              var second = tm.getSeconds();
+              second = (second<10)?'0'+second:second;
+              var timestamp = "(" + hour+":"+minute+":"+second+")";
+              var comment = timestamp + username + " : " + $('#ChatForm').val()+'\n';
+              socket.emit("send_chat", {comment:comment, path : location.pathname});
+            }
+            return event.which !== 13;
+          });
+        });
       };
       $("#MakeRoomDecide").on("click",function  (e) {
         e.preventDefault();
@@ -121,6 +155,9 @@ block content
       });
       $('#MakeRoom').click(function() {
         $('#RoomMakeModal').modal('show');
+      });
+      $('#ChatForm').submit(function(){
+        console.log("HELLO");
       });
       jQuery( function($) {
         $('tbody tr[data-href]').addClass('clickable').click( function() {
