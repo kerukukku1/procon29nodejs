@@ -6,8 +6,9 @@ block content
     include includes/confirm_modal.jade
     button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
     .text-danger ※注意 1日以上試合が行われない部屋は自動的に一覧から削除されます．
+    br
     table.table.table-striped.table-hover
-      thead
+      thead.bg-success.text-white
         tr
           th #
           th 部屋名
@@ -30,14 +31,17 @@ block content
           td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
           td= roomList[i].createdAt
       - }
+    hr
     form
       h5 Chat
-      .form-group
-        textarea#ChatComment.form-control(rows='8', readonly)
+        //- textarea#ChatComment.form-control(rows='8', readonly)
+      .table-scroll-wrapper#myChat
+        table#ChatComment.table.table-hover.table-striped
+          tbody
       .input-group.mb-3
         .input-group-prepend
           span#basic-addon1.input-group-text >
-        input.form-control(type='text', placeholder='Enter Chat Content', aria-label='Username', aria-describedby='basic-addon1')#ChatForm
+        input.form-control(type='text', placeholder='Enter Chat Content', aria-label='Username', aria-describedby='basic-addon1', autocomplete="off")#ChatForm
 
     h5 Preview
     hr
@@ -62,10 +66,20 @@ block content
           socket.emit('readfile', dir);
           socket.on('refresh_chat', function(data){
             if(data.path != location.pathname)return;
-            $('#ChatComment').append(data.comment);
+            data.comment = unescape(data.comment);
+            $('#ChatComment').append(
+              `<tr>
+              <th width="10%">${data.username}</th>
+              <th width="80%">${data.comment}</th>
+              <th width="10%">${data.timestamp}</th>
+              </tr>`
+            );
+            $('#myChat').animate({
+              scrollTop: Number($('#ChatComment').height())
+            },300);
             $('#ChatForm').val('');
-            var $textarea = $('#ChatComment');
-            $textarea.scrollTop($textarea[0].scrollHeight);
+            //- var $textarea = $('#ChatComment');
+            //- $textarea.scrollTop($textarea[0].scrollHeight);
           });
           socket.on('filedata', function(data){
             var arr = data.text.split('\n');
@@ -142,9 +156,10 @@ block content
               minute = (minute<10)?'0'+minute:minute;
               var second = tm.getSeconds();
               second = (second<10)?'0'+second:second;
-              var timestamp = "(" + hour+":"+minute+":"+second+")";
-              var comment = timestamp + username + " : " + escape($('#ChatForm').val())+'\n';
-              socket.emit("send_chat", {comment:comment, path : location.pathname});
+              var timestamp = hour+":"+minute+":"+second;
+              var comment = escape($('#ChatForm').val());
+              if(comment == '')return event.which !== 13;
+              socket.emit("send_chat", {username: username, timestamp: timestamp, comment:comment, path : location.pathname});
             }
             return event.which !== 13;
           });

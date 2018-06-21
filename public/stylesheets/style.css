@@ -45,7 +45,12 @@ textarea {
   font-weight: 900;
 }
 
-
+.table-scroll-wrapper{
+  display: block;
+  max-height:225px;
+  overflow-y: auto;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
 
 /*
 ul {
