@@ -32,11 +32,11 @@ block content
     script(type='text/javascript').
       var dir = '#{filedir}';
       var roomid = '#{roomId}';
-      var userid = '#{usersession.userid}'
-      var username = '#{usersession.username}'
-      var declare_time = '#{declare_time}'
-      var move_time = '#{move_time}'
-      var strategy_time = '#{strategy_time}'
+      var userid = '#{usersession.userid}';
+      var username = '#{usersession.username}';
+      var declare_time = Number('#{declare_time}');
+      var move_time = Number('#{move_time}');
+      var strategy_time = Number('#{strategy_time}');
     script(src="/module/client_socket.js")
     script(src="/module/calcScore.js")
     hr

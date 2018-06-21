@@ -173,9 +173,9 @@ window.onload = function() {
     }
     if (mytar == targets.NONE) return;
     var _check = getVerifyNextData(move_players)
-    if(equalsObject(_check[user_status.team][(mytar == targets.A)?"B":"A"], check)){
+    if (equalsObject(_check[user_status.team][(mytar == targets.A) ? "B" : "A"], check)) {
       console.log("equal");
-      return ;
+      return;
     }
     (function(data) {
       // paintType != clearなら+1されて9近傍を見る
@@ -214,10 +214,10 @@ window.onload = function() {
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var _paintflag = true;
-      if(user_status.team != "")
+      if (user_status.team != "")
         console.log(data.player.team);
-        console.log(user_status.team);
-        _paintflag = (user_status.team == data.player.team);
+      console.log(user_status.team);
+      _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
@@ -231,7 +231,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          _paintflag&&paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
+          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.A = coord;
@@ -241,7 +241,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          _paintflag&&paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
+          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.B = coord;
@@ -254,7 +254,7 @@ window.onload = function() {
         score: state[coord.y][coord.x].score,
         color: c
       };
-      _paintflag&&paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
+      _paintflag && paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
       if (data.status.paintType == types.clear && _paintflag) {
         ctx.strokeStyle = "black";
         ctx.beginPath();
@@ -373,9 +373,9 @@ window.onload = function() {
       var diff = ret.blue - ret.red;
       var redpar = 50;
       var bluepar = 50;
-      if(diff != 0){
+      if (diff != 0) {
         var bias = 0;
-        if(Math.min(ret.red, ret.blue) < 0){
+        if (Math.min(ret.red, ret.blue) < 0) {
           bias = Math.abs(Math.min(ret.red, ret.blue));
         }
         var _red = ret.red + bias;
@@ -384,10 +384,10 @@ window.onload = function() {
         redpar = _red / sum;
         bluepar = _blue / sum;
       }
-      $('#blueScore').empty().text(String(ret.blue)+"pt");
-      $('#redScore').empty().text(String(ret.red)+"pt");
-      $('#blueBar').width(bluepar*100 + "%").attr('aria-valuenow', bluepar*100);
-      $('#redBar').width(redpar*100 + "%").attr('aria-valuenow', redpar*100);
+      $('#blueScore').empty().text(String(ret.blue) + "pt");
+      $('#redScore').empty().text(String(ret.red) + "pt");
+      $('#blueBar').width(bluepar * 100 + "%").attr('aria-valuenow', bluepar * 100);
+      $('#redBar').width(redpar * 100 + "%").attr('aria-valuenow', redpar * 100);
     });
 
     socket.on('client_gamestart', function(data) {
@@ -631,12 +631,17 @@ window.onload = function() {
       //- $(".anime").empty();
       //- $('<img src="http://smile-design.bz/tight/blog/anai/bicycle-gif.gif", id = "start"></img>').appendTo(".anime").hide().fadeIn(3000);
       $(".wrapper").hide()
-      $(".wrapper").css({opacity:'0'}); //800ms かけて再表示
+      $(".wrapper").css({
+        opacity: '0'
+      }); //800ms かけて再表示
       setTimeout(function() {
         //- $(".wrapper").css("display", "block");
         $(".wrapper").show();
         //- $(".wrapper").css("display", "block");
-        - $(".wrapper").stop().animate({opacity:'1'},800); //800ms かけて再表示
+        -
+        $(".wrapper").stop().animate({
+          opacity: '1'
+        }, 800); //800ms かけて再表示
         $("#start_anime").hide();
         socket.emit("handshake", {
           status: user_status,
@@ -661,10 +666,11 @@ window.onload = function() {
       // initialize elements
       this.append('<h4><strong>' + phase + ' : </strong><span></span> seconds left.</h4>');
       this.append('<div class="progress"></div>');
-      this.children('.progress').append('<div class="progress-bar bg-info"></div>');
+      this.children('.progress').append('<div class="progress-bar progress-bar-striped bg-info"></div>');
       this.find('.progress-bar').css({
-        cssText: '-webkit-transition: none !important; transition: none !important;',
-        width: '100%'
+        cssText: 'aria-valuenow="100";aria-valuemin="0";aria-valuemax="100";',
+        width: '100%',
+        role: 'progressbar'
       });
       var isSync = false;
       var countdown = (function(timeLeft) {
@@ -715,6 +721,7 @@ window.onload = function() {
           //-   width:  width + '%'
           //- }, 1000, 'linear');
           this.find('div.progress-bar').css({
+            cssText: 'aria-valuenow="' + width + '";aria-valuemin="0";aria-valuemax="100";',
             width: width + '%'
           });
 
