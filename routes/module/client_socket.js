@@ -676,10 +676,17 @@ window.onload = function() {
       var countdown = (function(timeLeft) {
         var $header = this.children('h4');
         if (timeLeft <= 0) {
-          $header.empty().text(phase + ' is Over. Next Step is ' + (5 + timeLeft) + ' sec. later').addClass('text-danger');
-          this.find('div.progress-bar').css({
-            width: '0%'
-          });
+          $header.empty().text(phase + ' is Over. Next Step is ' + (move_time + timeLeft) + ' sec. later').addClass('text-danger');
+          if(timeLeft==0){
+            this.find('div.progress-bar').css({
+              width: '0%'
+            });
+          }else{
+            this.find('div.progress-bar').css({
+              cssText: `-webkit-transition: width ${move_time-1}s ease;`,
+              width: '100%'
+            });
+          }
           enableClick = false;
           var sender = {
             status: user_status,
@@ -691,7 +698,7 @@ window.onload = function() {
             socket.emit("MapDataSync", sender);
             isSync = true;
           }
-          if (timeLeft <= -5) {
+          if (timeLeft <= -move_time) {
             if (step == 1) {
               //next step
               sender.step += 1;
