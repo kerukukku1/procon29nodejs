@@ -75,22 +75,29 @@ block content
           var dir = '#{filedir}';
           console.log(dir);
           socket.emit('readfile', dir);
-          socket.emit('join_chatroom', {username: '#{usersession.username}', timestamp: getNowTime(), comment:'#{usersession.username}'+"が入場しました．", path : location.pathname});
+          socket.emit('join_chatroom', {userid:'#{usersession.userid}', username: '#{usersession.username}', timestamp: getNowTime(), comment:'#{usersession.username}'+"が入場しました．", path : location.pathname});
           socket.on('join_user', function(data){
             if(data.path != location.pathname)return;
-            $('#onlineUsers').append(
-              `<tr>
-              <th width="100%">${data.username}</th>
-              </tr>`
-            );
+            const result = Object.keys(data.users).filter((key) => {
+              return data.users[key].path === location.pathname
+            });
+            console.log(data.users);
+            for(var i = 0; i < result.length; i++){
+              $('#onlineUsers').append(
+                `<tr>
+                <th width="100%">${data.users[result[i]].username}</th>
+                </tr>`
+              );  
+            }
           });
           socket.on('refresh_chat', function(data){
             if(data.path != location.pathname)return;
             data.comment = unescape(data.comment);
             var option = (!data.label)?"":'class="bg-primary text-white"';
+            var _username = (!data.label)?data.username:"admin";
             $('#chatComment').append(
               `<tr ${option}>
-              <th width="10%">${data.username}</th>
+              <th width="10%">${_username}</th>
               <th width="80%">${data.comment}</th>
               <th width="10%">${data.timestamp}</th>
               </tr>`

@@ -49,6 +49,7 @@ var playing_user_store = {};
 var tmp_moveplayer_store = {};
 //何ターン目
 var turn_manage_store = {};
+var chatroom_user_store = {};
 var quest_manage_store = {};
 var timeout_store = {};
 //接続確立時の処理
@@ -258,9 +259,10 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('join_chatroom', function(data){
+    socket.chatdata = data;
     data.label = "server";
-    io.sockets.emit('join_user',data);
-    data.username = "Admin";
+    chatroom_user_store[data.userid] = data;
+    io.sockets.emit('join_user',{users:chatroom_user_store,path:data.path});
     io.sockets.emit('refresh_chat',data);
   });
 
