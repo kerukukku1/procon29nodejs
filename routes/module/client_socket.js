@@ -297,18 +297,18 @@ window.onload = function() {
     socket.on("reshake", function(data) {
       let time_offset = data.startTime - data.nowTime;
       //console.log("offset : ", time_offset);
-      if (data.step == 1) $('#progress-timer').timer(10 + time_offset, 'Strategy Phase', 1);
+      if (data.step == 1) $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
       if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        $('#progress-timer').timer(3 + time_offset, 'Declare Phase', 2);
+        $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
       }
-      if (data.step == 3) $('#progress-timer').timer(0 + time_offset, 'End Phase', 3);
+      if (data.step == 3) $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
     });
 
     socket.on('client_handshake', function(data) {
       //console.log("next : ", data.next);
       if (data.step == 1) {
-        $('#progress-timer').timer(10, 'Strategy Phase', 1);
+        $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         if (data.turn >= turn) {
@@ -317,10 +317,10 @@ window.onload = function() {
             step: data.step + 1
           });
         } else {
-          $('#progress-timer').timer(3, 'Declare Phase', 2);
+          $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
       } else if (data.step == 3) {
-        $('#progress-timer').timer(0, 'End Phase', 3);
+        $('#progress-timer').timer(10, 'End Phase', 3);
       }
     });
 

@@ -41,6 +41,10 @@ form input {
   margin-right: .5%;
 }
 
+textarea {
+  font-weight: 900;
+}
+
 /*
 ul {
     list-style-type: none;

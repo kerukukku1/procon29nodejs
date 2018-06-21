@@ -24,7 +24,10 @@ router.get('/:room_id', function(req, res, next) {
             res.render('battle', {
               title: battle[0].quest_name,
               filedir: battle[0].filedir,
-              roomId: roomId
+              roomId: roomId,
+              strategy_time: room[0].strategy_time,
+              move_time: room[0].move_time,
+              declare_time: room[0].declare_time
             });
           } else {
             res.render('error', {
