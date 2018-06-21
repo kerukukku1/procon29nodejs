@@ -323,7 +323,7 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
-        //nothing
+        io.sockets.in(socket.data.roomId).emit("handshake_finish", quest_manage_store[socket.data.roomId]);
       }
     }
     //10秒ごとに巡回．停止されているかどうかの確認

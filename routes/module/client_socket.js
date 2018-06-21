@@ -330,7 +330,7 @@ window.onload = function() {
         $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= turn) {
+        if (data.turn >= 2) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1
@@ -338,9 +338,12 @@ window.onload = function() {
         } else {
           $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
-      } else if (data.step == 3) {
-        $('#progress-timer').timer(10, 'End Phase', 3);
       }
+    });
+
+    socket.on('handshake_finish', function(data){
+      $('#GamesetModal').modal('show');
+      $('#progress-timer').hide();
     });
 
     socket.on('MapDataSync', function(data) {
