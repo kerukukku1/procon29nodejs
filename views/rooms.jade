@@ -33,23 +33,22 @@ block content
       - }
     hr
     h5 Chat
-    .container
-      .chatbox1
-        .table-scroll-wrapper#myChat
-          table#chatComment.table.table-hover.table-striped.table-bordered 
-            thead
-              tr
-                th(scope="col", width="10%") Username
-                th(scope="col", width="80%") Content
-                th(scope="col", width="10%") Datetime
-            tbody
-      .chatbox2
-        .table-scroll-wrapper
-          table#onlineUsers.table.table-hover.table-striped
-            thead.bg-success.text-white
-              tr
-                th ONLINE
-            tbody
+    .chatbox1
+      .table-scroll-wrapper#myChat
+        table#chatComment.table.table-hover.table-striped.table-bordered 
+          thead
+            tr
+              th(scope="col", width="10%") Username
+              th(scope="col", width="80%") Content
+              th(scope="col", width="10%") Datetime
+          tbody
+    .chatbox2
+      .table-scroll-wrapper
+        table#onlineUsers.table.table-hover.table-striped
+          thead.bg-success.text-white
+            tr
+              th ONLINE
+          tbody
     form
       .input-group.mb-3
         .input-group-prepend
