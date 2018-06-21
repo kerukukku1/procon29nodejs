@@ -217,6 +217,12 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
+  socket.on("disconfirm", function(data){
+    if (!socket.data) return;
+    confirm_room_store[data.roomId] = 0;
+    io.sockets.in(socket.data.roomId).emit("cancel_confirm", data);
+  });
+
   socket.on("confirm", function(data) {
     if (!socket.data) return;
     confirm_room_store[data.roomId] += 1;

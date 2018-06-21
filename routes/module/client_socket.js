@@ -25,6 +25,7 @@ window.onload = function() {
   };
   var move_players = objectCopy(players);
   var org_move_players = objectCopy(players);
+  var isConfirm = false;
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
   var ctx = canvas.getContext("2d");
@@ -125,10 +126,13 @@ window.onload = function() {
   };
 
   confirm.onclick = function() {
+    isConfirm = true;
     $("#ConfirmModal").modal('hide');
     $("#WaitingModal").modal('show');
     setTimeout(function() {
-      socket.emit("confirm", user_status);
+      if ($('#WaitingModal').is(':visible')) {
+        socket.emit("confirm", user_status);
+      }
     }, 1500);
   };
 
@@ -211,6 +215,20 @@ window.onload = function() {
       userName: username
     });
 
+    socket.on('cancel_confirm', function(data) {
+      isConfirm = false;
+      console.log("Call CancelConfirm");
+      if (data.team == user_status.team) {
+        if (user_status.team == "red") {
+          jred.onclick();
+        } else if (user_status.team == "blue") {
+          jblue.onclick();
+        }
+      }
+      $('#ConfirmModal').modal('hide');
+      $('#WaitingModal').modal('hide');
+    });
+
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var _paintflag = true;
@@ -287,6 +305,7 @@ window.onload = function() {
         if (user_status.team == "") jblue.disabled = false;
         jblue.textContent = "Join Blue";
       }
+      socket.emit("disconfirm", user_status);
     });
 
     socket.on('modal_show', function(data) {
@@ -392,6 +411,7 @@ window.onload = function() {
 
     socket.on('client_gamestart', function(data) {
       //console.log(data);
+      isConfirm = false;
       $("#WaitingModal").modal('hide');
       const team_red = Object.keys(data).filter((key) => {
         return data[key].team == "red";
@@ -677,11 +697,11 @@ window.onload = function() {
         var $header = this.children('h4');
         if (timeLeft <= 0) {
           $header.empty().text(phase + ' is Over. Next Step is ' + (move_time + timeLeft) + ' sec. later').addClass('text-danger');
-          if(timeLeft==0){
+          if (timeLeft == 0) {
             this.find('div.progress-bar').css({
               width: '0%'
             });
-          }else{
+          } else {
             this.find('div.progress-bar').css({
               cssText: `-webkit-transition: width ${move_time-1}s ease;`,
               width: '100%'
@@ -790,6 +810,14 @@ window.onload = function() {
   function isEmpty(obj) {
     return !Object.keys(obj).length;
   }
-
+  $('#WaitingModal').on('hidden.bs.modal', function() {
+    if(isConfirm)socket.emit("disconfirm", user_status);
+    console.log("Waiting");
+  });
+  $('#ConfirmModal').on('hidden.bs.modal', function() {
+    if(isConfirm)return;
+    socket.emit("disconfirm", user_status);
+    console.log("Confirm");
+  });
 };
 // //console.log(dir);
