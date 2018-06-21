@@ -1,7 +1,7 @@
 ul.navbar-nav
-  if usersession.userid 
+  if usersession
     li.nav-item.active
-      a.btn.btn-primary(href='#'): strong #{usersession.username}
+      a.btn.btn-primary(href='#'): strong #{usersession.user.username}
     li.nav-item.active
       a.btn.btn-primary(href='/logout'): strong Logout
 

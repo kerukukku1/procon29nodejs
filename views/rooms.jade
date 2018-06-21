@@ -1,6 +1,6 @@
 extends layout
 block content
-  if usersession.userid
+  if usersession.user.id
     h1 Quest Room
     hr
     include includes/confirm_modal.jade
@@ -75,7 +75,7 @@ block content
           var dir = '#{filedir}';
           console.log(dir);
           socket.emit('readfile', dir);
-          socket.emit('join_chatroom', {userid:'#{usersession.userid}', username: '#{usersession.username}', timestamp: getNowTime(), comment:'#{usersession.username}'+"が入場しました．", path : location.pathname});
+          socket.emit('join_chatroom', {userid:'#{usersession.user.id}', username: '#{usersession.user.username}', timestamp: getNowTime(), comment:'#{usersession.user.username}'+"が入場しました．", path : location.pathname});
           socket.on('join_user', function(data){
             if(data.path != location.pathname)return;
             const result = Object.keys(data.users).filter((key) => {
@@ -176,7 +176,7 @@ block content
         $(function() {
           $(document).on("keypress", "input:not(.allow_submit)", function(event) {
             if(event.which == 13){
-              var username = '#{usersession.username}';
+              var username = '#{usersession.user.username}';
               var timestamp = getNowTime();
               var comment = escape($('#ChatForm').val());
               if(comment == '')return event.which !== 13;
