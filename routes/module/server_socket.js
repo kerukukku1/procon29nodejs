@@ -257,6 +257,13 @@ io.sockets.on('connection', function(socket) {
     });
   });
 
+  socket.on('join_chatroom', function(data){
+    data.label = "server";
+    io.sockets.emit('join_user',data);
+    data.username = "Admin";
+    io.sockets.emit('refresh_chat',data);
+  });
+
   socket.on('send_chat', function(data){
     console.log("receive");
     io.sockets.emit('refresh_chat',data);
