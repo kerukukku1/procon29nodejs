@@ -26,8 +26,8 @@ router.get('/:room_id', function(req, res, next) {
 router.post('/:room_id', function(req, res, next) {
   console.log("POST!!!");
   console.log(req.body);
-  console.log(req.session.userid);
-  console.log(req.session.username);
+  console.log(req.session.user.userid);
+  console.log(req.session.user.username);
   var roomId = req.params.room_id;
   console.log("roomid: " + roomId);
   const query = `
@@ -43,8 +43,8 @@ router.post('/:room_id', function(req, res, next) {
               createdAt)
   VALUES    ('${req.body.room_name}',
              '${req.body.comment}',
-             '${req.session.username}',
-             '${req.session.userid}',
+             '${req.session.user.username}',
+             '${req.session.user.userid}',
              '${roomId}',
              '${req.body.strategy_time}',
              '${req.body.move_time}',

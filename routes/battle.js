@@ -3,7 +3,7 @@ var router = express.Router();
 var connection = require('../mysqlConnection');
 
 router.get('/:room_id', function(req, res, next) {
-  if (!req.session.userid) {
+  if (!req.session) {
     res.redirect('/');
   } else {
     var roomId = req.params.room_id;

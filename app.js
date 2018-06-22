@@ -17,8 +17,8 @@ var logoutRouter = require('./routes/logout');
 var passport = require('passport');
 var TwitterStrategy = require('passport-twitter').Strategy;
 
-var TWITTER_CONSUMER_KEY = "CWIwwMBTfHXd8Jz76nSJTlBNT";
-var TWITTER_CONSUMER_SECRET = "	jo2l8PuIvenENnf3TMwgDsuztB6In19ZqIo4RulLRNbp0bi30b";
+var TWITTER_CONSUMER_KEY = "8feNkbYD6nadzvj8aBo8dCnhN";
+var TWITTER_CONSUMER_SECRET = "uBPiKYLeMCl7j4IXeSTccHtI39eWeEfKiNAtP4KEMoxZ67S1dg";
 
 passport.serializeUser(function (user, done) {
     done(null, user);

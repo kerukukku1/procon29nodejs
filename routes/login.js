@@ -3,7 +3,7 @@ var router = express.Router();
 var connection = require('../mysqlConnection');
 
 router.get('/', function(req, res, next) {
-  if (req.session.userid) {
+  if (req.session) {
     res.redirect('/');
   } else {
     res.render('login', {
@@ -20,8 +20,8 @@ router.post('/', function(req, res, next) {
   connection.query(query, function(err, rows) {
     var userId = rows.length ? rows[0].userid : false;
     if (userId) {
-      req.session.userid = userId;
-      req.session.username = rows[0].username;
+      req.session.user.id = userId;
+      req.session.user.username = rows[0].username;
       res.redirect('/');
     } else {
       res.render('login', {
