@@ -38,6 +38,12 @@
   align-items: center;
 }
 
+.retBox{
+  word-wrap: break-word;
+  float: left;
+  width: 50%;
+}
+
 .svgbox {
   display: flex;
   justify-content: center;

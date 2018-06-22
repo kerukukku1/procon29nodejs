@@ -38,9 +38,9 @@ block content
         table#chatComment.table.table-hover.table-striped.table-bordered 
           thead
             tr
-              th(scope="col", width="10%") Username
-              th(scope="col", width="80%") Content
-              th(scope="col", width="10%") Datetime
+              th(scope="col", width="20%") Username
+              th(scope="col", width="75%") Content
+              th(scope="col", width="5%") Datetime
           tbody
     .chatbox2
       .table-scroll-wrapper
@@ -95,12 +95,13 @@ block content
           socket.on('refresh_chat', function(data){
             if(data.path != location.pathname)return;
             data.comment = unescape(data.comment);
+            console.log(data.username);
             var option = (!data.label)?"":'class="bg-primary text-white"';
             var _username = (!data.label)?data.username:"admin";
-            var thumbnail = (!data.label)?`<img src="${data.thumbnail}" class="thumbnail"></img>"`:"";
+            var thumbnail = (!data.label)?`<img src="${data.thumbnail}" class="thumbnail"></img>`:"";
             $('#chatComment').append(
               `<tr ${option}>
-              <th width="10%">${thumbnail}${_username}</th>
+              <th width="10%"><div class="box1">${thumbnail}</div><div class="retBox">${_username}</div></th>
               <th width="80%">${data.comment}</th>
               <th width="10%">${data.timestamp}</th>
               </tr>`
@@ -108,7 +109,7 @@ block content
             $('#myChat').animate({
               scrollTop: Number($('#chatComment').height())
             },300);
-            $('#ChatForm').val('');
+            if(data.username == '#{usersession.user.displayName}')$('#ChatForm').val('');
             //- var $textarea = $('#chatComment');
             //- $textarea.scrollTop($textarea[0].scrollHeight);
           });

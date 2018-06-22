@@ -3,6 +3,8 @@ var router = express.Router();
 var connection = require('../mysqlConnection');
 
 router.get('/:room_id', function(req, res, next) {
+  console.log(req.session);
+  if(!req.session)return;
   var roomId = req.params.room_id;
   if (isNaN(roomId)) {
     res.render('error', {
@@ -24,10 +26,9 @@ router.get('/:room_id', function(req, res, next) {
 });
 
 router.post('/:room_id', function(req, res, next) {
-  console.log("POST!!!");
+  if(!req.session.passport)return;
   console.log(req.body);
-  console.log(req.session.user.userid);
-  console.log(req.session.user.username);
+  console.log(req.session.passport);
   var roomId = req.params.room_id;
   console.log("roomid: " + roomId);
   const query = `
@@ -43,8 +44,8 @@ router.post('/:room_id', function(req, res, next) {
               createdAt)
   VALUES    ('${req.body.room_name}',
              '${req.body.comment}',
-             '${req.session.user.username}',
-             '${req.session.user.userid}',
+             '${req.session.passport.user.username}',
+             '${req.session.passport.user.id}',
              '${roomId}',
              '${req.body.strategy_time}',
              '${req.body.move_time}',
