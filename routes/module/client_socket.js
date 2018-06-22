@@ -424,8 +424,8 @@ window.onload = function() {
       });
       //console.log(data[team_red].userName, data[team_blu].userName);
       battleStart({
-        red: data[team_red].userName,
-        blue: data[team_blu].userName
+        red: data[team_red].thumbnail,
+        blue: data[team_blu].thumbnail
       });
     });
 
@@ -624,7 +624,8 @@ window.onload = function() {
       userName: username,
       team: user_status.team,
       maps: state,
-      paintType: paintType
+      paintType: paintType,
+      thumbnail: thumbnail
     };
   }
 
@@ -639,7 +640,7 @@ window.onload = function() {
   function battleStart(data) {
     //initialize Bar
     document.getElementById('playername').innerHTML =
-      '<strong><font color="#03A9F4", size = "20">' + data.blue + '</font> vs. <font color = "#FF4081", size = "20">' + data.red + "</font></strong>";
+      '<strong><font color="#03A9F4", size = "20"><img src="' + data.blue + '"></img></font> vs. <font color = "#FF4081", size = "20"><img src="' + data.red + '"</img></font></strong>';
     jQuery(function($) {
       // $("#progressBar").css({
       //   'width': '0%',
