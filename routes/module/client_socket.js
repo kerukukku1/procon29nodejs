@@ -342,7 +342,7 @@ window.onload = function() {
       }
     });
 
-    socket.on('handshake_finish', function(data){
+    socket.on('handshake_finish', function(data) {
       $('#GamesetModal').modal('show');
       $('#progress-timer').hide();
     });
@@ -737,7 +737,9 @@ window.onload = function() {
             return;
           } else {
             var id = setTimeout((function() {
-              countdown(timeLeft - 1);
+              requestAnimationFrame(function() {
+                countdown(timeLeft - 1);
+              });
             }), 1000);
           }
         } else {
@@ -816,11 +818,11 @@ window.onload = function() {
     return !Object.keys(obj).length;
   }
   $('#WaitingModal').on('hidden.bs.modal', function() {
-    if(isConfirm)socket.emit("disconfirm", user_status);
+    if (isConfirm) socket.emit("disconfirm", user_status);
     console.log("Waiting");
   });
   $('#ConfirmModal').on('hidden.bs.modal', function() {
-    if(isConfirm)return;
+    if (isConfirm) return;
     socket.emit("disconfirm", user_status);
     console.log("Confirm");
   });
