@@ -44,10 +44,11 @@ block content
           tbody
     .chatbox2
       .table-scroll-wrapper
-        table#onlineUsers.table.table-hover.table-striped
+        table#onlineUsers.table.table-hover.table-striped.table-bordered 
           thead.bg-success.text-white
             tr
               th ONLINE
+              th
           tbody
     form
       .input-group.mb-3
@@ -85,7 +86,8 @@ block content
             for(var i = 0; i < result.length; i++){
               $('#onlineUsers').append(
                 `<tr>
-                <th width="100%"><img src="${data.thumbnail}" class="thumbnail"></img> ${data.users[result[i]].username}</th>
+                <th width="10%"><img src="${data.users[result[i]].thumbnail}" class="thumbnail"></img></th>
+                <th width="80%">${data.users[result[i]].username}</th>
                 </tr>`
               );  
             }
@@ -95,9 +97,10 @@ block content
             data.comment = unescape(data.comment);
             var option = (!data.label)?"":'class="bg-primary text-white"';
             var _username = (!data.label)?data.username:"admin";
+            var thumbnail = (!data.label)?"<img src="${data.thumbnail}" class="thumbnail"></img>":"";
             $('#chatComment').append(
               `<tr ${option}>
-              <th width="10%"><img src="${data.thumbnail}" class="thumbnail"></img>${_username}</th>
+              <th width="10%">${thumbnail}${_username}</th>
               <th width="80%">${data.comment}</th>
               <th width="10%">${data.timestamp}</th>
               </tr>`
