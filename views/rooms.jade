@@ -97,7 +97,7 @@ block content
             data.comment = unescape(data.comment);
             var option = (!data.label)?"":'class="bg-primary text-white"';
             var _username = (!data.label)?data.username:"admin";
-            var thumbnail = (!data.label)?'<img src="${data.thumbnail}" class="thumbnail"></img>"':"";
+            var thumbnail = (!data.label)?`<img src="${data.thumbnail}" class="thumbnail"></img>"`:"";
             $('#chatComment').append(
               `<tr ${option}>
               <th width="10%">${thumbnail}${_username}</th>

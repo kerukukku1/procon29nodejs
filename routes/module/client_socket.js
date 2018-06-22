@@ -63,7 +63,8 @@ window.onload = function() {
     roomId: path,
     userId: userid,
     userName: username,
-    team: ""
+    team: "",
+    thumbnail: thumbnail
   };
 
   // document.getElementById("startbutton").onclick = function() {
@@ -640,7 +641,7 @@ window.onload = function() {
   function battleStart(data) {
     //initialize Bar
     document.getElementById('playername').innerHTML =
-      '<strong><font color="#03A9F4", size = "20"><img src="' + data.blue + '"></img></font> vs. <font color = "#FF4081", size = "20"><img src="' + data.red + '"</img></font></strong>';
+      '<strong><font color="#03A9F4", size = "20"><img src="' + data.blue + '"></img></font> vs. <font color = "#FF4081", size = "20"><img src="' + data.red + '"></img></font></strong>';
     jQuery(function($) {
       // $("#progressBar").css({
       //   'width': '0%',
