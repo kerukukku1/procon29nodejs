@@ -10,12 +10,12 @@ block content
     table.table.table-striped.table-hover
       thead.bg-success.text-white
         tr
-          th #
-          th 部屋名
-          th 内容
-          th 作成者
-          th 作戦/意思表示/行動 (sec.)
-          th 作成日時
+          th(width="5%") #
+          th(width="25%") 部屋名
+          th(width="30%") 内容
+          th(width="5%") 作成者
+          th(width="20%") 作戦/意思表示/行動 (sec.)
+          th(width="15%") 作成日時
       //- tbody
       //-   tr
       //-     td Default
@@ -83,6 +83,7 @@ block content
               return data.users[key].path === location.pathname
             });
             console.log(data.users);
+            $("#onlineUsers tr").remove();
             for(var i = 0; i < result.length; i++){
               $('#onlineUsers').append(
                 `<tr>

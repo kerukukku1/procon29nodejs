@@ -26,6 +26,7 @@ router.get('/:room_id', function(req, res, next) {
 });
 
 router.post('/:room_id', function(req, res, next) {
+  if(!req.session)return;
   if(!req.session.passport)return;
   console.log(req.body);
   console.log(req.session.passport);
