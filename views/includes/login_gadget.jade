@@ -1,6 +1,7 @@
 ul.navbar-nav
   if usersession
     li.nav-item.active
+      img(src="#{usersession.user.photos[0].value}")
       a.btn.btn-primary(href='#'): strong #{usersession.user.username}
     li.nav-item.active
       a.btn.btn-primary(href='/logout'): strong Logout
