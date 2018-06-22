@@ -17,8 +17,8 @@ var logoutRouter = require('./routes/logout');
 var passport = require('passport');
 var TwitterStrategy = require('passport-twitter').Strategy;
 
-var TWITTER_CONSUMER_KEY = "lfAgt317oyzBDnIrYJG4juayH";
-var TWITTER_CONSUMER_SECRET = "35EPsngR9hn9DdCf0SDXdgu1NFE3Eva5rDRXMPBcESUrtSEtnL";
+var TWITTER_CONSUMER_KEY = "CWIwwMBTfHXd8Jz76nSJTlBNT";
+var TWITTER_CONSUMER_SECRET = "	jo2l8PuIvenENnf3TMwgDsuztB6In19ZqIo4RulLRNbp0bi30b";
 
 passport.serializeUser(function (user, done) {
     done(null, user);
@@ -70,7 +70,6 @@ app.use(session({
 
 app.use(function(req, res, next){
   res.locals.usersession = req.session.passport;
-  console.log(req.session.passport);
   next();
 });
 
