@@ -90,28 +90,27 @@ io.sockets.on('connection', function(socket) {
 
   socket.on("MapDataSync", function(data) {
     //step2(設置フェーズ)においてのプレイヤーの情報
+    if (data.status.team == "") return;
     if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     } else {
       try {
-        console.log(tmp_moveplayer_store[socket.data.roomId]);
-        console.log("playerdata : ", data.playerdata);
         if (data.playerdata) {
           if (data.status.team == "red" && !data.playerdata.red) {
             tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
           } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
+          if (quest_manage_store[socket.data.roomId]) {
+            quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
+          }
+          io.sockets.in(socket.data.roomId).emit("MapDataSync", quest_manage_store[socket.data.roomId]);
         }
       } catch (err) {
         console.log(err.name + ': ' + err.message);
         return;
       }
     }
-    if (quest_manage_store[socket.data.roomId]) {
-      quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
-    }
-    socket.emit("MapDataSync", quest_manage_store[socket.data.roomId]);
   });
 
   //盤面情報の一時的な同期
@@ -218,7 +217,7 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on("disconfirm", function(data){
+  socket.on("disconfirm", function(data) {
     if (!socket.data) return;
     confirm_room_store[data.roomId] = 0;
     io.sockets.in(socket.data.roomId).emit("cancel_confirm", data);
@@ -253,22 +252,25 @@ io.sockets.on('connection', function(socket) {
         text: text,
         err: err
       };
-      if(socket.data)sender.status = quest_manage_store[socket.data.roomId];
+      if (socket.data) sender.status = quest_manage_store[socket.data.roomId];
       socket.emit("filedata", sender);
     });
   });
 
-  socket.on('join_chatroom', function(data){
+  socket.on('join_chatroom', function(data) {
     socket.chatdata = data;
     data.label = "server";
     chatroom_user_store[data.userid] = data;
-    io.sockets.emit('join_user',{users:chatroom_user_store,path:data.path});
-    io.sockets.emit('refresh_chat',data);
+    io.sockets.emit('join_user', {
+      users: chatroom_user_store,
+      path: data.path
+    });
+    io.sockets.emit('refresh_chat', data);
   });
 
-  socket.on('send_chat', function(data){
+  socket.on('send_chat', function(data) {
     console.log("receive");
-    io.sockets.emit('refresh_chat',data);
+    io.sockets.emit('refresh_chat', data);
   });
 
   socket.on("handshake", function(data) {
@@ -328,7 +330,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
-        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
+        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, verifyConflict(tmp_moveplayer_store[socket.data.roomId]));
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
@@ -343,6 +345,48 @@ io.sockets.on('connection', function(socket) {
     // }).bind(null, data.step), (data.step == 1)?20000:10000);
   });
 });
+/*
+red.a == red.b, blue.a, blue.b
+red.b == red.a, blue.a, blue.b
+blue.a == blue.b, red.a, red.b
+blue.b == blue.a, red.a, red.b
+*/
+function verifyConflict(_player) {
+  for (var team in _player) {
+    team = String(team);
+    for (var agent in _player[team]) {
+      agent = String(agent);
+      var isConflict = false;
+      for (var _team in _player) {
+        _team = String(_team);
+        for (var _agent in _player[_team]) {
+          _agent = String(_agent);
+          if ((team == _team) && (agent == _agent)) continue;
+          if(_player[_team][_agent].x == -1)continue;
+          if (equalsObject(_player[team][agent], _player[_team][_agent])) {
+            _player[_team][_agent] = {
+              x: -1,
+              y: -1
+            };
+            isConflict = true;
+          }
+        }
+      }
+      if (isConflict) {
+        _player[team][agent] = {
+          x: -1,
+          y: -1
+        };
+      }
+    }
+  }
+  console.log(_player);
+  return _player;
+}
+
+function equalsObject(obj1, obj2) {
+  return JSON.stringify(obj1) == JSON.stringify(obj2);
+}
 
 function timeKeeper(depth, span) {
   if (depth == 0) return;

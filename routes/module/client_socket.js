@@ -233,8 +233,9 @@ window.onload = function() {
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var _paintflag = true;
-      if (user_status.team != "")
+      if (user_status.team != ""){
         console.log(data.player.team);
+      }
       console.log(user_status.team);
       _paintflag = (user_status.team == data.player.team);
       var coord = {
@@ -331,12 +332,13 @@ window.onload = function() {
         $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= 2) {
+        if (data.turn >= turn) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1
           });
         } else {
+          enableClick = false;
           $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
       }
@@ -349,6 +351,13 @@ window.onload = function() {
 
     socket.on('MapDataSync', function(data) {
       if (typeof data.next != "undefined") {
+        for(var team in move_players){
+          team = String(team);
+          for(var agent in move_players[team]){
+            agent = String(agent);
+            paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", "black");
+          }
+        }
         var dummy = {
           A: types.draw,
           B: types.draw
