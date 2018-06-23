@@ -177,7 +177,7 @@ window.onload = function() {
       //console.log("TARGET : B");
     }
     if (mytar == targets.NONE) return;
-    var _check = getVerifyNextData(move_players)
+    var _check = getVerifyNextData(move_players).next
     if (equalsObject(_check[user_status.team][(mytar == targets.A) ? "B" : "A"], check)) {
       console.log("equal");
       return;
@@ -233,7 +233,7 @@ window.onload = function() {
     socket.on('tmp_movePlayer', function(data) {
       if (!data.player) return;
       var _paintflag = true;
-      if (user_status.team != ""){
+      if (user_status.team != "") {
         console.log(data.player.team);
       }
       console.log(user_status.team);
@@ -338,7 +338,7 @@ window.onload = function() {
             step: data.step + 1
           });
         } else {
-          enableClick = false;
+          enableClick = true;
           $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
       }
@@ -351,9 +351,9 @@ window.onload = function() {
 
     socket.on('MapDataSync', function(data) {
       if (typeof data.next != "undefined") {
-        for(var team in move_players){
+        for (var team in move_players) {
           team = String(team);
-          for(var agent in move_players[team]){
+          for (var agent in move_players[team]) {
             agent = String(agent);
             paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", "black");
           }
@@ -362,42 +362,61 @@ window.onload = function() {
           A: types.draw,
           B: types.draw
         }
-        data.next = getVerifyNextData(data.next);
+        var _verifyCheck = getVerifyNextData(data.next);
+        data.next = _verifyCheck.next;
         if (players.red.A.x == -1) {
           players = objectCopy(quest_manage_store[socket.data.roomId].currentPlayerPosition);
         }
         var tmp = mytar;
         mytar = targets.NONE;
         //現在のプレイヤーラベルを同一色で剥がす
-        paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
-        paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
-        paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
-        paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "", "white");
+        for (var team in players) {
+          team = String(team);
+          for (var agent in players[team]) {
+            agent = String(agent);
+            paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], "", "white");
+            //削除でコンフリクトのときは無効
+            if(_verifyCheck.flag[team][agent]){
+              data.method[team][agent] = types.draw;
+            }
+            state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
+            if (data.method[team][agent] == types.clear) {
+              paintCell(data.next[team][agent].x, data.next[team][agent].y, state[data.next[team][agent].y][data.next[team][agent].x], "", "black");
+            }
+          }
+        }
+        // paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "", "white");
+        // paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "", "white");
+        // paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "", "white");
+        // paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "", "white");
         //次のパネルをセット
-        state[data.next.red.A.y][data.next.red.A.x].color = (data.method.red.A != types.clear) ? colors.red : colors.white;
-        state[data.next.red.B.y][data.next.red.B.x].color = (data.method.red.B != types.clear) ? colors.red : colors.white;
-        state[data.next.blue.A.y][data.next.blue.A.x].color = (data.method.blue.A != types.clear) ? colors.blue : colors.white;
-        state[data.next.blue.B.y][data.next.blue.B.x].color = (data.method.blue.B != types.clear) ? colors.blue : colors.white;
+        // state[data.next.red.A.y][data.next.red.A.x].color = (data.method.red.A != types.clear) ? colors.red : colors.white;
+        // state[data.next.red.B.y][data.next.red.B.x].color = (data.method.red.B != types.clear) ? colors.red : colors.white;
+        // state[data.next.blue.A.y][data.next.blue.A.x].color = (data.method.blue.A != types.clear) ? colors.blue : colors.white;
+        // state[data.next.blue.B.y][data.next.blue.B.x].color = (data.method.blue.B != types.clear) ? colors.blue : colors.white;
         //次のパネルに移動
         mytar = tmp;
         //削除があった場合の対策
-        if (data.method.red.A == types.clear) {
-          paintCell(data.next.red.A.x, data.next.red.A.y, state[data.next.red.A.y][data.next.red.A.x], "", "black");
-        }
-        if (data.method.red.B == types.clear) {
-          paintCell(data.next.red.B.x, data.next.red.B.y, state[data.next.red.B.y][data.next.red.B.x], "", "black");
-        }
-        if (data.method.blue.A == types.clear) {
-          paintCell(data.next.blue.A.x, data.next.blue.A.y, state[data.next.blue.A.y][data.next.blue.A.x], "", "black");
-        }
-        if (data.method.blue.B == types.clear) {
-          paintCell(data.next.blue.B.x, data.next.blue.B.y, state[data.next.blue.B.y][data.next.blue.B.x], "", "black");
-        }
+        // if (data.method.red.A == types.clear) {
+        //   paintCell(data.next.red.A.x, data.next.red.A.y, state[data.next.red.A.y][data.next.red.A.x], "", "black");
+        // }
+        // if (data.method.red.B == types.clear) {
+        //   paintCell(data.next.red.B.x, data.next.red.B.y, state[data.next.red.B.y][data.next.red.B.x], "", "black");
+        // }
+        // if (data.method.blue.A == types.clear) {
+        //   paintCell(data.next.blue.A.x, data.next.blue.A.y, state[data.next.blue.A.y][data.next.blue.A.x], "", "black");
+        // }
+        // if (data.method.blue.B == types.clear) {
+        //   paintCell(data.next.blue.B.x, data.next.blue.B.y, state[data.next.blue.B.y][data.next.blue.B.x], "", "black");
+        // }
         players = getVerifyNextData2(data.next, data.method);
-        paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
-        paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
-        paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
-        paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
+        for (var team in players) {
+          team = String(team);
+          for (var agent in players[team]) {
+            agent = String(agent);
+            paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], agent, "white");
+          }
+        }
         move_players = objectCopy(org_move_players);
       }
       let ret = calcScore(state, w, h, colors);
@@ -580,19 +599,6 @@ window.onload = function() {
   }
 
   function getVerifyNextData2(next, method) {
-    // console.log(method);
-    // if (next.red.A.x == -1) {
-    //   next.red.A = players.red.A;
-    // }
-    // if (next.red.B.x == -1) {
-    //   next.red.B = players.red.B;
-    // }
-    // if (next.blue.A.x == -1) {
-    //   next.blue.A = players.blue.A;
-    // }
-    // if (next.blue.B.x == -1) {
-    //   next.blue.B = players.blue.B;
-    // }
     if (method) {
       if (method.red.A == types.clear) next.red.A = players.red.A;
       if (method.red.B == types.clear) next.red.B = players.red.B;
@@ -603,11 +609,36 @@ window.onload = function() {
   }
 
   function getVerifyNextData(next) {
-    if (next.red.A.x == -1) next.red.A = players.red.A;
-    if (next.red.B.x == -1) next.red.B = players.red.B;
-    if (next.blue.A.x == -1) next.blue.A = players.blue.A;
-    if (next.blue.B.x == -1) next.blue.B = players.blue.B;
-    return next;
+    var flag = {
+      red: {
+        A: false,
+        B: false
+      },
+      blue: {
+        A: false,
+        B: false
+      }
+    };
+    if (next.red.A.x == -1) {
+      next.red.A = players.red.A;
+      flag.red.A = true;
+    }
+    if (next.red.B.x == -1) {
+      next.red.B = players.red.B
+      flag.red.B = true;
+    };
+    if (next.blue.A.x == -1) {
+      next.blue.A = players.blue.A
+      flag.blue.A = true;
+    };
+    if (next.blue.B.x == -1) {
+      next.blue.B = players.blue.B
+      flag.blue.B = true;
+    };
+    return {
+      next: next,
+      flag: flag
+    };
   }
 
   function scrollX() {
@@ -696,7 +727,6 @@ window.onload = function() {
       // reset timer
       clearTimeout(this.data('id_of_settimeout'));
       this.empty();
-      if (step == 2) enableClick = true;
       // initialize elements
       this.append('<h4><strong>' + phase + ' : </strong><span></span> seconds left.</h4>');
       this.append('<div class="progress"></div>');
@@ -708,6 +738,7 @@ window.onload = function() {
       });
       var isSync = false;
       var countdown = (function(timeLeft) {
+        if (step == 2) enableClick = true;
         var $header = this.children('h4');
         if (timeLeft <= 0) {
           $header.empty().text(phase + ' is Over. Next Step is ' + (move_time + timeLeft) + ' sec. later').addClass('text-danger');
@@ -727,7 +758,7 @@ window.onload = function() {
             step: step,
             maps: state
           };
-          sender.playerdata = getVerifyNextData(move_players);
+          sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
             socket.emit("MapDataSync", sender);
             isSync = true;

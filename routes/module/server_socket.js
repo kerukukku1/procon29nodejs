@@ -344,6 +344,40 @@ io.sockets.on('connection', function(socket) {
     //   io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
     // }).bind(null, data.step), (data.step == 1)?20000:10000);
   });
+  function verifyConflict(_player) {
+    for (var team in _player) {
+      team = String(team);
+      for (var agent in _player[team]) {
+        agent = String(agent);
+        var isConflict = false;
+        for (var _team in _player) {
+          _team = String(_team);
+          for (var _agent in _player[_team]) {
+            _agent = String(_agent);
+            if ((team == _team) && (agent == _agent)) continue;
+            if(_player[_team][_agent].x == -1)continue;
+            if (equalsObject(_player[team][agent], _player[_team][_agent])) {
+              _player[_team][_agent] = {
+                x: -1,
+                y: -1
+              };
+              quest_manage_store[socket.data.roomId].method[_team][_agent] = types.draw;
+              isConflict = true;
+            }
+          }
+        }
+        if (isConflict) {
+          quest_manage_store[socket.data.roomId].method[team][agent] = types.draw;
+          _player[team][agent] = {
+            x: -1,
+            y: -1
+          };
+        }
+      }
+    }
+    console.log(_player);
+    return _player;
+  }
 });
 /*
 red.a == red.b, blue.a, blue.b
@@ -351,38 +385,6 @@ red.b == red.a, blue.a, blue.b
 blue.a == blue.b, red.a, red.b
 blue.b == blue.a, red.a, red.b
 */
-function verifyConflict(_player) {
-  for (var team in _player) {
-    team = String(team);
-    for (var agent in _player[team]) {
-      agent = String(agent);
-      var isConflict = false;
-      for (var _team in _player) {
-        _team = String(_team);
-        for (var _agent in _player[_team]) {
-          _agent = String(_agent);
-          if ((team == _team) && (agent == _agent)) continue;
-          if(_player[_team][_agent].x == -1)continue;
-          if (equalsObject(_player[team][agent], _player[_team][_agent])) {
-            _player[_team][_agent] = {
-              x: -1,
-              y: -1
-            };
-            isConflict = true;
-          }
-        }
-      }
-      if (isConflict) {
-        _player[team][agent] = {
-          x: -1,
-          y: -1
-        };
-      }
-    }
-  }
-  console.log(_player);
-  return _player;
-}
 
 function equalsObject(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);
