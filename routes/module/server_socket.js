@@ -106,6 +106,16 @@ io.sockets.on('connection', function(socket) {
           }
           io.sockets.in(socket.data.roomId).emit("MapDataSync", quest_manage_store[socket.data.roomId]);
         }
+        quest_manage_store[socket.data.roomId].method = {
+          red: {
+            A: types.draw,
+            B: types.draw
+          },
+          blue: {
+            A: types.draw,
+            B: types.draw
+          }
+        }
       } catch (err) {
         console.log(err.name + ': ' + err.message);
         return;
@@ -330,7 +340,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
-        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, verifyConflict(tmp_moveplayer_store[socket.data.roomId]));
+        quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
@@ -344,6 +354,7 @@ io.sockets.on('connection', function(socket) {
     //   io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
     // }).bind(null, data.step), (data.step == 1)?20000:10000);
   });
+
   function verifyConflict(_player) {
     for (var team in _player) {
       team = String(team);
@@ -355,7 +366,7 @@ io.sockets.on('connection', function(socket) {
           for (var _agent in _player[_team]) {
             _agent = String(_agent);
             if ((team == _team) && (agent == _agent)) continue;
-            if(_player[_team][_agent].x == -1)continue;
+            if (_player[_team][_agent].x == -1) continue;
             if (equalsObject(_player[team][agent], _player[_team][_agent])) {
               _player[_team][_agent] = {
                 x: -1,

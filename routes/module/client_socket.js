@@ -43,6 +43,8 @@ window.onload = function() {
     red: "#FF4081",
     blue: "#03A9F4",
     white: "#FFFFFF",
+    clearred: 'rgba(255, 64, 129, 0.5)',
+    clearblue: 'rgba(3, 169, 244, 0.5)'
   };
   var targets = {
     A: 0,
@@ -243,7 +245,6 @@ window.onload = function() {
         y: data.status.y
       };
 
-      c = (data.player.team == "red") ? colors.red : colors.blue;
       var group = data.status.group;
       //一回前の描画を消すための処理
       if (group == "A") {
@@ -270,18 +271,25 @@ window.onload = function() {
       // state[coord.y][coord.x].color = c;
       var nowx = coord.x;
       var nowy = coord.y;
+      c = (data.player.team == "red") ? colors.red : colors.blue;
       var dummy = {
-        score: state[coord.y][coord.x].score,
+        score: state[nowy][nowx].score,
         color: c
       };
+      var tmpcolor = state[nowy][nowx].color;
       _paintflag && paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", (user_status.team == "red") ? "#1AFF8C" : "#FFB31A");
       if (data.status.paintType == types.clear && _paintflag) {
+        if (state[nowy][nowx].color == colors.red) {
+          paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", "#1AFF8C", colors["clearred"])
+        } else if (data.status.maps[nowy][nowx].color == colors.blue) {
+          paintCell(nowx, nowy, dummy, (mytar == targets.A) ? "A*" : "B*", "#FFB31A", colors["clearblue"])
+        }
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.moveTo(coord.x * square_size, coord.y * square_size);
-        ctx.lineTo((coord.x + 1) * square_size, (coord.y + 1) * square_size);
-        ctx.lineTo((coord.x) * square_size, (coord.y + 1) * square_size);
-        ctx.lineTo((coord.x + 1) * square_size, (coord.y) * square_size);
+        ctx.moveTo(nowx * square_size, nowy * square_size);
+        ctx.lineTo((nowx + 1) * square_size, (nowy + 1) * square_size);
+        ctx.lineTo((nowx) * square_size, (nowy + 1) * square_size);
+        ctx.lineTo((nowx + 1) * square_size, (nowy) * square_size);
         ctx.stroke();
         ctx.strokeStyle = "#757575";
       }
@@ -376,7 +384,7 @@ window.onload = function() {
             agent = String(agent);
             paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], "", "white");
             //削除でコンフリクトのときは無効
-            if(_verifyCheck.flag[team][agent]){
+            if (_verifyCheck.flag[team][agent]) {
               data.method[team][agent] = types.draw;
             }
             state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
@@ -545,7 +553,7 @@ window.onload = function() {
       //console.log(paintType);
       paintType = types.clear;
       //透過処理
-      ctx.globalAlpha = 0.5;
+      // ctx.globalAlpha = 0.5;
     }
   };
 
@@ -553,7 +561,7 @@ window.onload = function() {
     if (event.key == "Shift") {
       //console.log("up");
       paintType = types.draw;
-      ctx.globalAlpha = 1.0;
+      // ctx.globalAlpha = 1.0;
     }
   };
 
@@ -817,13 +825,13 @@ window.onload = function() {
     socket.emit('readfile', dir);
   }
 
-  function paintCell(nowx, nowy, cell, player, textcolor) {
+  function paintCell(nowx, nowy, cell, player, textcolor, clearcolor) {
     //verify
     if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
     //canvasの一部分削除
     posx = nowx * square_size;
     posy = nowy * square_size;
-    ctx.fillStyle = cell.color;
+    ctx.fillStyle = (!clearcolor) ? cell.color : clearcolor;
     ctx.font = "20px bold";
     ctx.beginPath();
     ctx.clearRect(posx, posy, square_size, square_size);
