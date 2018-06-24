@@ -28,7 +28,8 @@ router.get('/:room_id', function(req, res, next) {
               roomId: roomId,
               strategy_time: room[0].strategy_time,
               move_time: room[0].move_time,
-              declare_time: room[0].declare_time
+              declare_time: room[0].declare_time,
+              isFinished: room[0].isFinished
             });
           } else {
             res.render('error', {

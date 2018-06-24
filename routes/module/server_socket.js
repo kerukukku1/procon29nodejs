@@ -2,6 +2,7 @@ var http = require('http');
 var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
+var connection = require('../../mysqlConnection');
 var types = {
   clear: 0,
   draw: 1
@@ -273,6 +274,18 @@ io.sockets.on('connection', function(socket) {
     };
   });
 
+  socket.on("endBattle", function(data){
+    var query = `update room_table set isFinished = 1 where room_id = ${data}`;
+    console.log(query);
+    connection.query(query, function(err, rows) {
+      if(err){
+        console.log("Update Database Error");
+      }else{
+        console.log(rows);
+      }
+    });
+  });
+
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
     var dir = process.cwd() + '/questdata/' + data;
@@ -364,7 +377,7 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
-        io.sockets.in(socket.data.roomId).emit("handshake_finish", quest_manage_store[socket.data.roomId]);
+        io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       }
     }
     //10秒ごとに巡回．停止されているかどうかの確認

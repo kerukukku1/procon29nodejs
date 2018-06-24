@@ -331,16 +331,22 @@ window.onload = function() {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
       }
-      if (data.step == 3) $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
+      if (data.step == 3) {
+        //ゲーム終了時のレイアウトをここで表示
+        // $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
+        $('#GamesetModal').modal('show');
+        $('#progress-timer').hide();
+      }
     });
 
     socket.on('client_handshake', function(data) {
       //console.log("next : ", data.next);
       if (data.step == 1) {
-        $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
+        // $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
+        $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= turn) {
+        if (data.turn >= 2) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1
@@ -349,12 +355,12 @@ window.onload = function() {
           enableClick = true;
           $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
+      } else if (data.step == 3) {
+        //ゲーム終了時のレイアウトをここで表示
+        socket.emit("endBattle", roomid);
+        $('#GamesetModal').modal('show');
+        $('#progress-timer').hide();
       }
-    });
-
-    socket.on('handshake_finish', function(data) {
-      $('#GamesetModal').modal('show');
-      $('#progress-timer').hide();
     });
 
     socket.on('MapDataSync', function(data) {
@@ -366,8 +372,8 @@ window.onload = function() {
           team = String(team);
           for (var agent in move_players[team]) {
             agent = String(agent);
-            var flag = (state[move_players[team][agent].y][move_players[team][agent].x].color==colors.white);
-            paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", flag?"black":"white");
+            var flag = (state[move_players[team][agent].y][move_players[team][agent].x].color == colors.white);
+            paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", flag ? "black" : "white");
           }
         }
         var dummy = {
@@ -455,7 +461,7 @@ window.onload = function() {
       });
     });
 
-    socket.on('GameForceShutdown', function(){
+    socket.on('GameForceShutdown', function() {
       $("#GameForceShutdown").modal('show');
     });
 
