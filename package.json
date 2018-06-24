@@ -8,13 +8,21 @@
   "dependencies": {
     "animejs": "^2.2.0",
     "cookie-parser": "~1.4.3",
+    "date-utils": "^1.2.21",
     "debug": "~2.6.9",
     "express": "~4.16.0",
+    "express-session": "^1.15.6",
+    "extend": "^3.0.1",
+    "fs": "0.0.1-security",
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
-    "moment": "^2.22.1",
+    "moment": "^2.22.2",
+    "mongoose": "^5.1.6",
     "morgan": "~1.9.0",
     "mysql": "^2.15.0",
-    "socket.io": "^2.1.1"
+    "passport": "^0.4.0",
+    "passport-twitter": "^1.0.4",
+    "socket.io": "^2.1.1",
+    "vivus": "^0.4.4"
   }
 }

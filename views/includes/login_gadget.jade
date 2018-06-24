@@ -1,0 +1,14 @@
+ul.navbar-nav
+  if usersession
+    li.nav-item.active
+      img(src="#{usersession.user.photos[0].value}").thumbnail
+    li.nav-item.active
+      a.btn.btn-primary(href='#'): strong #{usersession.user.username}
+    li.nav-item.active
+      a.btn.btn-primary(href='/logout'): strong Logout
+
+  else 
+    //- li.nav-item
+      //- a.btn.btn-primary(href='/register'): strong Register
+    li.nav-item
+      a.btn.btn-primary(href='/oauth'): strong Login Twitter

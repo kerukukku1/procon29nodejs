@@ -1,6 +1,10 @@
 extends layout
 
 block content
-  h1= message
-  h2= error.status
-  pre #{error.stack}
+  if roomid_error
+    div(class="alert alert-danger" role="alert")
+      |ルームIDが不正です．適切な値を入力してください．
+  else
+    h1= message
+    h2= error.status
+    pre #{error.stack}

@@ -1,7 +1,12 @@
 extends layout
 block content
-  h1= title
-  p Welcome to #{title}
+  h1 Welcome to #{title}!
+  hr
+  br
+  h2 What's this?
+  br
+  h7
+    p 全国高専プログラミングコンテストの競技部門のための練習場です．問題のアップロードとリアルタイムの対戦が可能です．このサイトはnode.jsとsocket.ioを用いています．私自身はちゃんとしたサイトを作ったのがこれが初めてなのでセキュリティとかの問題に対処しきれていない場合があります．念のためアカウントには本アカウントのパスワードなどを用いないようにお願いします．暗号化などの処理は施してはいますが，万一データなどが不正に抜き取られた場合，当サイト及び運営は一切の責任をとりません．ご了承ください．
   //- section: strong: font(size="6") Turn 0 / NaN
   //- .wrapper#master
   //-   -for(var i = 0; i < 5; i++){  

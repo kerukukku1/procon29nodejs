@@ -1,0 +1,231 @@
+extends layout
+block content
+  if usersession
+    h1 Quest Room
+    hr
+    include includes/confirm_modal.jade
+    button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
+    .text-danger ※注意 1日以上試合が行われない部屋は自動的に一覧から削除されます．
+    br
+    table.table.table-striped.table-hover
+      thead.bg-success.text-white
+        tr
+          th(width="5%") #
+          th(width="25%") 部屋名
+          th(width="30%") 内容
+          th(width="5%") 作成者
+          th(width="20%") 作戦/意思表示/行動 (sec.)
+          th(width="15%") 作成日時
+      //- tbody
+      //-   tr
+      //-     td Default
+      //-     td Defaultson
+      //-     td def@somemail.com
+      tbody
+      - for (var i = 0; i < roomList.length; i++) {
+        tr(data-href="/battle/#{roomList[i].room_id}")
+          th(scope='row')= roomList[i].room_id
+          td= roomList[i].room_name
+          td= roomList[i].comment
+          td= roomList[i].master
+          td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
+          td= roomList[i].createdAt
+      - }
+    hr
+    h5 Chat
+    .chatbox1
+      .table-scroll-wrapper#myChat
+        table#chatComment.table.table-hover.table-striped.table-bordered 
+          thead
+            tr
+              th(scope="col", width="20%") Username
+              th(scope="col", width="75%") Content
+              th(scope="col", width="5%") Datetime
+          tbody
+    .chatbox2
+      .table-scroll-wrapper
+        table#onlineUsers.table.table-hover.table-striped.table-bordered 
+          thead.bg-success.text-white
+            tr
+              th ONLINE
+              th
+          tbody
+    form
+      .input-group.mb-3
+        .input-group-prepend
+          span#basic-addon1.input-group-text >
+        input.form-control(type='text', placeholder='Enter Chat Content', aria-label='Username', aria-describedby='basic-addon1', autocomplete="off")#ChatForm
+        
+    h5 Preview
+    center: canvas(id="myCanvas", height="800", width="800")
+    script(src="http://localhost:8888/socket.io/socket.io.js")
+    script.
+      window.onload = function() {
+        $('#chatComment').css({resize: "none"});
+        var colors = {
+          red: "#FF4081",
+          blue: "#03A9F4",
+          white: "#FFFFFF",
+        };
+        var socket = io.connect("http://localhost:8888/");
+        var state = [];
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        var square_size = 50;
+        socket.on('connect', function() {
+          var dir = '#{filedir}';
+          console.log(dir);
+          socket.emit('readfile', dir);
+          socket.emit('join_chatroom', {thumbnail: "#{usersession.user.photos[0].value}", userid:'#{usersession.user.id}', username: '#{usersession.user.displayName}', timestamp: getNowTime(), comment:'<img src="#{usersession.user.photos[0].value}" class="thumbnail"></img> #{usersession.user.displayName}'+"さんが入場しました．", path : location.pathname});
+          socket.on('join_user', function(data){
+            if(data.path != location.pathname)return;
+            const result = Object.keys(data.users).filter((key) => {
+              return data.users[key].path === location.pathname
+            });
+            console.log(data.users);
+            $("#onlineUsers tr").remove();
+            for(var i = 0; i < result.length; i++){
+              $('#onlineUsers').append(
+                `<tr>
+                <th width="10%"><img src="${data.users[result[i]].thumbnail}" class="thumbnail"></img></th>
+                <th width="80%">${data.users[result[i]].username}</th>
+                </tr>`
+              );  
+            }
+          });
+          socket.on('refresh_chat', function(data){
+            if(data.path != location.pathname)return;
+            data.comment = unescape(data.comment);
+            console.log(data.username);
+            var option = (!data.label)?"":'class="bg-primary text-white"';
+            var _username = (!data.label)?data.username:"admin";
+            var thumbnail = (!data.label)?`<img src="${data.thumbnail}" class="thumbnail"></img>`:"";
+            $('#chatComment').append(
+              `<tr ${option}>
+              <th width="10%"><div class="box1">${thumbnail}</div><div class="retBox">${_username}</div></th>
+              <th width="80%">${data.comment}</th>
+              <th width="10%">${data.timestamp}</th>
+              </tr>`
+            );
+            $('#myChat').animate({
+              scrollTop: Number($('#chatComment').height())
+            },300);
+            if(data.username == '#{usersession.user.displayName}')$('#ChatForm').val('');
+            //- var $textarea = $('#chatComment');
+            //- $textarea.scrollTop($textarea[0].scrollHeight);
+          });
+          socket.on('filedata', function(data){
+            var arr = data.text.split('\n');
+            w = parseInt(arr[1]);
+            h = parseInt(arr[2]);
+            _w = w * square_size + 1.5;
+            _h = h * square_size + 1;
+            canvas.height = 2 * _h;
+            canvas.width = 2 * _w;
+            canvas.style.height = _h + 'px';
+            canvas.style.width = _w + 'px';
+            ctx.scale(2, 2);
+            ctx.strokeStyle = "#757575"
+            ctx.lineWidth = 0.5;
+            ctx.translate(0.5, 0.5);
+            ctx.textAlign = "center";
+            for (var i = 0; i < h; i++) {
+              var row = arr[3 + i];
+              var elems = row.split(' ');
+              var _elems = [];
+              for (var j = 0; j < w; j++) {
+                var score = elems[j];
+                _elems[j] = {
+                  score: parseInt(elems[j]),
+                  color: "white"
+                };
+                paintCell(j,i,_elems[j],"","black");
+              }
+              state.push(_elems);
+            }
+            i += 3;var npos;
+            npos = arr[i + 0].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.red;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
+            npos = arr[i + 1].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.red;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+            npos = arr[i + 2].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.blue;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
+            npos = arr[i + 3].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.blue;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+          });
+
+        });
+        function paintCell(nowx, nowy, cell, player, textcolor) {
+          //verify
+          if (nowx < 0 || nowy < 0 || nowx >= w || nowy >= h) return;
+          //canvasの一部分削除
+          posx = nowx * square_size;
+          posy = nowy * square_size;
+          ctx.fillStyle = cell.color;
+          ctx.font = "20px bold";
+          ctx.beginPath();
+          ctx.fillRect(posx, posy, square_size, square_size);
+          ctx.rect(posx, posy, square_size, square_size);
+          ctx.stroke();
+          ctx.strokeStyle = "#757575";
+          ctx.lineWidth = 0.5;
+          ctx.fillStyle = textcolor;
+          ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
+          ctx.font = "15px bold";
+          ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
+        }
+        $(function() {
+          $(document).on("keypress", "input:not(.allow_submit)", function(event) {
+            if(event.which == 13){
+              var username = '#{usersession.user.displayName}';
+              var thumbnail = '#{usersession.user.photos[0].value}';
+              var timestamp = getNowTime();
+              var comment = escape($('#ChatForm').val());
+              if(comment == '')return event.which !== 13;
+              socket.emit("send_chat", {thumbnail:thumbnail, username: username, timestamp: timestamp, comment:comment, path : location.pathname});
+            }
+            return event.which !== 13;
+          });
+        });
+      };
+      $("#MakeRoomDecide").on("click",function  (e) {
+        e.preventDefault();
+        $('#submitRoomDetails').submit();
+        //- $('#RoomMakeModal').modal('hide');
+      });
+      $('#MakeRoom').click(function() {
+        $('#RoomMakeModal').modal('show');
+      });
+      $('#ChatForm').submit(function(){
+        console.log("HELLO");
+      });
+      jQuery( function($) {
+        $('tbody tr[data-href]').addClass('clickable').click( function() {
+          window.location = $(this).attr('data-href');
+        }).find('a').hover( function() {
+          $(this).parents('tr').unbind('click');
+        }, function() {
+          $(this).parents('tr').click( function() {
+            window.location = $(this).attr('data-href');
+          });
+        });
+      });
+      function getNowTime(){
+        var tm= new Date();
+        var hour = tm.getHours();
+        hour = (hour<10)?'0'+hour:hour;
+        var minute = tm.getMinutes();
+        minute = (minute<10)?'0'+minute:minute;
+        var second = tm.getSeconds();
+        second = (second<10)?'0'+second:second;
+        var timestamp = hour+":"+minute+":"+second;
+        return timestamp;
+      }
+
+  else
+    div(class="alert alert-danger" role="alert")
+      セッション情報がありません．ログインを行ってください．
