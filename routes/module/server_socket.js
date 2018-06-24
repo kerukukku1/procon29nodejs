@@ -88,7 +88,15 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on("MapDataSync", function(data) {
+  socket.on("MapDataSync", function(data){
+    if(data.status.team=="")return;
+    if(!socket.data)return;
+    quest_manage_store[socket.data.roomId].maps = data.maps;
+    quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, data.currentPlayerPosition);
+    tmp_moveplayer_store[socket.data.roomId] = extend({}, data.currentPlayerPosition);
+  });
+
+  socket.on("SyncQuestData", function(data) {
     //step2(設置フェーズ)においてのプレイヤーの情報
     if (data.status.team == "") return;
     if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
@@ -104,6 +112,9 @@ io.sockets.on('connection', function(socket) {
           if (quest_manage_store[socket.data.roomId]) {
             quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
           }
+          quest_manage_store[socket.data.roomId].maps = data.maps;
+          quest_manage_store[socket.data.roomId].currentPlayerPosition = tmp_moveplayer_store[socket.data.roomId];
+          // quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, getVerifyNextData(quest_manage_store[socket.data.roomId].next, quest_manage_store[socket.data.roomId].currentPlayerPosition));
           io.sockets.in(socket.data.roomId).emit("MapDataSync", quest_manage_store[socket.data.roomId]);
         }
         quest_manage_store[socket.data.roomId].method = {
@@ -334,6 +345,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].nowTime = now;
       if (data.step == 1) {
         //prepare next turn count
+        quest_manage_store[socket.data.roomId].currentPlayerPosition = data.current;
         quest_manage_store[socket.data.roomId].turn = 0;
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
@@ -396,6 +408,22 @@ red.b == red.a, blue.a, blue.b
 blue.a == blue.b, red.a, red.b
 blue.b == blue.a, red.a, red.b
 */
+
+function getVerifyNextData(next, players) {
+  if (next.red.A.x == -1) {
+    next.red.A = players.red.A;
+  }
+  if (next.red.B.x == -1) {
+    next.red.B = players.red.B
+  };
+  if (next.blue.A.x == -1) {
+    next.blue.A = players.blue.A
+  };
+  if (next.blue.B.x == -1) {
+    next.blue.B = players.blue.B
+  };
+  return next
+}
 
 function equalsObject(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);

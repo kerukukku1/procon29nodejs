@@ -418,6 +418,11 @@ window.onload = function() {
         //   paintCell(data.next.blue.B.x, data.next.blue.B.y, state[data.next.blue.B.y][data.next.blue.B.x], "", "black");
         // }
         players = getVerifyNextData2(data.next, data.method);
+        socket.emit("MapDataSync", {
+          status: user_status,
+          maps: state,
+          currentPlayerPosition: players
+        });
         for (var team in players) {
           team = String(team);
           for (var agent in players[team]) {
@@ -718,6 +723,7 @@ window.onload = function() {
         $("#start_anime").hide();
         socket.emit("handshake", {
           status: user_status,
+          current: players,
           step: 1
         });
       }, 4000);
@@ -768,7 +774,7 @@ window.onload = function() {
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
-            socket.emit("MapDataSync", sender);
+            socket.emit("SyncQuestData", sender);
             isSync = true;
           }
           if (timeLeft <= -move_time) {
