@@ -43,6 +43,13 @@ var timeout_store = {};
 io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
+    if (chatroom_user_store[socket.chatdata.userid]) {
+      // chatroom_user_store[socket.chatdata.userid].comment = chatroom_user_store[socket.chatdata.userid].username + "さんが退出しました．";
+      // chatroom_user_store[socket.chatdata.userid].label = "server";
+      // io.sockets.in(socket.chatdata.path).emit('refresh_chat', chatroom_user_store[socket.chatdata.userid]);
+      delete chatroom_user_store[socket.chatdata.userid];
+      io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
+    }
     if (!socket.data) return;
     var tmpteam = "";
     if (player_user_store[socket.data.userId]) {
@@ -62,14 +69,14 @@ io.sockets.on('connection', function(socket) {
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
     for (var key in playing_user_store[socket.data.roomId]) {
-      if (!join_user_store[key]){
+      if (!join_user_store[key]) {
         cnt++;
-        if(tmpteam == "red"){
+        if (tmpteam == "red") {
           quest_manage_store[socket.data.roomId].method["red"] = {
             A: types.draw,
             B: types.draw
           }
-        }else if(tmpteam == "blue"){
+        } else if (tmpteam == "blue") {
           quest_manage_store[socket.data.roomId].method["blue"] = {
             A: types.draw,
             B: types.draw
@@ -87,9 +94,9 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on("MapDataSync", function(data){
-    if(data.status.team=="")return;
-    if(!socket.data)return;
+  socket.on("MapDataSync", function(data) {
+    if (data.status.team == "") return;
+    if (!socket.data) return;
     quest_manage_store[socket.data.roomId].maps = data.maps;
     quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, data.currentPlayerPosition);
     tmp_moveplayer_store[socket.data.roomId] = extend({}, data.currentPlayerPosition);
@@ -281,13 +288,11 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('join_chatroom', function(data) {
     socket.chatdata = data;
-    data.label = "server";
+    socket.join(socket.chatdata.path);
+    // data.label = "server";
     chatroom_user_store[data.userid] = data;
-    io.sockets.emit('join_user', {
-      users: chatroom_user_store,
-      path: data.path
-    });
-    io.sockets.emit('refresh_chat', data);
+    io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
+    // io.sockets.emit('refresh_chat', data);
   });
 
   socket.on('send_chat', function(data) {

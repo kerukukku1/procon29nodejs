@@ -21,7 +21,7 @@ block animecontent
         .uYfoqRSv_0{stroke-dasharray:1568 1570;stroke-dashoffset:1569;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_1{stroke-dasharray:400 402;stroke-dashoffset:401;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_2{stroke-dasharray:1670 1672;stroke-dashoffset:1671;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_3{stroke-dasharray:1000 1002;stroke-dashoffset:1001;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_4{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_5{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_6{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_7{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_8{stroke-dasharray:367 369;stroke-dashoffset:368;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}@keyframes uYfoqRSv_draw{100%{stroke-dashoffset:0;}}@keyframes uYfoqRSv_fade{0%{stroke-opacity:1;}94.44444444444444%{stroke-opacity:1;}100%{stroke-opacity:0;}}
 block content
   if usersession
-
+    include includes/match_result.jade
     include includes/confirm_modal.jade
     //- center: p Welcome to #{title}
     .wrapper
@@ -59,7 +59,7 @@ block content
             button.btn.btn-danger.btn-lg.btn-block(type='button')#joinRed: strong Join Red
       hr
       //- button.btn.btn-success.btn-lg.btn-block(type='button')#startbutton: strong Game Start!
-      a(href="/questboard", class="btn") Back to Top
+      a(href="/questboard", class="btn") Back to Quest
   else
     div(class="alert alert-danger" role="alert")
       セッション情報がありません．ログインを行ってください．
