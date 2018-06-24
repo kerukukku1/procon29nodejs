@@ -57,10 +57,12 @@ io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
     if (!socket.data) return;
+    var tmpteam = "";
     if (player_user_store[socket.data.userId]) {
       //ゲームがまだ開始されていない場合
       if (!playing_user_store[socket.data.roomId])
         socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", player_user_store[socket.data.userId]);
+      tmpteam = player_user_store[socket.data.userId].team;
       delete player_user_store[socket.data.userId];
     }
     if (join_user_store[socket.data.userId]) {
@@ -73,9 +75,19 @@ io.sockets.on('connection', function(socket) {
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
     for (var key in playing_user_store[socket.data.roomId]) {
-      if (!join_user_store[key] ||
-        (join_user_store[key].roomId != socket.data.roomId)) {
+      if (!join_user_store[key]){
         cnt++;
+        if(tmpteam == "red"){
+          quest_manage_store[socket.data.roomId].method["red"] = {
+            A: types.draw,
+            B: types.draw
+          }
+        }else if(tmpteam == "blue"){
+          quest_manage_store[socket.data.roomId].method["blue"] = {
+            A: types.draw,
+            B: types.draw
+          }
+        }
       }
     }
     //二人とも退出している場合ゲーム情報をリセット
@@ -140,7 +152,7 @@ io.sockets.on('connection', function(socket) {
     if (!socket.data) return;
     if (join_user_store[data.userId]) {
       if (quest_manage_store[socket.data.roomId]) {
-        quest_manage_store[socket.data.roomId].maps = data.maps;
+        // quest_manage_store[socket.data.roomId].maps = data.maps;
         //まだ押されてない場合
         if (!quest_manage_store[socket.data.roomId].method) {
           quest_manage_store[socket.data.roomId].method = {
