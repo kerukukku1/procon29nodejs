@@ -271,6 +271,7 @@ io.sockets.on('connection', function(socket) {
       //initialize
       handshake_room_store[socket.data.roomId] = 0;
       playing_user_store[socket.data.roomId] = ret;
+      delete quest_manage_store[socket.data.roomId]
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
