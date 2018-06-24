@@ -22,6 +22,7 @@ router.get('/:room_id', function(req, res, next) {
         connection.query(query2, function(err2, battle) {
           if (!err2 && battle.length) {
             res.render('battle', {
+              questId: room[0].org_quest_id,
               title: battle[0].quest_name,
               filedir: battle[0].filedir,
               roomId: roomId,

@@ -455,6 +455,10 @@ window.onload = function() {
       });
     });
 
+    socket.on('GameForceShutdown', function(){
+      $("#GameForceShutdown").modal('show');
+    });
+
     socket.on('filedata', function(data) {
       var arr = data.text.split('\n');
       // //console.log(arr);
@@ -833,6 +837,9 @@ window.onload = function() {
     if (isConfirm) return;
     socket.emit("disconfirm", user_status);
     console.log("Confirm");
+  });
+  $('#GameForceShutdown').on('hidden.bs.modal', function() {
+    window.location.reload();
   });
 };
 // //console.log(dir);

@@ -59,7 +59,7 @@ block content
             button.btn.btn-danger.btn-lg.btn-block(type='button')#joinRed: strong Join Red
       hr
       //- button.btn.btn-success.btn-lg.btn-block(type='button')#startbutton: strong Game Start!
-      a(href="/questboard", class="btn") Back to Quest
+      a(href="/rooms/#{questId}", class="btn") Back to Quest
   else
     div(class="alert alert-danger" role="alert")
       セッション情報がありません．ログインを行ってください．

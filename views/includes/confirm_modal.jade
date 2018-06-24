@@ -25,6 +25,19 @@
       .modal-footer
         button.btn.btn-secondary(type='button', data-dismiss='modal') Close
 
+#GameForceShutdown.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true', data-backdrop="static", data-keyboard="false")
+  .modal-dialog(role='document')
+    .modal-content
+      .modal-header
+        h5#exampleModalLabel.modal-title 通知
+        button.close(type='button', data-dismiss='modal', aria-label='Close')
+          span(aria-hidden='true') ×
+      .modal-body
+        |プレイヤーが部屋に存在しなくなったため、試合を破棄しルームが削除されました．
+      .modal-footer
+        button.btn.btn-secondary(type='button', data-dismiss='modal') Close
+
+
 #WaitingModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='confirmModalLabel', aria-hidden='true', data-backdrop="static", data-keyboard="false")
   .modal-dialog(role='document')
     .modal-content

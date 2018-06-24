@@ -43,7 +43,7 @@ var timeout_store = {};
 io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
-    if (chatroom_user_store[socket.chatdata.userid]) {
+    if (socket.chatdata && chatroom_user_store[socket.chatdata.userid]) {
       // chatroom_user_store[socket.chatdata.userid].comment = chatroom_user_store[socket.chatdata.userid].username + "さんが退出しました．";
       // chatroom_user_store[socket.chatdata.userid].label = "server";
       // io.sockets.in(socket.chatdata.path).emit('refresh_chat', chatroom_user_store[socket.chatdata.userid]);
@@ -86,12 +86,14 @@ io.sockets.on('connection', function(socket) {
     }
     //二人とも退出している場合ゲーム情報をリセット
     if (cnt == 2) {
+      io.sockets.in(socket.data.roomId).emit('GameForceShutdown');
       delete playing_user_store[socket.data.roomId];
       delete quest_manage_store[socket.data.roomId];
       delete tmp_moveplayer_store[socket.data.roomId]
       if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
       delete timeout_store[socket.data.roomId]
     }
+    delete socket.data;
   });
 
   socket.on("MapDataSync", function(data) {
