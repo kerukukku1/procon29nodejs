@@ -324,17 +324,17 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
-      let time_offset = data.startTime - data.nowTime;
-      //console.log("offset : ", time_offset);
-      if (data.step == 1) $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
-      if (data.step == 2) {
+      if (data.step == 1) {
+        let time_offset = data.startTime - data.nowTime;
+        $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
+      } else if (data.step == 2) {
+        let time_offset = data.startTime - data.nowTime;
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
-      }
-      if (data.step == 3) {
+      } else if (data.step == 3) {
         //ゲーム終了時のレイアウトをここで表示
         // $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
-        $('#GamesetModal').modal('show');
+        $('#GameShutdown').modal('show');
         $('#progress-timer').hide();
       }
     });
@@ -358,7 +358,7 @@ window.onload = function() {
       } else if (data.step == 3) {
         //ゲーム終了時のレイアウトをここで表示
         socket.emit("endBattle", roomid);
-        $('#GamesetModal').modal('show');
+        $('#GameShutdown').modal('show');
         $('#progress-timer').hide();
       }
     });
@@ -845,6 +845,9 @@ window.onload = function() {
     console.log("Confirm");
   });
   $('#GameForceShutdown').on('hidden.bs.modal', function() {
+    window.location.reload();
+  });
+  $('#GameShutdown').on('hidden.bs.modal', function() {
     window.location.reload();
   });
 };

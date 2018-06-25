@@ -281,7 +281,12 @@ io.sockets.on('connection', function(socket) {
       if(err){
         console.log("Update Database Error");
       }else{
-        console.log(rows);
+        delete playing_user_store[socket.data.roomId];
+        delete player_user_store[socket.data.roomId];
+        delete quest_manage_store[socket.data.roomId];
+        delete turn_manage_store[socket.data.roomId];
+        delete tmp_moveplayer_store[socket.data.roomId];
+        // console.log(rows);
       }
     });
   });
