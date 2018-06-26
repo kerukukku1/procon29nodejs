@@ -220,7 +220,7 @@ window.onload = function() {
 
     socket.emit("getGameHistory");
 
-    socket.on('setGameHistory', function(data){
+    socket.on('setGameHistory', function(data) {
       console.log(data);
     })
 
@@ -432,7 +432,7 @@ window.onload = function() {
         move_players = objectCopy(org_move_players);
       }
       var ret = calcScore(state, w, h, colors);
-      if(user_status!="")socket.emit("SyncScoreData", ret);
+      if (user_status != "") socket.emit("SyncScoreData", ret);
       var diff = ret.blue - ret.red;
       var redpar = 50;
       var bluepar = 50;
