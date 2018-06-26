@@ -2,22 +2,28 @@ const mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 const CoordinateSchema = new Schema({
   x: Number,
-  y: Number
+  y: Number,
+  paintType: Number
 });
 
 const StatusSchema = new Schema({
   A: CoordinateSchema,
   B: CoordinateSchema,
-  score: Number
 });
 
+const ScoreSchema = new Schema({
+  red: Number,
+  blue: Number
+})
+
 const PlayerSchema = new Schema({
-  userid: Number,
+  userid: String,
   displayName: String
 });
 
 const GameHistory = new Schema({
-  questid: Number,
+  roomid: String,
+  score: ScoreSchema,
   redplayer: PlayerSchema,
   blueplayer: PlayerSchema,
   red: [StatusSchema],

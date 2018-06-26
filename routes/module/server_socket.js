@@ -99,6 +99,10 @@ io.sockets.on('connection', function(socket) {
     delete socket.data;
   });
 
+  socket.on("SyncScoreData", function(data) {
+    updateMapScore(socket.data.roomId, data);
+  });
+
   socket.on("MapDataSync", function(data) {
     if (data.status.team == "") return;
     if (!socket.data) return;
@@ -120,6 +124,8 @@ io.sockets.on('connection', function(socket) {
           } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
+          //データをmongodbに書き込み
+          pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], tmp_moveplayer_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
           if (quest_manage_store[socket.data.roomId]) {
             quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
           }
@@ -272,6 +278,10 @@ io.sockets.on('connection', function(socket) {
       playing_user_store[socket.data.roomId] = ret;
       //ルーム情報が残る可能性があるので削除
       delete quest_manage_store[socket.data.roomId];
+      //もし以前の情報が保持されている場合にも削除
+      History.remove({
+        roomid : socket.data.roomId
+      })
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
@@ -311,7 +321,7 @@ io.sockets.on('connection', function(socket) {
   socket.on('join_chatroom', function(data) {
     socket.chatdata = data;
     socket.join(socket.chatdata.path);
-    pushMoveData();
+    // pushMoveData();
     // data.label = "server";
     chatroom_user_store[data.userid] = data;
     io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
@@ -319,7 +329,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('send_chat', function(data) {
-    console.log("receive");
+    // console.log("receive");
     io.sockets.emit('refresh_chat', data);
   });
 
@@ -339,6 +349,7 @@ io.sockets.on('connection', function(socket) {
         users: playing_user_store[socket.data.roomId],
         step: data.step,
         turn: -1,
+        maxturn : data.maxturn,
         next: tmp_moveplayer_store[socket.data.roomId],
         method: {
           red: {
@@ -427,7 +438,7 @@ io.sockets.on('connection', function(socket) {
         }
       }
     }
-    console.log(_player);
+    // console.log(_player);
     return _player;
   }
 });
@@ -457,44 +468,74 @@ function getVerifyNextData(next, players) {
 function equalsObject(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);
 }
+/*
+need : questid,
+       position,
+       userid,
+       username,
+       score,
+       paintType
 
-var pushMoveData = function() {
+{ '1349374676':
+  { roomId: '/battle/5',
+    userId: '1349374676',
+    userName: 'Mahito',
+    team: 'blue',
+    thumbnail: 'https://pbs.twimg.com/profile_images/917317706818265088/ZQn5Do5-_normal.jpg',
+    position: { A: [Object], B: [Object] } },
+ '935161301541691392':
+  { roomId: '/battle/5',
+    userId: '935161301541691392',
+    userName: '皆無',
+    team: 'red',
+    thumbnail: 'https://pbs.twimg.com/profile_images/935161692836708352/-Q3Z98a6_normal.jpg',
+    position: { A: [Object], B: [Object] } } }
+*/
+
+var updateMapScore = function(roomId, score) {
+  History.update({
+    roomid: roomId
+  }, {
+    $set: {
+      score: score
+    }
+  }, {
+    upsert: true
+  }, function(err) {
+    if (!err) console.log("score update");
+  });
+}
+
+var pushMoveData = function(roomId, questdata, position, playerdata) {
   var position_red = {
     A: {
-      x: 2,
-      y: 1
+      x: position.red.A.x,
+      y: position.red.A.y,
+      paintType: questdata.method.red.A
     },
     B: {
-      x: 1,
-      y: 6
-    },
-    score: -1
+      x: position.red.B.x,
+      y: position.red.B.y,
+      paintType: questdata.method.red.B
+    }
   };
-  var player_red = {
-    userid: 1,
-    displayName: "Admin2",
-  }
 
   var position_blue = {
     A: {
-      x: 7,
-      y: 9
+      x: position.blue.A.x,
+      y: position.blue.A.y,
+      paintType: questdata.method.blue.A
     },
     B: {
-      x: 1,
-      y: 3
-    },
-    score: -2
+      x: position.blue.B.x,
+      y: position.blue.B.y,
+      paintType: questdata.method.red.B
+    }
   };
-  var player_blue = {
-    userid: 0,
-    displayName: "Admin1",
-  }
 
   var history;
-
   History.find({
-    questid: -1
+    roomid: roomId
   }, function(err, docs) {
     if (docs.length) {
       console.log(docs);
@@ -502,7 +543,7 @@ var pushMoveData = function() {
       docs[0].blue.push(position_blue);
       history = docs[0];
       History.update({
-        questid: -1
+        roomid: roomId
       }, {
         $set: {
           red: history.red,
@@ -515,12 +556,21 @@ var pushMoveData = function() {
       });
     } else {
       history = new History({
-        questid: -1,
-        redplayer: player_red,
-        blueplayer: player_blue,
-        red: position_red,
-        blue: position_blue
+        score: {
+          red: 0,
+          blue: 0
+        }
       });
+      for (var player in playerdata) {
+        var add_player = {
+          userid: player.userId,
+          displayName: player.userName
+        }
+        var head = player.team;
+        history[head + "player"] = add_player;
+        history[head] = (head == "red") ? position_red : position_blue;
+        history.roomid = roomId;
+      }
       history.save(function(err) {
         if (!err) console.log("push");
       })

@@ -329,7 +329,7 @@ window.onload = function() {
         $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         let time_offset = data.startTime - data.nowTime;
-        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
+        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
       } else if (data.step == 3) {
         //ゲーム終了時のレイアウトをここで表示
@@ -342,14 +342,15 @@ window.onload = function() {
     socket.on('client_handshake', function(data) {
       //console.log("next : ", data.next);
       if (data.step == 1) {
-        // $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
-        $('#progress-timer').timer(3, 'Strategy Phase', 1);
+        $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
+        // $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
-        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= 2) {
+        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
+        if (data.turn >= data.maxturn) {
           socket.emit("handshake", {
             status: user_status,
-            step: data.step + 1
+            step: data.step + 1,
+            maxturn: turn
           });
         } else {
           enableClick = true;
@@ -423,7 +424,8 @@ window.onload = function() {
         }
         move_players = objectCopy(org_move_players);
       }
-      let ret = calcScore(state, w, h, colors);
+      var ret = calcScore(state, w, h, colors);
+      if(user_status!="")socket.emit("SyncScoreData", ret);
       var diff = ret.blue - ret.red;
       var redpar = 50;
       var bluepar = 50;
@@ -689,7 +691,8 @@ window.onload = function() {
         socket.emit("handshake", {
           status: user_status,
           current: players,
-          step: 1
+          step: 1,
+          maxturn: turn
         });
       }, 4000);
     });
@@ -735,7 +738,8 @@ window.onload = function() {
           var sender = {
             status: user_status,
             step: step,
-            maps: state
+            maps: state,
+            maxturn: turn
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
