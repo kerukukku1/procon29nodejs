@@ -398,7 +398,7 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
         //データをmongodbに書き込み
-        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
+        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], tmp_moveplayer_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
@@ -516,29 +516,29 @@ var updateMapScore = function(roomId, score) {
   });
 }
 
-var pushMoveData = function(roomId, questdata, playerdata) {
+var pushMoveData = function(roomId, questdata, position, playerdata) {
   var position_red = {
     A: {
-      x: questdata.next.red.A.x,
-      y: questdata.next.red.A.y,
+      x: position.red.A.x,
+      y: position.red.A.y,
       paintType: questdata.method.red.A
     },
     B: {
-      x: questdata.next.red.B.x,
-      y: questdata.next.red.B.y,
+      x: position.red.B.x,
+      y: position.red.B.y,
       paintType: questdata.method.red.B
     }
   };
 
   var position_blue = {
     A: {
-      x: questdata.next.blue.A.x,
-      y: questdata.next.blue.A.y,
+      x: position.blue.A.x,
+      y: position.blue.A.y,
       paintType: questdata.method.blue.A
     },
     B: {
-      x: questdata.next.blue.B.x,
-      y: questdata.next.blue.B.y,
+      x: position.blue.B.x,
+      y: position.blue.B.y,
       paintType: questdata.method.red.B
     }
   };
