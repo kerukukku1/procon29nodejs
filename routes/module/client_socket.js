@@ -78,6 +78,7 @@ window.onload = function() {
   // };
 
   jblue.onclick = function() {
+    if (isFinished) return;
     //console.log("blue click");
     if (jblue.textContent == "Cancel") {
       jblue.textContent = "Join Blue";
@@ -104,6 +105,7 @@ window.onload = function() {
   };
   jred.onclick = function() {
     //console.log("red click");
+    if (isFinished) return;
     if (jred.textContent == "Cancel") {
       jred.textContent = "Join Red";
       user_status.team = "red";
@@ -207,12 +209,22 @@ window.onload = function() {
 
   socket.on('connect', function() {
 
+    if (isFinished) {
+      socket.emit("getGameHistory", path);
+      jred.textContent = ">";
+      jblue.textContent = "<";
+    }
     initCanvas();
-
-    socket.emit("getGameHistory");
-
     socket.on('setGameHistory', function(data) {
       console.log(data);
+      console.log(data.score.red);
+      console.log(data.score.blue);
+      var redtext = (data.score.red < data.score.blue) ? "LOSE" : (data.score.red > data.score.blue) ? "WIN" : "DRAW";
+      var bluetext = (data.score.red < data.score.blue) ? "WIN" : (data.score.red > data.score.blue) ? "LOSE" : "DRAW";
+      $('#redResult').empty().html("Score:" + data.score.red +
+        '<br>' + `<img src="${data.redplayer.thumbnail}" class="thumbnail-lg"></img>` + redtext);
+      $('#blueResult').empty().html("Score:" + data.score.blue +
+        '<br>' + `<img src="${data.blueplayer.thumbnail}" class="thumbnail-lg"></img>` + bluetext);
     })
 
     socket.on('cancel_confirm', function(data) {
@@ -322,18 +334,20 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
-      if (data.step == 1) {
-        let time_offset = data.startTime - data.nowTime;
+      var red_thumbnail, blue_thumbnail;
+      for (p in data.player) {
+        if (data.player[p].team == "red") red_thumbnail = data.player[p].thumbnail;
+        else if (data.player[p].team == "blue") blue_thumbnail = data.player[p].thumbnail;
+      }
+      document.getElementById('playername').innerHTML =
+        `<img src="${blue_thumbnail}" class="thumbnail-md"></img>　vs.　<img src="${red_thumbnail}" class="thumbnail-md"></img>`;
+      if (data.quest.step == 1) {
+        let time_offset = data.quest.startTime - data.quest.nowTime;
         $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
       } else if (data.step == 2) {
-        let time_offset = data.startTime - data.nowTime;
-        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
+        let time_offset = data.quest.startTime - data.quest.nowTime;
+        $('#turnlabel').empty().text('TURN ' + data.quest.turn + " / " + data.quest.maxturn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
-      } else if (data.step == 3) {
-        //ゲーム終了時のレイアウトをここで表示
-        // $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
-        $('#GameShutdown').modal('show');
-        $('#progress-timer').hide();
       }
     });
 
@@ -344,7 +358,8 @@ window.onload = function() {
         // $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= data.maxturn) {
+        if (data.turn > 1) {
+          // if (data.turn > data.maxturn) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1,
@@ -545,8 +560,8 @@ window.onload = function() {
       paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
       paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
       paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
-      //全処理が完了したのち、部屋へ入る。
-      socket.emit("join_to_room", {
+      //全処理が完了したのち、部屋へ入る。完了済みの場合は入らない
+      if (!isFinished) socket.emit("join_to_room", {
         roomId: path,
         userId: userid,
         userName: username
@@ -662,7 +677,8 @@ window.onload = function() {
   function battleStart(data) {
     //initialize Bar
     document.getElementById('playername').innerHTML =
-      '<strong><font color="#03A9F4", size = "20"><img src="' + data.blue + '"></img></font> vs. <font color = "#FF4081", size = "20"><img src="' + data.red + '"></img></font></strong>';
+      `<img src="${data.blue}" class="thumbnail-lg"></img>　vs.　<img src="${data.red}" class="thumbnail-lg"></img>`;
+
     jQuery(function($) {
       // $("#progressBar").css({
       //   'width': '0%',
@@ -752,11 +768,9 @@ window.onload = function() {
               //next step
               sender.step += 1;
             } else if (step == 2) {
-              // sender.playerdata = getVerifyNextData(move_players);
             } else if (step == 3) {
               return;
             }
-            //console.log("playerdata : ", sender.playerdata);
             socket.emit("handshake", sender);
             return;
           } else {

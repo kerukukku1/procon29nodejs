@@ -100,7 +100,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("SyncScoreData", function(data) {
-    updateMapScore(socket.data.roomId, data);
+    quest_manage_store[socket.data.roomId].score = data;
   });
 
   socket.on("MapDataSync", function(data) {
@@ -247,7 +247,10 @@ io.sockets.on('connection', function(socket) {
         player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
         socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
         // handshake_room_store[socket.data.roomId]++;
-        socket.emit("reshake", quest_manage_store[socket.data.roomId]);
+        socket.emit("reshake", {
+          quest: quest_manage_store[socket.data.roomId],
+          player: playing_user_store[socket.data.roomId]
+        });
       }
     }
   });
@@ -276,8 +279,11 @@ io.sockets.on('connection', function(socket) {
       //ルーム情報が残る可能性があるので削除
       delete quest_manage_store[socket.data.roomId];
       //もし以前の情報が保持されている場合にも削除
-      History.remove({roomid:socket.data.roomId}, function(err){
-          if(err) console.log("removed error : ", err);
+      History.remove({
+        roomid: socket.data.roomId
+      }, function(err) {
+        if (!err) console.log("removed");
+        if (err) console.log("removed error : ", err);
       });
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
@@ -310,7 +316,7 @@ io.sockets.on('connection', function(socket) {
         text: text,
         err: err
       };
-      if(data.roomId!=-1)sender.status = quest_manage_store[data.roomId];
+      if (data.roomId != -1) sender.status = quest_manage_store[data.roomId];
       socket.emit("filedata", sender);
     });
   });
@@ -325,12 +331,11 @@ io.sockets.on('connection', function(socket) {
     // io.sockets.emit('refresh_chat', data);
   });
 
-  socket.on('getGameHistory', function(){
-    if(!socket.data)return;
+  socket.on('getGameHistory', function(roomId) {
     History.find({
-      roomid: socket.data.roomId
+      roomid: roomId
     }, function(err, docs) {
-      if(docs.length){
+      if (docs.length) {
         socket.emit("setGameHistory", docs[0]);
       }
     });
@@ -357,7 +362,7 @@ io.sockets.on('connection', function(socket) {
         users: playing_user_store[socket.data.roomId],
         step: data.step,
         turn: -1,
-        maxturn : data.maxturn,
+        maxturn: data.maxturn,
         next: tmp_moveplayer_store[socket.data.roomId],
         method: {
           red: {
@@ -397,12 +402,17 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn = 0;
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
-        //データをmongodbに書き込み
-        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], tmp_moveplayer_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
-        quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
+        //データをmongodbに書き込み
+        pushMoveData(
+          socket.data.roomId,
+          copyExtendsObject(quest_manage_store[socket.data.roomId]),
+          copyExtendsObject(tmp_moveplayer_store[socket.data.roomId]),
+          copyExtendsObject(playing_user_store[socket.data.roomId])
+        );
+        quest_manage_store[socket.data.roomId].turn++;
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
@@ -517,43 +527,42 @@ var updateMapScore = function(roomId, score) {
 }
 
 var pushMoveData = function(roomId, questdata, position, playerdata) {
-  var position_red = {
-    A: {
-      x: position.red.A.x,
-      y: position.red.A.y,
-      paintType: questdata.method.red.A
-    },
-    B: {
-      x: position.red.B.x,
-      y: position.red.B.y,
-      paintType: questdata.method.red.B
-    }
-  };
-
-  var position_blue = {
-    A: {
-      x: position.blue.A.x,
-      y: position.blue.A.y,
-      paintType: questdata.method.blue.A
-    },
-    B: {
-      x: position.blue.B.x,
-      y: position.blue.B.y,
-      paintType: questdata.method.red.B
-    }
-  };
-
-  var history;
+  console.log(questdata);
+  console.log(playerdata);
   History.find({
     roomid: roomId
   }, function(err, docs) {
+    var history;
+    var position_red = {
+      A: {
+        x: position.red.A.x,
+        y: position.red.A.y,
+        paintType: questdata.method.red.A
+      },
+      B: {
+        x: position.red.B.x,
+        y: position.red.B.y,
+        paintType: questdata.method.red.B
+      }
+    };
+
+    var position_blue = {
+      A: {
+        x: position.blue.A.x,
+        y: position.blue.A.y,
+        paintType: questdata.method.blue.A
+      },
+      B: {
+        x: position.blue.B.x,
+        y: position.blue.B.y,
+        paintType: questdata.method.red.B
+      }
+    };
     if (docs.length) {
-      console.log(docs);
+      console.log("find");
       docs[0].red.push(position_red);
       docs[0].blue.push(position_blue);
-      console.log(questdata.turn);
-      console.log(docs[0].red.length);
-      if(questdata.turn != docs[0].red.length)return;
+      if (questdata.turn != docs[0].red.length) return;
       history = docs[0];
       History.update({
         roomid: roomId
@@ -565,27 +574,40 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
       }, {
         upsert: true
       }, function(err) {
-        if (!err) console.log("upsert");
+        if (!err) {
+          updateMapScore(roomId, questdata.score);
+          console.log("upsert");
+        }else{
+          console.log(err);
+        }
       });
     } else {
+      console.log("not find");
       history = new History({
         score: {
           red: 0,
           blue: 0
         }
       });
-      for (var player in playerdata) {
+      for (var id in playerdata) {
         var add_player = {
-          userid: player.userId,
-          displayName: player.userName
+          userid: playerdata[id].userId,
+          displayName: playerdata[id].userName,
+          thumbnail: playerdata[id].thumbnail
         }
-        var head = player.team;
+        var head = playerdata[id].team;
         history[head + "player"] = add_player;
         history[head] = (head == "red") ? position_red : position_blue;
         history.roomid = roomId;
       }
+      console.log(history);
       history.save(function(err) {
-        if (!err) console.log("push");
+        if (!err) {
+          updateMapScore(roomId, questdata.score);
+          console.log("push");
+        }else{
+          console.log(err);
+        }
       })
     }
   });
@@ -596,6 +618,10 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
   // }, function(err) {
   //   if (!err) console.log("saved");
   // });
+}
+
+function copyExtendsObject(obj) {
+  return extend({}, obj);
 }
 
 function timeKeeper(depth, span) {

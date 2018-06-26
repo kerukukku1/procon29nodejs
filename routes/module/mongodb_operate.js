@@ -18,7 +18,8 @@ const ScoreSchema = new Schema({
 
 const PlayerSchema = new Schema({
   userid: String,
-  displayName: String
+  displayName: String,
+  thumbnail: String
 });
 
 const GameHistory = new Schema({

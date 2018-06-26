@@ -74,6 +74,18 @@ img.thumbnail {
   width: 40px;
 }
 
+img.thumbnail-lg {
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+}
+
+img.thumbnail-md {
+  border-radius: 50%;
+  height: 60px;
+  width: 60px;
+}
+
 flexwrapper {
   display: flex;
   width: 100%;
@@ -81,7 +93,7 @@ flexwrapper {
 }
 
 resultText {
-  text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+  text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
 }
 
 .resultBox {
@@ -89,7 +101,7 @@ resultText {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 1px solid;
+  text-align:center;
   width: 50%;
   height: 100%;
 }
