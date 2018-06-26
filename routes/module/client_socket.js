@@ -42,7 +42,7 @@ window.onload = function() {
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
-    white: "#FFFFFF",
+    white: "white",
     clearred: 'rgba(255, 64, 129, 0.5)',
     clearblue: 'rgba(3, 169, 244, 0.5)'
   };
@@ -218,6 +218,12 @@ window.onload = function() {
       userName: username
     });
 
+    socket.emit("getGameHistory");
+
+    socket.on('setGameHistory', function(data){
+      console.log(data);
+    })
+
     socket.on('cancel_confirm', function(data) {
       isConfirm = false;
       console.log("Call CancelConfirm");
@@ -236,14 +242,15 @@ window.onload = function() {
       if (!data.player) return;
       var _paintflag = true;
       if (user_status.team != "") {
-        console.log(data.player.team);
+        // console.log(data.player.team);
       }
-      console.log(user_status.team);
-      _paintflag = (user_status.team == data.player.team);
+      // console.log(user_status.team);
+      // _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
       };
+      console.log(state[data.status.y][data.status.x].color);
 
       var group = data.status.group;
       //一回前の描画を消すための処理
@@ -552,18 +559,15 @@ window.onload = function() {
 
   window.document.onkeydown = function() {
     if (event.key == "Shift") {
-      //console.log(paintType);
+      // console.log("down");
       paintType = types.clear;
-      //透過処理
-      // ctx.globalAlpha = 0.5;
     }
   };
 
   window.document.onkeyup = function() {
     if (event.key == "Shift") {
-      //console.log("up");
+      // console.log("up");
       paintType = types.draw;
-      // ctx.globalAlpha = 1.0;
     }
   };
 

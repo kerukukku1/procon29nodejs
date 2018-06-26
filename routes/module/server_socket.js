@@ -124,8 +124,6 @@ io.sockets.on('connection', function(socket) {
           } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
-          //データをmongodbに書き込み
-          pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], tmp_moveplayer_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
           if (quest_manage_store[socket.data.roomId]) {
             quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
           }
@@ -279,9 +277,9 @@ io.sockets.on('connection', function(socket) {
       //ルーム情報が残る可能性があるので削除
       delete quest_manage_store[socket.data.roomId];
       //もし以前の情報が保持されている場合にも削除
-      History.remove({
-        roomid : socket.data.roomId
-      })
+      History.remove({roomid:socket.data.roomId}, function(err){
+          if(err) console.log("removed error : ", err);
+      });
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
@@ -326,6 +324,17 @@ io.sockets.on('connection', function(socket) {
     chatroom_user_store[data.userid] = data;
     io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
     // io.sockets.emit('refresh_chat', data);
+  });
+
+  socket.on('getGameHistory', function(){
+    if(!socket.data)return;
+    History.find({
+      roomid: socket.data.roomId
+    }, function(err, docs) {
+      if(docs.length){
+        socket.emit("setGameHistory", docs[0]);
+      }
+    });
   });
 
   socket.on('send_chat', function(data) {
@@ -389,6 +398,8 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn = 0;
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
+        //データをmongodbに書き込み
+        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
@@ -506,29 +517,29 @@ var updateMapScore = function(roomId, score) {
   });
 }
 
-var pushMoveData = function(roomId, questdata, position, playerdata) {
+var pushMoveData = function(roomId, questdata, playerdata) {
   var position_red = {
     A: {
-      x: position.red.A.x,
-      y: position.red.A.y,
+      x: questdata.next.red.A.x,
+      y: questdata.next.red.A.y,
       paintType: questdata.method.red.A
     },
     B: {
-      x: position.red.B.x,
-      y: position.red.B.y,
+      x: questdata.next.red.B.x,
+      y: questdata.next.red.B.y,
       paintType: questdata.method.red.B
     }
   };
 
   var position_blue = {
     A: {
-      x: position.blue.A.x,
-      y: position.blue.A.y,
+      x: questdata.next.blue.A.x,
+      y: questdata.next.blue.A.y,
       paintType: questdata.method.blue.A
     },
     B: {
-      x: position.blue.B.x,
-      y: position.blue.B.y,
+      x: questdata.next.blue.B.x,
+      y: questdata.next.blue.B.y,
       paintType: questdata.method.red.B
     }
   };
@@ -541,6 +552,9 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
       console.log(docs);
       docs[0].red.push(position_red);
       docs[0].blue.push(position_blue);
+      console.log(questdata.turn);
+      console.log(docs[0].red.length);
+      if(questdata.turn != docs[0].red.length)return;
       history = docs[0];
       History.update({
         roomid: roomId
