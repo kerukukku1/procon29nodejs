@@ -3,6 +3,8 @@ var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
 var connection = require('../../mysqlConnection');
+var mongoUtil = require('./mongodb_operate');
+var History = mongoUtil.History;
 var types = {
   clear: 0,
   draw: 1
@@ -274,13 +276,13 @@ io.sockets.on('connection', function(socket) {
     };
   });
 
-  socket.on("endBattle", function(data){
+  socket.on("endBattle", function(data) {
     var query = `update room_table set isFinished = 1 where room_id = ${data}`;
     console.log(query);
     connection.query(query, function(err, rows) {
-      if(err){
+      if (err) {
         console.log("Update Database Error");
-      }else{
+      } else {
         delete playing_user_store[socket.data.roomId];
         delete player_user_store[socket.data.roomId];
         delete quest_manage_store[socket.data.roomId];
@@ -309,6 +311,7 @@ io.sockets.on('connection', function(socket) {
   socket.on('join_chatroom', function(data) {
     socket.chatdata = data;
     socket.join(socket.chatdata.path);
+    pushMoveData();
     // data.label = "server";
     chatroom_user_store[data.userid] = data;
     io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
@@ -453,6 +456,83 @@ function getVerifyNextData(next, players) {
 
 function equalsObject(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);
+}
+
+var pushMoveData = function() {
+  var position_red = {
+    A: {
+      x: 2,
+      y: 1
+    },
+    B: {
+      x: 1,
+      y: 6
+    },
+    score: -1
+  };
+  var player_red = {
+    userid: 1,
+    displayName: "Admin2",
+  }
+
+  var position_blue = {
+    A: {
+      x: 7,
+      y: 9
+    },
+    B: {
+      x: 1,
+      y: 3
+    },
+    score: -2
+  };
+  var player_blue = {
+    userid: 0,
+    displayName: "Admin1",
+  }
+
+  var history;
+
+  History.find({
+    questid: -1
+  }, function(err, docs) {
+    if (docs.length) {
+      console.log(docs);
+      docs[0].red.push(position_red);
+      docs[0].blue.push(position_blue);
+      history = docs[0];
+      History.update({
+        questid: -1
+      }, {
+        $set: {
+          red: history.red,
+          blue: history.blue
+        }
+      }, {
+        upsert: true
+      }, function(err) {
+        if (!err) console.log("upsert");
+      });
+    } else {
+      history = new History({
+        questid: -1,
+        redplayer: player_red,
+        blueplayer: player_blue,
+        red: position_red,
+        blue: position_blue
+      });
+      history.save(function(err) {
+        if (!err) console.log("push");
+      })
+    }
+  });
+  // History.update({
+  //   questid: -1
+  // }, history, {
+  //   upsert: true
+  // }, function(err) {
+  //   if (!err) console.log("saved");
+  // });
 }
 
 function timeKeeper(depth, span) {
