@@ -75,7 +75,7 @@ block content
         socket.on('connect', function() {
           var dir = '#{filedir}';
           console.log(dir);
-          socket.emit('readfile', dir);
+          socket.emit('readfile', {filename: dir, roomId: -1});
           socket.emit('join_chatroom', {thumbnail: "#{usersession.user.photos[0].value}", userid:'#{usersession.user.id}', username: '#{usersession.user.displayName}', timestamp: getNowTime(), comment:'<img src="#{usersession.user.photos[0].value}" class="thumbnail"></img> #{usersession.user.displayName}'+"さんが入場しました．", path : location.pathname});
           socket.on('join_user', function(data){
             const result = Object.keys(data).filter((key) => {

@@ -228,7 +228,6 @@ io.sockets.on('connection', function(socket) {
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
-    socket.emit("init_MapState", {});
     //他プレイヤーが入室した場合に参加済ユーザをボタンにセット
     const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
@@ -303,7 +302,7 @@ io.sockets.on('connection', function(socket) {
 
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
-    var dir = process.cwd() + '/questdata/' + data;
+    var dir = process.cwd() + '/questdata/' + data.filename;
     fs.readFile(dir, 'utf8', function(err, text) {
       // console.log(text);
       // console.log(err);
@@ -311,7 +310,7 @@ io.sockets.on('connection', function(socket) {
         text: text,
         err: err
       };
-      if (socket.data) sender.status = quest_manage_store[socket.data.roomId];
+      if(data.roomId!=-1)sender.status = quest_manage_store[data.roomId];
       socket.emit("filedata", sender);
     });
   });
