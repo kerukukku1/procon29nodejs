@@ -1,7 +1,5 @@
 extends layout
 block animecontent
-  if isFinished
-    include includes/match_result.jade
   div(class="svgbox")#animation
     svg(display="none", id="start_anime", width='580', height='200', xmlns='http://www.w3.org/2000/svg', style='')
       // Created with Method Draw - http://github.com/duopixel/Method-Draw/
@@ -23,6 +21,8 @@ block animecontent
         .uYfoqRSv_0{stroke-dasharray:1568 1570;stroke-dashoffset:1569;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_1{stroke-dasharray:400 402;stroke-dashoffset:401;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_2{stroke-dasharray:1670 1672;stroke-dashoffset:1671;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_3{stroke-dasharray:1000 1002;stroke-dashoffset:1001;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_4{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_5{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_6{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_7{stroke-dasharray:0 2;stroke-dashoffset:1;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}.uYfoqRSv_8{stroke-dasharray:367 369;stroke-dashoffset:368;animation:uYfoqRSv_draw 3000ms ease-in 0ms forwards;}@keyframes uYfoqRSv_draw{100%{stroke-dashoffset:0;}}@keyframes uYfoqRSv_fade{0%{stroke-opacity:1;}94.44444444444444%{stroke-opacity:1;}100%{stroke-opacity:0;}}
 block content
   if usersession
+    if isFinished
+      include includes/match_result.jade
     include includes/confirm_modal.jade
     //- center: p Welcome to #{title}
     .wrapper
@@ -61,6 +61,14 @@ block content
             button.btn.btn-danger.btn-lg.btn-block(type='button')#joinRed: strong Join Red
       hr
       //- button.btn.btn-success.btn-lg.btn-block(type='button')#startbutton: strong Game Start!
+      h9 操作方法
+      br
+      strong マスを移動
+      |: 移動させたいエージェント(A, B)をクリックした後，移動するマスをクリック．
+      br
+      strong マスを削除
+      | : 消去したいマスをShiftキーを押しながらクリックする．消去するマスはx印で強調される．
+      br
       a(href="/rooms/#{questId}", class="btn") Back to Quest
   else
     div(class="alert alert-danger" role="alert")

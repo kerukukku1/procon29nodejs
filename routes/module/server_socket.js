@@ -228,7 +228,6 @@ io.sockets.on('connection', function(socket) {
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
-    socket.emit("init_MapState", {});
     //他プレイヤーが入室した場合に参加済ユーザをボタンにセット
     const result1 = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
@@ -303,7 +302,7 @@ io.sockets.on('connection', function(socket) {
 
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
-    var dir = process.cwd() + '/questdata/' + data;
+    var dir = process.cwd() + '/questdata/' + data.filename;
     fs.readFile(dir, 'utf8', function(err, text) {
       // console.log(text);
       // console.log(err);
@@ -311,7 +310,7 @@ io.sockets.on('connection', function(socket) {
         text: text,
         err: err
       };
-      if (socket.data) sender.status = quest_manage_store[socket.data.roomId];
+      if(data.roomId!=-1)sender.status = quest_manage_store[data.roomId];
       socket.emit("filedata", sender);
     });
   });
@@ -399,7 +398,7 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
         //データをmongodbに書き込み
-        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
+        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], tmp_moveplayer_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
@@ -517,29 +516,29 @@ var updateMapScore = function(roomId, score) {
   });
 }
 
-var pushMoveData = function(roomId, questdata, playerdata) {
+var pushMoveData = function(roomId, questdata, position, playerdata) {
   var position_red = {
     A: {
-      x: questdata.next.red.A.x,
-      y: questdata.next.red.A.y,
+      x: position.red.A.x,
+      y: position.red.A.y,
       paintType: questdata.method.red.A
     },
     B: {
-      x: questdata.next.red.B.x,
-      y: questdata.next.red.B.y,
+      x: position.red.B.x,
+      y: position.red.B.y,
       paintType: questdata.method.red.B
     }
   };
 
   var position_blue = {
     A: {
-      x: questdata.next.blue.A.x,
-      y: questdata.next.blue.A.y,
+      x: position.blue.A.x,
+      y: position.blue.A.y,
       paintType: questdata.method.blue.A
     },
     B: {
-      x: questdata.next.blue.B.x,
-      y: questdata.next.blue.B.y,
+      x: position.blue.B.x,
+      y: position.blue.B.y,
       paintType: questdata.method.red.B
     }
   };

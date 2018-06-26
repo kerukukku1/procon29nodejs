@@ -181,7 +181,6 @@ window.onload = function() {
     if (mytar == targets.NONE) return;
     var _check = getVerifyNextData(move_players).next
     if (equalsObject(_check[user_status.team][(mytar == targets.A) ? "B" : "A"], check)) {
-      console.log("equal");
       return;
     }
     (function(data) {
@@ -208,19 +207,11 @@ window.onload = function() {
 
   socket.on('connect', function() {
 
-    socket.on("init_MapState", function(data) {
-      initCanvas();
-    });
-
-    socket.emit("join_to_room", {
-      roomId: path,
-      userId: userid,
-      userName: username
-    });
+    initCanvas();
 
     socket.emit("getGameHistory");
 
-    socket.on('setGameHistory', function(data){
+    socket.on('setGameHistory', function(data) {
       console.log(data);
     })
 
@@ -245,7 +236,7 @@ window.onload = function() {
         // console.log(data.player.team);
       }
       // console.log(user_status.team);
-      // _paintflag = (user_status.team == data.player.team);
+      _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
@@ -432,7 +423,7 @@ window.onload = function() {
         move_players = objectCopy(org_move_players);
       }
       var ret = calcScore(state, w, h, colors);
-      if(user_status!="")socket.emit("SyncScoreData", ret);
+      if (user_status != "") socket.emit("SyncScoreData", ret);
       var diff = ret.blue - ret.red;
       var redpar = 50;
       var bluepar = 50;
@@ -554,6 +545,12 @@ window.onload = function() {
       paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
       paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
       paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
+      //全処理が完了したのち、部屋へ入る。
+      socket.emit("join_to_room", {
+        roomId: path,
+        userId: userid,
+        userName: username
+      });
     });
   });
 
@@ -765,6 +762,7 @@ window.onload = function() {
           } else {
             var id = setTimeout((function() {
               requestAnimationFrame(function() {
+                if (step == 2) enableClick = true;
                 countdown(timeLeft - 1);
               });
             }), 1000);
@@ -800,7 +798,10 @@ window.onload = function() {
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
     if (isInit) return;
-    socket.emit('readfile', dir);
+    socket.emit('readfile', {
+      filename: dir,
+      roomId: path
+    });
   }
 
   function paintCell(nowx, nowy, cell, player, textcolor, clearcolor) {
