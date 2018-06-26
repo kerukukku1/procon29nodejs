@@ -55,7 +55,7 @@ block content
         .input-group-prepend
           span#basic-addon1.input-group-text >
         input.form-control(type='text', placeholder='Enter Chat Content', aria-label='Username', aria-describedby='basic-addon1', autocomplete="off")#ChatForm
-        
+
     h5 Preview
     center: canvas(id="myCanvas", height="800", width="800")
     script(src="http://localhost:8888/socket.io/socket.io.js")
@@ -93,7 +93,7 @@ block content
           });
           socket.on('refresh_chat', function(data){
             if(data.path != location.pathname)return;
-            data.comment = unescape(data.comment);
+            data.comment = htmlEntities(data.comment, 'encode');
             console.log(data.username);
             var option = (!data.label)?"":'class="bg-primary text-white"';
             var _username = (!data.label)?data.username:"admin";
@@ -182,7 +182,7 @@ block content
               var username = '#{usersession.user.displayName}';
               var thumbnail = '#{usersession.user.photos[0].value}';
               var timestamp = getNowTime();
-              var comment = escape($('#ChatForm').val());
+              var comment = $('#ChatForm').val();
               if(comment == '')return event.which !== 13;
               socket.emit("send_chat", {thumbnail:thumbnail, username: username, timestamp: timestamp, comment:comment, path : location.pathname});
             }
@@ -223,6 +223,24 @@ block content
         var timestamp = hour+":"+minute+":"+second;
         return timestamp;
       }
+      function htmlEntities( text, proc ) {
+        var entities = [
+          ['amp', '&'],
+          ['apos', '\''],
+          ['lt', '<'],
+          ['gt', '>'],
+        ];
+
+        for ( var i=0, max=entities.length; i<max; i++ ) {
+          if ( 'encode' === proc ) {
+            text = text.replace(new RegExp( entities[i][1], 'g' ), "&"+entities[i][0]+';' ).replace( '"', '&quot;' );
+          } else {
+            text = text.replace( '&quot;', '"' ).replace(new RegExp( '&'+entities[i][0]+';', 'g' ), entities[i][1] );
+          }
+        }
+        return text;
+      }
+
 
   else
     div(class="alert alert-danger" role="alert")
