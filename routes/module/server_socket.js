@@ -2,23 +2,13 @@ var http = require('http');
 var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
+var connection = require('../../mysqlConnection');
+var mongoUtil = require('./mongodb_operate');
+var History = mongoUtil.History;
 var types = {
   clear: 0,
   draw: 1
 };
-const mongoose = require('mongoose');
-const Cat = mongoose.model('Cat', {
-  mapdata: [
-    [{
-      position: Number,
-      color: String
-    }]
-  ],
-  roomid: {
-    type: Number
-  }
-});
-mongoose.connect('mongodb://localhost/test');
 
 process.on('uncaughtException', function(err) {
   console.log(err);
@@ -56,6 +46,13 @@ var timeout_store = {};
 io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
+    if (socket.chatdata && chatroom_user_store[socket.chatdata.userid]) {
+      // chatroom_user_store[socket.chatdata.userid].comment = chatroom_user_store[socket.chatdata.userid].username + "さんが退出しました．";
+      // chatroom_user_store[socket.chatdata.userid].label = "server";
+      // io.sockets.in(socket.chatdata.path).emit('refresh_chat', chatroom_user_store[socket.chatdata.userid]);
+      delete chatroom_user_store[socket.chatdata.userid];
+      io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
+    }
     if (!socket.data) return;
     var tmpteam = "";
     if (player_user_store[socket.data.userId]) {
@@ -75,14 +72,14 @@ io.sockets.on('connection', function(socket) {
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
     for (var key in playing_user_store[socket.data.roomId]) {
-      if (!join_user_store[key]){
+      if (!join_user_store[key]) {
         cnt++;
-        if(tmpteam == "red"){
+        if (tmpteam == "red") {
           quest_manage_store[socket.data.roomId].method["red"] = {
             A: types.draw,
             B: types.draw
           }
-        }else if(tmpteam == "blue"){
+        } else if (tmpteam == "blue") {
           quest_manage_store[socket.data.roomId].method["blue"] = {
             A: types.draw,
             B: types.draw
@@ -92,17 +89,23 @@ io.sockets.on('connection', function(socket) {
     }
     //二人とも退出している場合ゲーム情報をリセット
     if (cnt == 2) {
+      io.sockets.in(socket.data.roomId).emit('GameForceShutdown');
       delete playing_user_store[socket.data.roomId];
       delete quest_manage_store[socket.data.roomId];
       delete tmp_moveplayer_store[socket.data.roomId]
       if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
       delete timeout_store[socket.data.roomId]
     }
+    delete socket.data;
   });
 
-  socket.on("MapDataSync", function(data){
-    if(data.status.team=="")return;
-    if(!socket.data)return;
+  socket.on("SyncScoreData", function(data) {
+    updateMapScore(socket.data.roomId, data);
+  });
+
+  socket.on("MapDataSync", function(data) {
+    if (data.status.team == "") return;
+    if (!socket.data) return;
     quest_manage_store[socket.data.roomId].maps = data.maps;
     quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, data.currentPlayerPosition);
     tmp_moveplayer_store[socket.data.roomId] = extend({}, data.currentPlayerPosition);
@@ -271,9 +274,31 @@ io.sockets.on('connection', function(socket) {
       //initialize
       handshake_room_store[socket.data.roomId] = 0;
       playing_user_store[socket.data.roomId] = ret;
-      delete quest_manage_store[socket.data.roomId]
+      //ルーム情報が残る可能性があるので削除
+      delete quest_manage_store[socket.data.roomId];
+      //もし以前の情報が保持されている場合にも削除
+      History.remove({roomid:socket.data.roomId}, function(err){
+          if(err) console.log("removed error : ", err);
+      });
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
+  });
+
+  socket.on("endBattle", function(data) {
+    var query = `update room_table set isFinished = 1 where room_id = ${data}`;
+    console.log(query);
+    connection.query(query, function(err, rows) {
+      if (err) {
+        console.log("Update Database Error");
+      } else {
+        delete playing_user_store[socket.data.roomId];
+        delete player_user_store[socket.data.roomId];
+        delete quest_manage_store[socket.data.roomId];
+        delete turn_manage_store[socket.data.roomId];
+        delete tmp_moveplayer_store[socket.data.roomId];
+        // console.log(rows);
+      }
+    });
   });
 
   //ファイル読み込み -> クライアントにデータを投げる
@@ -293,17 +318,27 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('join_chatroom', function(data) {
     socket.chatdata = data;
-    data.label = "server";
+    socket.join(socket.chatdata.path);
+    // pushMoveData();
+    // data.label = "server";
     chatroom_user_store[data.userid] = data;
-    io.sockets.emit('join_user', {
-      users: chatroom_user_store,
-      path: data.path
+    io.sockets.in(socket.chatdata.path).emit('join_user', chatroom_user_store);
+    // io.sockets.emit('refresh_chat', data);
+  });
+
+  socket.on('getGameHistory', function(){
+    if(!socket.data)return;
+    History.find({
+      roomid: socket.data.roomId
+    }, function(err, docs) {
+      if(docs.length){
+        socket.emit("setGameHistory", docs[0]);
+      }
     });
-    io.sockets.emit('refresh_chat', data);
   });
 
   socket.on('send_chat', function(data) {
-    console.log("receive");
+    // console.log("receive");
     io.sockets.emit('refresh_chat', data);
   });
 
@@ -323,6 +358,7 @@ io.sockets.on('connection', function(socket) {
         users: playing_user_store[socket.data.roomId],
         step: data.step,
         turn: -1,
+        maxturn : data.maxturn,
         next: tmp_moveplayer_store[socket.data.roomId],
         method: {
           red: {
@@ -362,6 +398,8 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].turn = 0;
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       } else if (data.step == 2) {
+        //データをmongodbに書き込み
+        pushMoveData(socket.data.roomId, quest_manage_store[socket.data.roomId], playing_user_store[socket.data.roomId]);
         quest_manage_store[socket.data.roomId].turn++;
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
@@ -369,7 +407,7 @@ io.sockets.on('connection', function(socket) {
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
-        io.sockets.in(socket.data.roomId).emit("handshake_finish", quest_manage_store[socket.data.roomId]);
+        io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
       }
     }
     //10秒ごとに巡回．停止されているかどうかの確認
@@ -411,7 +449,7 @@ io.sockets.on('connection', function(socket) {
         }
       }
     }
-    console.log(_player);
+    // console.log(_player);
     return _player;
   }
 });
@@ -440,6 +478,125 @@ function getVerifyNextData(next, players) {
 
 function equalsObject(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);
+}
+/*
+need : questid,
+       position,
+       userid,
+       username,
+       score,
+       paintType
+
+{ '1349374676':
+  { roomId: '/battle/5',
+    userId: '1349374676',
+    userName: 'Mahito',
+    team: 'blue',
+    thumbnail: 'https://pbs.twimg.com/profile_images/917317706818265088/ZQn5Do5-_normal.jpg',
+    position: { A: [Object], B: [Object] } },
+ '935161301541691392':
+  { roomId: '/battle/5',
+    userId: '935161301541691392',
+    userName: '皆無',
+    team: 'red',
+    thumbnail: 'https://pbs.twimg.com/profile_images/935161692836708352/-Q3Z98a6_normal.jpg',
+    position: { A: [Object], B: [Object] } } }
+*/
+
+var updateMapScore = function(roomId, score) {
+  History.update({
+    roomid: roomId
+  }, {
+    $set: {
+      score: score
+    }
+  }, {
+    upsert: true
+  }, function(err) {
+    if (!err) console.log("score update");
+  });
+}
+
+var pushMoveData = function(roomId, questdata, playerdata) {
+  var position_red = {
+    A: {
+      x: questdata.next.red.A.x,
+      y: questdata.next.red.A.y,
+      paintType: questdata.method.red.A
+    },
+    B: {
+      x: questdata.next.red.B.x,
+      y: questdata.next.red.B.y,
+      paintType: questdata.method.red.B
+    }
+  };
+
+  var position_blue = {
+    A: {
+      x: questdata.next.blue.A.x,
+      y: questdata.next.blue.A.y,
+      paintType: questdata.method.blue.A
+    },
+    B: {
+      x: questdata.next.blue.B.x,
+      y: questdata.next.blue.B.y,
+      paintType: questdata.method.red.B
+    }
+  };
+
+  var history;
+  History.find({
+    roomid: roomId
+  }, function(err, docs) {
+    if (docs.length) {
+      console.log(docs);
+      docs[0].red.push(position_red);
+      docs[0].blue.push(position_blue);
+      console.log(questdata.turn);
+      console.log(docs[0].red.length);
+      if(questdata.turn != docs[0].red.length)return;
+      history = docs[0];
+      History.update({
+        roomid: roomId
+      }, {
+        $set: {
+          red: history.red,
+          blue: history.blue
+        }
+      }, {
+        upsert: true
+      }, function(err) {
+        if (!err) console.log("upsert");
+      });
+    } else {
+      history = new History({
+        score: {
+          red: 0,
+          blue: 0
+        }
+      });
+      for (var player in playerdata) {
+        var add_player = {
+          userid: player.userId,
+          displayName: player.userName
+        }
+        var head = player.team;
+        history[head + "player"] = add_player;
+        history[head] = (head == "red") ? position_red : position_blue;
+        history.roomid = roomId;
+      }
+      history.save(function(err) {
+        if (!err) console.log("push");
+      })
+    }
+  });
+  // History.update({
+  //   questid: -1
+  // }, history, {
+  //   upsert: true
+  // }, function(err) {
+  //   if (!err) console.log("saved");
+  // });
 }
 
 function timeKeeper(depth, span) {

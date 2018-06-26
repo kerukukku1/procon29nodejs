@@ -42,7 +42,7 @@ window.onload = function() {
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
-    white: "#FFFFFF",
+    white: "white",
     clearred: 'rgba(255, 64, 129, 0.5)',
     clearblue: 'rgba(3, 169, 244, 0.5)'
   };
@@ -218,6 +218,12 @@ window.onload = function() {
       userName: username
     });
 
+    socket.emit("getGameHistory");
+
+    socket.on('setGameHistory', function(data){
+      console.log(data);
+    })
+
     socket.on('cancel_confirm', function(data) {
       isConfirm = false;
       console.log("Call CancelConfirm");
@@ -236,14 +242,15 @@ window.onload = function() {
       if (!data.player) return;
       var _paintflag = true;
       if (user_status.team != "") {
-        console.log(data.player.team);
+        // console.log(data.player.team);
       }
-      console.log(user_status.team);
-      _paintflag = (user_status.team == data.player.team);
+      // console.log(user_status.team);
+      // _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
       };
+      console.log(state[data.status.y][data.status.x].color);
 
       var group = data.status.group;
       //一回前の描画を消すための処理
@@ -324,37 +331,44 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
-      let time_offset = data.startTime - data.nowTime;
-      //console.log("offset : ", time_offset);
-      if (data.step == 1) $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
-      if (data.step == 2) {
-        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
+      if (data.step == 1) {
+        let time_offset = data.startTime - data.nowTime;
+        $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
+      } else if (data.step == 2) {
+        let time_offset = data.startTime - data.nowTime;
+        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
+      } else if (data.step == 3) {
+        //ゲーム終了時のレイアウトをここで表示
+        // $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
+        $('#GameShutdown').modal('show');
+        $('#progress-timer').hide();
       }
-      if (data.step == 3) $('#progress-timer').timer(10 + time_offset, 'End Phase', 3);
     });
 
     socket.on('client_handshake', function(data) {
       //console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
+        // $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
-        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + turn).addClass('text-danger').wrap('<strong />');
-        if (data.turn >= turn) {
+        $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
+        if (data.turn >= data.maxturn) {
           socket.emit("handshake", {
             status: user_status,
-            step: data.step + 1
+            step: data.step + 1,
+            maxturn: turn
           });
         } else {
           enableClick = true;
           $('#progress-timer').timer(declare_time, 'Declare Phase', 2);
         }
+      } else if (data.step == 3) {
+        //ゲーム終了時のレイアウトをここで表示
+        socket.emit("endBattle", roomid);
+        $('#GameShutdown').modal('show');
+        $('#progress-timer').hide();
       }
-    });
-
-    socket.on('handshake_finish', function(data) {
-      $('#GamesetModal').modal('show');
-      $('#progress-timer').hide();
     });
 
     socket.on('MapDataSync', function(data) {
@@ -366,8 +380,8 @@ window.onload = function() {
           team = String(team);
           for (var agent in move_players[team]) {
             agent = String(agent);
-            var flag = (state[move_players[team][agent].y][move_players[team][agent].x].color==colors.white);
-            paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", flag?"black":"white");
+            var flag = (state[move_players[team][agent].y][move_players[team][agent].x].color == colors.white);
+            paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", flag ? "black" : "white");
           }
         }
         var dummy = {
@@ -417,7 +431,8 @@ window.onload = function() {
         }
         move_players = objectCopy(org_move_players);
       }
-      let ret = calcScore(state, w, h, colors);
+      var ret = calcScore(state, w, h, colors);
+      if(user_status!="")socket.emit("SyncScoreData", ret);
       var diff = ret.blue - ret.red;
       var redpar = 50;
       var bluepar = 50;
@@ -453,6 +468,10 @@ window.onload = function() {
         red: data[team_red].thumbnail,
         blue: data[team_blu].thumbnail
       });
+    });
+
+    socket.on('GameForceShutdown', function() {
+      $("#GameForceShutdown").modal('show');
     });
 
     socket.on('filedata', function(data) {
@@ -540,18 +559,15 @@ window.onload = function() {
 
   window.document.onkeydown = function() {
     if (event.key == "Shift") {
-      //console.log(paintType);
+      // console.log("down");
       paintType = types.clear;
-      //透過処理
-      // ctx.globalAlpha = 0.5;
     }
   };
 
   window.document.onkeyup = function() {
     if (event.key == "Shift") {
-      //console.log("up");
+      // console.log("up");
       paintType = types.draw;
-      // ctx.globalAlpha = 1.0;
     }
   };
 
@@ -679,7 +695,8 @@ window.onload = function() {
         socket.emit("handshake", {
           status: user_status,
           current: players,
-          step: 1
+          step: 1,
+          maxturn: turn
         });
       }, 4000);
     });
@@ -725,7 +742,8 @@ window.onload = function() {
           var sender = {
             status: user_status,
             step: step,
-            maps: state
+            maps: state,
+            maxturn: turn
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
@@ -833,6 +851,12 @@ window.onload = function() {
     if (isConfirm) return;
     socket.emit("disconfirm", user_status);
     console.log("Confirm");
+  });
+  $('#GameForceShutdown').on('hidden.bs.modal', function() {
+    window.location.reload();
+  });
+  $('#GameShutdown').on('hidden.bs.modal', function() {
+    window.location.reload();
   });
 };
 // //console.log(dir);

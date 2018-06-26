@@ -22,12 +22,14 @@ router.get('/:room_id', function(req, res, next) {
         connection.query(query2, function(err2, battle) {
           if (!err2 && battle.length) {
             res.render('battle', {
+              questId: room[0].org_quest_id,
               title: battle[0].quest_name,
               filedir: battle[0].filedir,
               roomId: roomId,
               strategy_time: room[0].strategy_time,
               move_time: room[0].move_time,
-              declare_time: room[0].declare_time
+              declare_time: room[0].declare_time,
+              isFinished: room[0].isFinished
             });
           } else {
             res.render('error', {

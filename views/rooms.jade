@@ -65,7 +65,7 @@ block content
         var colors = {
           red: "#FF4081",
           blue: "#03A9F4",
-          white: "#FFFFFF",
+          white: "white",
         };
         var socket = io.connect("http://localhost:8888/");
         var state = [];
@@ -78,17 +78,15 @@ block content
           socket.emit('readfile', dir);
           socket.emit('join_chatroom', {thumbnail: "#{usersession.user.photos[0].value}", userid:'#{usersession.user.id}', username: '#{usersession.user.displayName}', timestamp: getNowTime(), comment:'<img src="#{usersession.user.photos[0].value}" class="thumbnail"></img> #{usersession.user.displayName}'+"さんが入場しました．", path : location.pathname});
           socket.on('join_user', function(data){
-            if(data.path != location.pathname)return;
-            const result = Object.keys(data.users).filter((key) => {
-              return data.users[key].path === location.pathname
+            const result = Object.keys(data).filter((key) => {
+              return data[key].path === location.pathname
             });
-            console.log(data.users);
             $("#onlineUsers tr").remove();
             for(var i = 0; i < result.length; i++){
               $('#onlineUsers').append(
                 `<tr>
-                <th width="10%"><img src="${data.users[result[i]].thumbnail}" class="thumbnail"></img></th>
-                <th width="80%">${data.users[result[i]].username}</th>
+                <th width="10%"><img src="${data[result[i]].thumbnail}" class="thumbnail"></img></th>
+                <th width="80%">${data[result[i]].username}</th>
                 </tr>`
               );  
             }
