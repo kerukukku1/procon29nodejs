@@ -406,6 +406,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         //データをmongodbに書き込み
+        // console.log(tmp_moveplayer_store[socket.data.roomId]);
         pushMoveData(
           socket.data.roomId,
           copyExtendsObject(quest_manage_store[socket.data.roomId]),

@@ -358,8 +358,8 @@ window.onload = function() {
         // $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
-        if (data.turn > 1) {
-          // if (data.turn > data.maxturn) {
+        // if (data.turn > 1) {
+        if (data.turn > data.maxturn) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1,
@@ -767,8 +767,7 @@ window.onload = function() {
             if (step == 1) {
               //next step
               sender.step += 1;
-            } else if (step == 2) {
-            } else if (step == 3) {
+            } else if (step == 2) {} else if (step == 3) {
               return;
             }
             socket.emit("handshake", sender);
