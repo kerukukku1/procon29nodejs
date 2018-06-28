@@ -334,6 +334,8 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
+      console.log("reshake");
+      console.log(data);
       var red_thumbnail, blue_thumbnail;
       for (p in data.player) {
         if (data.player[p].team == "red") red_thumbnail = data.player[p].thumbnail;
@@ -344,7 +346,7 @@ window.onload = function() {
       if (data.quest.step == 1) {
         let time_offset = data.quest.startTime - data.quest.nowTime;
         $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
-      } else if (data.step == 2) {
+      } else if (data.quest.step == 2) {
         let time_offset = data.quest.startTime - data.quest.nowTime;
         $('#turnlabel').empty().text('TURN ' + data.quest.turn + " / " + data.quest.maxturn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
