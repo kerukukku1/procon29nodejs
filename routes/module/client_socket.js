@@ -817,6 +817,7 @@ window.onload = function() {
       filename: dir,
       roomId: path
     });
+    socket.emit("getQuestData", questid);
   }
 
   function paintCell(nowx, nowy, cell, player, textcolor, clearcolor) {

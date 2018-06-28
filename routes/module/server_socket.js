@@ -5,10 +5,14 @@ var moment = require('moment');
 var connection = require('../../mysqlConnection');
 var mongoUtil = require('./mongodb_operate');
 var History = mongoUtil.History;
+var Quest = mongoUtil.Quest;
+
 var types = {
   clear: 0,
   draw: 1
 };
+
+var qrpath_template = "http://chart.apis.google.com/chart?cht=qr&chs=256x256&chld=M|0&chl=";
 
 process.on('uncaughtException', function(err) {
   console.log(err);
@@ -306,6 +310,16 @@ io.sockets.on('connection', function(socket) {
     });
   });
 
+  socket.on("getQuestData", function(id) {
+    Quest.find({
+      quest_id: id
+    }, function(err, docs) {
+      if (docs[0]) {
+        
+      }
+    });
+  });
+
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
     var dir = process.cwd() + '/questdata/' + data.filename;
@@ -578,7 +592,7 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
           console.log("upsert");
-        }else{
+        } else {
           console.log(err);
         }
       });
@@ -606,7 +620,7 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
           console.log("push");
-        }else{
+        } else {
           console.log(err);
         }
       })
