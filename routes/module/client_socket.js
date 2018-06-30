@@ -33,7 +33,6 @@ window.onload = function() {
   var w;
   var h;
   var pos;
-  var turn;
   var now_turn = 0;
   var state = [];
   var isInit = false;
@@ -487,12 +486,9 @@ window.onload = function() {
       $("#GameForceShutdown").modal('show');
     });
 
-    socket.on('filedata', function(data) {
-      var arr = data.text.split('\n');
-      // //console.log(arr);
-      turn = parseInt(arr[0]);
-      w = parseInt(arr[1]);
-      h = parseInt(arr[2]);
+    socket.on("sendQuestData", function(data){
+      var arr = data.docs.filedata.red.split(':');
+      [h, w] = arr[0].split(' ');
       _w = w * square_size + 1.5;
       _h = h * square_size + 1;
       canvas.height = 2 * _h;
@@ -504,14 +500,10 @@ window.onload = function() {
       ctx.lineWidth = 0.5;
       ctx.translate(0.5, 0.5);
       ctx.textAlign = "center";
-      //console.log("data:");
-      //console.log(data.status);
       for (var i = 0; i < h; i++) {
-        var row = arr[3 + i];
-        var elems = row.split(' ');
+        var elems = arr[1 + i].split(' ');
         var _elems = [];
         for (var j = 0; j < w; j++) {
-          var score = elems[j];
           _elems[j] = {
             score: parseInt(elems[j]),
             color: "white"
@@ -519,31 +511,31 @@ window.onload = function() {
         }
         state.push(_elems);
       }
-      //bias
-      i += 3;
+
       var npos;
-      npos = arr[i].split(' ').map(e => parseInt(e));
+      npos = arr[i + 1].split(' ').map(e => parseInt(e));
       players.red.A = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 1].split(' ').map(e => parseInt(e));
+      npos = arr[i + 2].split(' ').map(e => parseInt(e));
       players.red.B = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 2].split(' ').map(e => parseInt(e));
+      var arr = data.docs.filedata.blue.split(':');
+      npos = arr[i + 1].split(' ').map(e => parseInt(e));
       players.blue.A = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 3].split(' ').map(e => parseInt(e));
+      npos = arr[i + 2].split(' ').map(e => parseInt(e));
       players.blue.B = {
         x: npos[0],
         y: npos[1]
       };
+      console.log(data.status);
       if (data.status) {
-        //console.log(data.status);
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
         if (!isEmpty(tmp_state)) state = tmp_state;
@@ -818,11 +810,7 @@ window.onload = function() {
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
     if (isInit) return;
-    socket.emit('readfile', {
-      filename: dir,
-      roomId: path
-    });
-    socket.emit("getQuestData", questid);
+    socket.emit("getQuestData", {id : questid, path: path});
   }
 
   function paintCell(nowx, nowy, cell, player, textcolor, clearcolor) {

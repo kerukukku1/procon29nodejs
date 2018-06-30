@@ -23,7 +23,7 @@ block content
       //-     td def@somemail.com
       tbody
       - for (var i = 0; i < roomList.length; i++) {
-        tr(data-href="/battle/#{roomList[i].room_id}")
+        tr(data-href="/battle/#{roomList[i]._id}")
           th(scope='row')= roomList[i].room_id
           td= roomList[i].room_name
           td= roomList[i].comment
@@ -72,10 +72,13 @@ block content
         var canvas = document.getElementById("myCanvas");
         var ctx = canvas.getContext("2d");
         var square_size = 50;
+        var w, h;
         socket.on('connect', function() {
-          var dir = '#{filedir}';
-          console.log(dir);
-          socket.emit('readfile', {filename: dir, roomId: -1});
+          socket.emit("getQuestData", {
+            id : '#{room_id}', 
+            path : "/"
+          });
+          //- socket.emit('readfile', {filename: dir, roomId: -1});
           socket.emit('join_chatroom', {thumbnail: "#{usersession.user.photos[0].value}", userid:'#{usersession.user.id}', username: '#{usersession.user.displayName}', timestamp: getNowTime(), comment:'<img src="#{usersession.user.photos[0].value}" class="thumbnail"></img> #{usersession.user.displayName}'+"さんが入場しました．", path : location.pathname});
           socket.on('join_user', function(data){
             const result = Object.keys(data).filter((key) => {
@@ -112,10 +115,11 @@ block content
             //- var $textarea = $('#chatComment');
             //- $textarea.scrollTop($textarea[0].scrollHeight);
           });
-          socket.on('filedata', function(data){
-            var arr = data.text.split('\n');
-            w = parseInt(arr[1]);
-            h = parseInt(arr[2]);
+          socket.on("sendQuestData", function(data){
+            console.log(data);
+            var arr = data.docs.filedata.red.split(':');
+            //- console.log(arr);
+            [h, w] = arr[0].split(' ');
             _w = w * square_size + 1.5;
             _h = h * square_size + 1;
             canvas.height = 2 * _h;
@@ -128,11 +132,9 @@ block content
             ctx.translate(0.5, 0.5);
             ctx.textAlign = "center";
             for (var i = 0; i < h; i++) {
-              var row = arr[3 + i];
-              var elems = row.split(' ');
+              var elems = arr[1 + i].split(' ');
               var _elems = [];
               for (var j = 0; j < w; j++) {
-                var score = elems[j];
                 _elems[j] = {
                   score: parseInt(elems[j]),
                   color: "white"
@@ -140,22 +142,22 @@ block content
                 paintCell(j,i,_elems[j],"","black");
               }
               state.push(_elems);
-            }
-            i += 3;var npos;
-            npos = arr[i + 0].split(' ').map(e => parseInt(e));
-            state[npos[1]][npos[0]].color = colors.red;
-            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
+            }   
+            var npos;
             npos = arr[i + 1].split(' ').map(e => parseInt(e));
             state[npos[1]][npos[0]].color = colors.red;
-            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
             npos = arr[i + 2].split(' ').map(e => parseInt(e));
+            state[npos[1]][npos[0]].color = colors.red;
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+            var arr = data.docs.filedata.blue.split(':');
+            npos = arr[i + 1].split(' ').map(e => parseInt(e));
             state[npos[1]][npos[0]].color = colors.blue;
             paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "A", "white");
-            npos = arr[i + 3].split(' ').map(e => parseInt(e));
+            npos = arr[i + 2].split(' ').map(e => parseInt(e));
             state[npos[1]][npos[0]].color = colors.blue;
-            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");
+            paintCell(npos[0], npos[1], state[npos[1]][npos[0]], "B", "white");     
           });
-
         });
         function paintCell(nowx, nowy, cell, player, textcolor) {
           //verify

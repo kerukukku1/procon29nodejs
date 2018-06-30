@@ -1,42 +1,35 @@
 var express = require('express');
 var router = express.Router();
-var connection = require('../mysqlConnection');
+var mongo = require("./module/mongodb_operate");
+var Room = mongo.Room;
+var Quest = mongo.Quest;
+const mongoose = require("mongoose");
 
 router.get('/:room_id', function(req, res, next) {
-  if (!req.session) {
+  if (!req.session.passport) {
     res.redirect('/');
   } else {
     var roomId = req.params.room_id;
-    if (isNaN(roomId)) {
-      res.render('error', {
-        roomid_error: true
-      });
-    }
-    var query = 'SELECT * FROM room_table WHERE room_id = ' + roomId;
-    console.log(query);
-    connection.query(query, function(err, room) {
-      if (!err && room.length) {
-        var query2 = 'SELECT * FROM quest_board WHERE quest_id = ' + room[0].org_quest_id;
-        console.log(query2);
-        console.log(room);
-        connection.query(query2, function(err2, battle) {
-          if (!err2 && battle.length) {
-            res.render('battle', {
-              questId: room[0].org_quest_id,
-              title: battle[0].quest_name,
-              filedir: battle[0].filedir,
-              roomId: roomId,
-              strategy_time: room[0].strategy_time,
-              move_time: room[0].move_time,
-              declare_time: room[0].declare_time,
-              isFinished: room[0].isFinished
-            });
-          } else {
-            res.render('error', {
-              roomid_error: true
-            });
-          }
+    mongoose.connect('mongodb://localhost/test');
+    Room.findOne({
+      _id: roomId
+    }, function(err, row1) {
+      console.log(row1);
+      if (row1 != null) {
+        Quest.findOne({
+          _id: row1.org_quest_id
+        }, function(err, row2) {
+          res.render('battle', {
+            roomId: roomId,
+            questId: row1.org_quest_id,
+            strategy_time: row1.strategy_time,
+            move_time: row1.move_time,
+            declare_time: row1.declare_time,
+            isFinished: row1.isFinished,
+            turn : row1.turn
+          });
         });
+        console.log(row1);
       } else {
         res.render('error', {
           roomid_error: true

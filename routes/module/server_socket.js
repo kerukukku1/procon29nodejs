@@ -3,9 +3,10 @@ var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
 var connection = require('../../mysqlConnection');
-var mongoUtil = require('./mongodb_operate');
-var History = mongoUtil.History;
-var Quest = mongoUtil.Quest;
+var mongo = require('../module/mongodb_operate');
+var Room = mongo.Room;
+var History = mongo.History;
+var Quest = mongo.Quest;
 
 var types = {
   clear: 0,
@@ -294,29 +295,40 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("endBattle", function(data) {
-    var query = `update room_table set isFinished = 1 where room_id = ${data}`;
-    console.log(query);
-    connection.query(query, function(err, rows) {
-      if (err) {
-        console.log("Update Database Error");
-      } else {
-        delete playing_user_store[socket.data.roomId];
-        delete player_user_store[socket.data.roomId];
-        delete quest_manage_store[socket.data.roomId];
-        delete turn_manage_store[socket.data.roomId];
-        delete tmp_moveplayer_store[socket.data.roomId];
-        // console.log(rows);
-      }
-    });
+    Room.findOne({
+      _id: data
+    }, function(err, row) {
+      Room.update({
+        _id: data
+      }, {
+        $set: {
+          isFinished: true
+        }
+      }, {
+        upsert: true
+      }, function(err) {
+        if (err) {
+          console.log("Update Database Error");
+        } else {
+          delete playing_user_store[socket.data.roomId];
+          delete player_user_store[socket.data.roomId];
+          delete quest_manage_store[socket.data.roomId];
+          delete turn_manage_store[socket.data.roomId];
+          delete tmp_moveplayer_store[socket.data.roomId];
+          // console.log(rows);
+        }
+      });
+    })
   });
 
-  socket.on("getQuestData", function(id) {
-    Quest.find({
-      quest_id: id
+  socket.on("getQuestData", function(data) {
+    Quest.findOne({
+      _id: data.id
     }, function(err, docs) {
-      if (docs[0]) {
-        
-      }
+      socket.emit("sendQuestData", {
+        docs: docs,
+        status: quest_manage_store[data.path]
+      });
     });
   });
 

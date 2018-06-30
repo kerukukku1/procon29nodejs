@@ -24,7 +24,6 @@ block content
     if isFinished
       include includes/match_result.jade
     include includes/confirm_modal.jade
-    //- center: p Welcome to #{title}
     .wrapper
       div#progress-timer
       hr
@@ -42,7 +41,8 @@ block content
         var move_time = Number('#{move_time}');
         var strategy_time = Number('#{strategy_time}');
         var questid = '#{questId}';
-        var isFinished = Number('#{isFinished}');
+        var isFinished = '#{isFinished}';
+        var turn = Number('#{turn}');
       script(src="/module/client_socket.js")
       script(src="/module/calcScore.js")
       hr

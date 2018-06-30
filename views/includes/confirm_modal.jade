@@ -70,6 +70,13 @@
                 input.form-control(type='text', placeholder='誰でも参加OK', name="comment", required)
             .form-row
               .form-group.col-md-4
+                label(for='inputState') ターン数
+                select#inputState.form-control(type='text', name="turn")
+                  -for(var i = 5; i <= 120; i++){
+                    option #{i}
+                  -}
+            .form-row
+              .form-group.col-md-4
                 label(for='inputState') 作戦ステップ(秒)
                 select#inputState.form-control(type='text', name="strategy_time")
                   option(selected='') 30

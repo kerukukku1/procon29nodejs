@@ -26,8 +26,8 @@ block content
             th(scope='col') 作成日
         tbody
         - for (var i = 0; i < boardList.length; i++) {
-            tr(data-href="/rooms/#{i+1}")
-              th(scope='row')= boardList[i].quest_id
+            tr(data-href="/rooms/"+boardList[i]._id)
+              th(scope='row')= i+1
               td= boardList[i].quest_name
               td= boardList[i].author
               td= boardList[i].createdAt
