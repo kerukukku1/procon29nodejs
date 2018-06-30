@@ -31,7 +31,41 @@ const GameHistory = new Schema({
   blue: [StatusSchema]
 });
 
+const QuestData = new Schema({
+  quest_name: String,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  author: String,
+  filedata: {
+    red: String,
+    blue: String
+  }
+});
+
+const RoomData = new Schema({
+  room_name: String,
+  comment: String,
+  master: String,
+  org_quest_id: String,
+  strategy_time: Number,
+  move_time: Number,
+  declare_time: Number,
+  turn: Number,
+  isFinished: Boolean,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  user_id: String
+});
+
 mongoose.connect('mongodb://localhost/test');
 // module.exports = mongoose.model('Player', PlayerSchema);
 var History = mongoose.model('History', GameHistory);
+var Quest = mongoose.model('Quest', QuestData);
+var Room = mongoose.model('Room', RoomData);
 module.exports.History = History;
+module.exports.Quest = Quest;
+module.exports.Room = Room;

@@ -33,7 +33,6 @@ window.onload = function() {
   var w;
   var h;
   var pos;
-  var turn;
   var now_turn = 0;
   var state = [];
   var isInit = false;
@@ -160,13 +159,13 @@ window.onload = function() {
     } else if (paintType == types.clear) {
       //白なら削除する必要なし
       if (state[d.y][d.x].color == "white") return;
-      for (var key1 in players) {
-        for (var key2 in players[String(key1)]) {
-          if (equalsObject(players[String(key1)][String(key2)], check)) {
-            return false;
-          }
-        }
-      }
+      // for (var key1 in players) {
+      //   for (var key2 in players[String(key1)]) {
+      //     if (equalsObject(players[String(key1)][String(key2)], check)) {
+      //       return false;
+      //     }
+      //   }
+      // }
     }
     var me = (user_status.team == "red") ? players.red : players.blue;
     if (equalsObject(check, me.A)) {
@@ -262,7 +261,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.A : players.blue.A;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", flag ? "white" : "black");
+          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "A" : "", (state[tmp.y][tmp.x].color != "white") ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.A = coord;
@@ -272,7 +271,7 @@ window.onload = function() {
         var tmp2 = (data.player.team == "red") ? players.red.B : players.blue.B;
         if (tmp.x >= 0 || tmp.y >= 0) {
           var flag = equalsObject(tmp, tmp2);
-          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", flag ? "white" : "black");
+          _paintflag && paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], flag ? "B" : "", (state[tmp.y][tmp.x].color != "white") ? "white" : "black");
         }
         if (data.player.team == "red") {
           move_players.red.B = coord;
@@ -334,6 +333,8 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
+      console.log("reshake");
+      console.log(data);
       var red_thumbnail, blue_thumbnail;
       for (p in data.player) {
         if (data.player[p].team == "red") red_thumbnail = data.player[p].thumbnail;
@@ -344,7 +345,7 @@ window.onload = function() {
       if (data.quest.step == 1) {
         let time_offset = data.quest.startTime - data.quest.nowTime;
         $('#progress-timer').timer(strategy_time + time_offset, 'Strategy Phase', 1);
-      } else if (data.step == 2) {
+      } else if (data.quest.step == 2) {
         let time_offset = data.quest.startTime - data.quest.nowTime;
         $('#turnlabel').empty().text('TURN ' + data.quest.turn + " / " + data.quest.maxturn).addClass('text-danger').wrap('<strong />');
         $('#progress-timer').timer(declare_time + time_offset, 'Declare Phase', 2);
@@ -358,8 +359,8 @@ window.onload = function() {
         // $('#progress-timer').timer(3, 'Strategy Phase', 1);
       } else if (data.step == 2) {
         $('#turnlabel').empty().text('TURN ' + data.turn + " / " + data.maxturn).addClass('text-danger').wrap('<strong />');
-        if (data.turn > 1) {
-          // if (data.turn > data.maxturn) {
+        // if (data.turn > 1) {
+        if (data.turn > data.maxturn) {
           socket.emit("handshake", {
             status: user_status,
             step: data.step + 1,
@@ -394,25 +395,30 @@ window.onload = function() {
           A: types.draw,
           B: types.draw
         }
-        var _verifyCheck = getVerifyNextData(data.next);
+        var _verifyCheck = verifyConflict(getVerifyNextData(data.next));
+        console.log(_verifyCheck.flag);
         data.next = _verifyCheck.next;
-        if (players.red.A.x == -1) {
-          players = objectCopy(quest_manage_store[socket.data.roomId].currentPlayerPosition);
-        }
+        // if (players.red.A.x == -1) {
+        //   players = objectCopy(data.currentPlayerPosition);
+        // }
         var tmp = mytar;
         mytar = targets.NONE;
+        var _p = objectCopy(players);
         //現在のプレイヤーラベルを同一色で剥がす
         for (var team in players) {
           team = String(team);
           for (var agent in players[team]) {
             agent = String(agent);
-            paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], "", "white");
+            //エージェント位置のマスを濃くするためのペイント
+            paintCell(_p[team][agent].x, _p[team][agent].y, state[_p[team][agent].y][_p[team][agent].x], "", "white");
             //削除でコンフリクトのときは無効
             if (_verifyCheck.flag[team][agent]) {
               data.method[team][agent] = types.draw;
+              console.log("conflict");
+            }else{
+              //次のパネルをセット
+              state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
             }
-            //次のパネルをセット
-            state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
             //削除があった場合の対策
             if (data.method[team][agent] == types.clear) {
               state[data.next[team][agent].y][data.next[team][agent].x].color = colors.white;
@@ -422,6 +428,7 @@ window.onload = function() {
         }
         //次のパネルに移動
         mytar = tmp;
+        var _p = objectCopy(players);
         players = getVerifyNextData2(data.next, data.method);
         socket.emit("MapDataSync", {
           status: user_status,
@@ -432,6 +439,7 @@ window.onload = function() {
           team = String(team);
           for (var agent in players[team]) {
             agent = String(agent);
+            paintCell(_p[team][agent].x, _p[team][agent].y, state[_p[team][agent].y][_p[team][agent].x], "", (state[_p[team][agent].y][_p[team][agent].x].color == "white") ? "black" : "white");
             paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], agent, "white");
           }
         }
@@ -480,12 +488,9 @@ window.onload = function() {
       $("#GameForceShutdown").modal('show');
     });
 
-    socket.on('filedata', function(data) {
-      var arr = data.text.split('\n');
-      // //console.log(arr);
-      turn = parseInt(arr[0]);
-      w = parseInt(arr[1]);
-      h = parseInt(arr[2]);
+    socket.on("sendQuestData", function(data) {
+      var arr = data.docs.filedata.red.split(':');
+      [h, w] = arr[0].split(' ');
       _w = w * square_size + 1.5;
       _h = h * square_size + 1;
       canvas.height = 2 * _h;
@@ -497,14 +502,10 @@ window.onload = function() {
       ctx.lineWidth = 0.5;
       ctx.translate(0.5, 0.5);
       ctx.textAlign = "center";
-      //console.log("data:");
-      //console.log(data.status);
       for (var i = 0; i < h; i++) {
-        var row = arr[3 + i];
-        var elems = row.split(' ');
+        var elems = arr[1 + i].split(' ');
         var _elems = [];
         for (var j = 0; j < w; j++) {
-          var score = elems[j];
           _elems[j] = {
             score: parseInt(elems[j]),
             color: "white"
@@ -512,31 +513,31 @@ window.onload = function() {
         }
         state.push(_elems);
       }
-      //bias
-      i += 3;
+
       var npos;
-      npos = arr[i].split(' ').map(e => parseInt(e));
+      npos = arr[i + 1].split(' ').map(e => parseInt(e));
       players.red.A = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 1].split(' ').map(e => parseInt(e));
+      npos = arr[i + 2].split(' ').map(e => parseInt(e));
       players.red.B = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 2].split(' ').map(e => parseInt(e));
+      var arr = data.docs.filedata.blue.split(':');
+      npos = arr[i + 1].split(' ').map(e => parseInt(e));
       players.blue.A = {
         x: npos[0],
         y: npos[1]
       };
-      npos = arr[i + 3].split(' ').map(e => parseInt(e));
+      npos = arr[i + 2].split(' ').map(e => parseInt(e));
       players.blue.B = {
         x: npos[0],
         y: npos[1]
       };
+      console.log(data.status);
       if (data.status) {
-        //console.log(data.status);
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
         if (!isEmpty(tmp_state)) state = tmp_state;
@@ -767,8 +768,7 @@ window.onload = function() {
             if (step == 1) {
               //next step
               sender.step += 1;
-            } else if (step == 2) {
-            } else if (step == 3) {
+            } else if (step == 2) {} else if (step == 3) {
               return;
             }
             socket.emit("handshake", sender);
@@ -812,9 +812,9 @@ window.onload = function() {
   //サーバにファイル要求を出してファイルを取得
   function initCanvas() {
     if (isInit) return;
-    socket.emit('readfile', {
-      filename: dir,
-      roomId: path
+    socket.emit("getQuestData", {
+      id: questid,
+      path: path
     });
   }
 
@@ -824,12 +824,20 @@ window.onload = function() {
     //canvasの一部分削除
     posx = nowx * square_size;
     posy = nowy * square_size;
-    ctx.fillStyle = (!clearcolor) ? cell.color : clearcolor;
-    ctx.font = "20px bold";
-    ctx.beginPath();
-    ctx.clearRect(posx, posy, square_size, square_size);
-    ctx.fillRect(posx, posy, square_size, square_size);
     var offset = 0;
+    ctx.fillStyle = (!clearcolor) ? cell.color : clearcolor;
+    for (team in players) {
+      team = String(team);
+      for (agent in players[team]) {
+        agent = String(agent);
+        if (equalsObject(players[team][agent], {
+            x: nowx,
+            y: nowy
+          })) {
+          ctx.fillStyle = team;
+        }
+      }
+    }
     if (user_status.team != "") {
       //console.log("player fill");
       var me = (user_status.team == "red") ? players.red : players.blue;
@@ -845,6 +853,10 @@ window.onload = function() {
         offset = 1;
       }
     }
+    ctx.font = "20px bold";
+    ctx.beginPath();
+    ctx.clearRect(posx, posy, square_size, square_size);
+    ctx.fillRect(posx, posy, square_size, square_size);
     ctx.rect(posx + offset, posy + offset, square_size - (offset * 2), square_size - (offset * 2));
     ctx.stroke();
     ctx.strokeStyle = "#757575";
@@ -853,6 +865,46 @@ window.onload = function() {
     ctx.fillText(cell.score, posx + (square_size / 2), posy + (square_size / 2), 1000);
     ctx.font = "15px bold";
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
+  }
+
+  function verifyConflict(data) {
+    var _player = data.next;
+    var flag = data.flag;
+    for (var team in _player) {
+      team = String(team);
+      for (var agent in _player[team]) {
+        agent = String(agent);
+        var isConflict = false;
+        for (var _team in _player) {
+          _team = String(_team);
+          for (var _agent in _player[_team]) {
+            _agent = String(_agent);
+            if ((team == _team) && (agent == _agent)) continue;
+            if (_player[_team][_agent].x == -1) continue;
+            if (equalsObject(_player[team][agent], _player[_team][_agent])) {
+              _player[_team][_agent] = {
+                x: players[_team][_agent].x,
+                y: players[_team][_agent].y
+              };
+              flag[_team][_agent] = true;
+              isConflict = true;
+            }
+          }
+        }
+        if (isConflict) {
+          _player[team][agent] = {
+            x: players[team][agent].x,
+            y: players[team][agent].y
+          };
+          flag[team][agent] = true;
+        }
+      }
+    }
+    // console.log(_player);
+    return {
+      next: _player,
+      flag: flag
+    };
   }
 
   function isEmpty(obj) {
@@ -873,5 +925,7 @@ window.onload = function() {
   $('#GameShutdown').on('hidden.bs.modal', function() {
     window.location.reload();
   });
+
+
 };
 // //console.log(dir);

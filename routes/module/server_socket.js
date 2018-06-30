@@ -3,12 +3,17 @@ var fs = require('fs');
 var extend = require('extend');
 var moment = require('moment');
 var connection = require('../../mysqlConnection');
-var mongoUtil = require('./mongodb_operate');
-var History = mongoUtil.History;
+var mongo = require('../module/mongodb_operate');
+var Room = mongo.Room;
+var History = mongo.History;
+var Quest = mongo.Quest;
+
 var types = {
   clear: 0,
   draw: 1
 };
+
+var qrpath_template = "http://chart.apis.google.com/chart?cht=qr&chs=256x256&chld=M|0&chl=";
 
 process.on('uncaughtException', function(err) {
   console.log(err);
@@ -290,19 +295,40 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("endBattle", function(data) {
-    var query = `update room_table set isFinished = 1 where room_id = ${data}`;
-    console.log(query);
-    connection.query(query, function(err, rows) {
-      if (err) {
-        console.log("Update Database Error");
-      } else {
-        delete playing_user_store[socket.data.roomId];
-        delete player_user_store[socket.data.roomId];
-        delete quest_manage_store[socket.data.roomId];
-        delete turn_manage_store[socket.data.roomId];
-        delete tmp_moveplayer_store[socket.data.roomId];
-        // console.log(rows);
-      }
+    Room.findOne({
+      _id: data
+    }, function(err, row) {
+      Room.update({
+        _id: data
+      }, {
+        $set: {
+          isFinished: true
+        }
+      }, {
+        upsert: true
+      }, function(err) {
+        if (err) {
+          console.log("Update Database Error");
+        } else {
+          delete playing_user_store[socket.data.roomId];
+          delete player_user_store[socket.data.roomId];
+          delete quest_manage_store[socket.data.roomId];
+          delete turn_manage_store[socket.data.roomId];
+          delete tmp_moveplayer_store[socket.data.roomId];
+          // console.log(rows);
+        }
+      });
+    })
+  });
+
+  socket.on("getQuestData", function(data) {
+    Quest.findOne({
+      _id: data.id
+    }, function(err, docs) {
+      socket.emit("sendQuestData", {
+        docs: docs,
+        status: quest_manage_store[data.path]
+      });
     });
   });
 
@@ -406,6 +432,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         //データをmongodbに書き込み
+        // console.log(tmp_moveplayer_store[socket.data.roomId]);
         pushMoveData(
           socket.data.roomId,
           copyExtendsObject(quest_manage_store[socket.data.roomId]),
@@ -577,7 +604,7 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
           console.log("upsert");
-        }else{
+        } else {
           console.log(err);
         }
       });
@@ -605,7 +632,7 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
           console.log("push");
-        }else{
+        } else {
           console.log(err);
         }
       })

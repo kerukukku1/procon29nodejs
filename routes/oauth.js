@@ -31,12 +31,22 @@ const User = mongoose.model('User', {
   }
 });
 
+// var proxy = require('httpx-proxy-agent-config');
+//
+// proxy.install({
+//  http_proxy: 'http://172.24.2.60:15080',
+//  https_proxy: 'http://172.24.2.60:15080',
+//  // example for passportjs Google OAuth2 + Google+
+//  // whitelist: ['www.google.com','accounts.google.com', '173.194.66.95', '74.125.192.95', '209.85.201.95', 'www.googleapis.com']
+//  blacklist: ['localhost']
+// });
+
 // /oauthにアクセスした時
 router.get('/', passport.authenticate('twitter'), function(req, res, next) {});
 
 // /oauth/callbackにアクセスした時（Twitterログイン後）
 router.get('/callback', passport.authenticate('twitter', {
-  failureRedirect: '/login'
+  failureRedirect: '/oauth'
 }), function(req, res) {
   mongoose.connect('mongodb://localhost/test');
   User.find({
