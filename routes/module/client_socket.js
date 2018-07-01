@@ -1,5 +1,6 @@
 const dx = [1, 1, 1, 0, -1, -1, -1, 0, 0];
 const dy = [1, 0, -1, -1, -1, 0, 1, 1, 0];
+var qrpath_template = "http://chart.apis.google.com/chart?cht=qr&chs=256x256&chld=M|0&chl=";
 window.onload = function() {
   var players = {
     red: {
@@ -38,6 +39,7 @@ window.onload = function() {
   var isInit = false;
   var path = location.pathname;
   var enableClick = false;
+  var filedata;
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
@@ -340,6 +342,9 @@ window.onload = function() {
         if (data.player[p].team == "red") red_thumbnail = data.player[p].thumbnail;
         else if (data.player[p].team == "blue") blue_thumbnail = data.player[p].thumbnail;
       }
+      var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
+      console.log(qrpath);
+      if(user_status.team!="")$("#qrcode-img").append(qrpath);
       document.getElementById('playername').innerHTML =
         `<img src="${blue_thumbnail}" class="thumbnail-md"></img>　vs.　<img src="${red_thumbnail}" class="thumbnail-md"></img>`;
       if (data.quest.step == 1) {
@@ -415,7 +420,7 @@ window.onload = function() {
             if (_verifyCheck.flag[team][agent]) {
               data.method[team][agent] = types.draw;
               console.log("conflict");
-            }else{
+            } else {
               //次のパネルをセット
               state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
             }
@@ -489,6 +494,7 @@ window.onload = function() {
     });
 
     socket.on("sendQuestData", function(data) {
+      filedata = data.docs.filedata;
       var arr = data.docs.filedata.red.split(':');
       [h, w] = arr[0].split(' ');
       _w = w * square_size + 1.5;
@@ -562,11 +568,13 @@ window.onload = function() {
       paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
       paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
       //全処理が完了したのち、部屋へ入る。完了済みの場合は入らない
-      if (!isFinished) socket.emit("join_to_room", {
-        roomId: path,
-        userId: userid,
-        userName: username
-      });
+      if (!isFinished) {
+        socket.emit("join_to_room", {
+          roomId: path,
+          userId: userid,
+          userName: username
+        });
+      }
     });
   });
 
@@ -714,6 +722,10 @@ window.onload = function() {
         });
       }, 4000);
     });
+
+    var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
+    console.log(qrpath);
+    if(user_status.team!="")$("#qrcode-img").append(qrpath);
     $("#joinRed").prop('disabled', true);
     $("#joinBlue").prop('disabled', true);
   };

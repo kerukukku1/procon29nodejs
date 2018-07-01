@@ -13,8 +13,6 @@ var types = {
   draw: 1
 };
 
-var qrpath_template = "http://chart.apis.google.com/chart?cht=qr&chs=256x256&chld=M|0&chl=";
-
 process.on('uncaughtException', function(err) {
   console.log(err);
 });
@@ -247,16 +245,16 @@ io.sockets.on('connection', function(socket) {
         return playing_user_store[socket.data.roomId][key].userId === socket.data.userId
       });
       //自分が対戦中ユーザだった場合
+      quest_manage_store[socket.data.roomId].nowTime = moment().unix();
       for (let i = 0; i < result2.length; i++) {
-        quest_manage_store[socket.data.roomId].nowTime = moment().unix();
         player_user_store[result2[i]] = playing_user_store[socket.data.roomId][result2[i]]
         socket.emit("Someone_Entried", playing_user_store[socket.data.roomId][result2[i]]);
         // handshake_room_store[socket.data.roomId]++;
-        socket.emit("reshake", {
-          quest: quest_manage_store[socket.data.roomId],
-          player: playing_user_store[socket.data.roomId]
-        });
       }
+      socket.emit("reshake", {
+        quest: quest_manage_store[socket.data.roomId],
+        player: playing_user_store[socket.data.roomId]
+      });
     }
   });
 

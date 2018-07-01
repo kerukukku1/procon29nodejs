@@ -86,6 +86,10 @@ img.thumbnail-md {
   width: 60px;
 }
 
+flexbox{
+  display: flex;
+}
+
 flexwrapper {
   display: flex;
   width: 100%;
