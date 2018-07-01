@@ -39,7 +39,7 @@ window.onload = function() {
   var isInit = false;
   var path = location.pathname;
   var enableClick = false;
-  var filedata;
+  var history;
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
@@ -79,7 +79,12 @@ window.onload = function() {
   // };
 
   jblue.onclick = function() {
-    if (isFinished) return;
+    if (isFinished) {
+      if(now_turn == 0)return;
+      now_turn--;
+      console.log(history["blue"][now_turn]);
+      return;
+    }
     //console.log("blue click");
     if (jblue.textContent == "Cancel") {
       jblue.textContent = "Join Blue";
@@ -106,7 +111,12 @@ window.onload = function() {
   };
   jred.onclick = function() {
     //console.log("red click");
-    if (isFinished) return;
+    if (isFinished){
+      if(now_turn == turn-1)return;
+      now_turn++;
+      console.log(history["red"][now_turn]);
+      return;
+    }
     if (jred.textContent == "Cancel") {
       jred.textContent = "Join Red";
       user_status.team = "red";
@@ -218,14 +228,13 @@ window.onload = function() {
     initCanvas();
     socket.on('setGameHistory', function(data) {
       console.log(data);
-      console.log(data.score.red);
-      console.log(data.score.blue);
       var redtext = (data.score.red < data.score.blue) ? "LOSE" : (data.score.red > data.score.blue) ? "WIN" : "DRAW";
       var bluetext = (data.score.red < data.score.blue) ? "WIN" : (data.score.red > data.score.blue) ? "LOSE" : "DRAW";
       $('#redResult').empty().html("Score:" + data.score.red +
         '<br>' + `<img src="${data.redplayer.thumbnail}" class="thumbnail-lg"></img>` + redtext);
       $('#blueResult').empty().html("Score:" + data.score.blue +
         '<br>' + `<img src="${data.blueplayer.thumbnail}" class="thumbnail-lg"></img>` + bluetext);
+      history = data;
     })
 
     socket.on('cancel_confirm', function(data) {
@@ -344,7 +353,7 @@ window.onload = function() {
       }
       var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
       console.log(qrpath);
-      if(user_status.team!="")$("#qrcode-img").append(qrpath);
+      if (user_status.team != "") $("#qrcode-img").append(qrpath);
       document.getElementById('playername').innerHTML =
         `<img src="${blue_thumbnail}" class="thumbnail-md"></img>　vs.　<img src="${red_thumbnail}" class="thumbnail-md"></img>`;
       if (data.quest.step == 1) {
@@ -493,7 +502,7 @@ window.onload = function() {
       $("#GameForceShutdown").modal('show');
     });
 
-    socket.on("sendQuestData", function(data) {
+    socket.on("setQuestData", function(data) {
       filedata = data.docs.filedata;
       var arr = data.docs.filedata.red.split(':');
       [h, w] = arr[0].split(' ');
@@ -574,7 +583,13 @@ window.onload = function() {
           userId: userid,
           userName: username
         });
+      } else {
+        socket.emit("getHistory", path);
       }
+    });
+
+    socket.on("setHistory", function(data) {
+
     });
   });
 
@@ -725,7 +740,7 @@ window.onload = function() {
 
     var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
     console.log(qrpath);
-    if(user_status.team!="")$("#qrcode-img").append(qrpath);
+    if (user_status.team != "") $("#qrcode-img").append(qrpath);
     $("#joinRed").prop('disabled', true);
     $("#joinBlue").prop('disabled', true);
   };
@@ -937,7 +952,5 @@ window.onload = function() {
   $('#GameShutdown').on('hidden.bs.modal', function() {
     window.location.reload();
   });
-
-
 };
 // //console.log(dir);

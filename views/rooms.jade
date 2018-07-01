@@ -115,7 +115,7 @@ block content
             //- var $textarea = $('#chatComment');
             //- $textarea.scrollTop($textarea[0].scrollHeight);
           });
-          socket.on("sendQuestData", function(data){
+          socket.on("setQuestData", function(data){
             console.log(data);
             var arr = data.docs.filedata.red.split(':');
             //- console.log(arr);

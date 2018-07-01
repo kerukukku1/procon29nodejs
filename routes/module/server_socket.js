@@ -323,7 +323,7 @@ io.sockets.on('connection', function(socket) {
     Quest.findOne({
       _id: data.id
     }, function(err, docs) {
-      socket.emit("sendQuestData", {
+      socket.emit("setQuestData", {
         docs: docs,
         status: quest_manage_store[data.path]
       });
