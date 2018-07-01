@@ -40,6 +40,9 @@ window.onload = function() {
   var path = location.pathname;
   var enableClick = false;
   var history;
+  const STACK_MAX_SIZE = 120;
+  let undoDataStack = [];
+  let redoDataStack = [];
   var colors = {
     red: "#FF4081",
     blue: "#03A9F4",
@@ -80,9 +83,10 @@ window.onload = function() {
 
   jblue.onclick = function() {
     if (isFinished) {
-      if(now_turn == 0)return;
+      if (now_turn == 0) return;
       now_turn--;
       console.log(history["blue"][now_turn]);
+      undo();
       return;
     }
     //console.log("blue click");
@@ -111,10 +115,27 @@ window.onload = function() {
   };
   jred.onclick = function() {
     //console.log("red click");
-    if (isFinished){
-      if(now_turn == turn-1)return;
+    if (isFinished) {
+      if (now_turn == turn - 1) return;
       now_turn++;
       console.log(history["red"][now_turn]);
+      beforeDraw();
+      console.log(historyConflict(now_turn, historyConflict(now_turn)))
+      for (var team in {
+          red: history["red"],
+          blue: history["blue"]
+        }) {
+        team = String(team);
+        console.log(team);
+        for (var agent in history[team][now_turn]) {
+          if (agent == "_id") continue;
+          console.log(agent)
+          console.log(colors[team]);
+          var now = history[team][now_turn][agent];
+          state[now.y][now.x].color = colors[team];
+          paintCell(now.x, now.y, state[now.y][now.x], agent, "white");
+        }
+      }
       return;
     }
     if (jred.textContent == "Cancel") {
@@ -219,13 +240,12 @@ window.onload = function() {
   }, false);
 
   socket.on('connect', function() {
-
+    initCanvas();
     if (isFinished) {
       socket.emit("getGameHistory", path);
       jred.textContent = ">";
       jblue.textContent = "<";
     }
-    initCanvas();
     socket.on('setGameHistory', function(data) {
       console.log(data);
       var redtext = (data.score.red < data.score.blue) ? "LOSE" : (data.score.red > data.score.blue) ? "WIN" : "DRAW";
@@ -405,10 +425,6 @@ window.onload = function() {
             paintCell(move_players[team][agent].x, move_players[team][agent].y, state[move_players[team][agent].y][move_players[team][agent].x], "", flag ? "black" : "white");
           }
         }
-        var dummy = {
-          A: types.draw,
-          B: types.draw
-        }
         var _verifyCheck = verifyConflict(getVerifyNextData(data.next));
         console.log(_verifyCheck.flag);
         data.next = _verifyCheck.next;
@@ -453,6 +469,7 @@ window.onload = function() {
           team = String(team);
           for (var agent in players[team]) {
             agent = String(agent);
+            state[players[team][agent].y][players[team][agent].x].color = colors[team];
             paintCell(_p[team][agent].x, _p[team][agent].y, state[_p[team][agent].y][_p[team][agent].x], "", (state[_p[team][agent].y][_p[team][agent].x].color == "white") ? "black" : "white");
             paintCell(players[team][agent].x, players[team][agent].y, state[players[team][agent].y][players[team][agent].x], agent, "white");
           }
@@ -551,7 +568,6 @@ window.onload = function() {
         x: npos[0],
         y: npos[1]
       };
-      console.log(data.status);
       if (data.status) {
         tmp_state = $.extend({}, data.status.maps);
         tmp_players = $.extend({}, data.status.currentPlayerPosition);
@@ -894,6 +910,45 @@ window.onload = function() {
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
   }
 
+  function historyConflict(now_t, _player){
+    if(!_player){
+      _player = {};
+      _player.red = history.red[now_t];
+      _player.blue = history.blue[now_t];
+    }
+    for (var team in _player) {
+      team = String(team);
+      for (var agent in _player[team]) {
+        agent = String(agent);
+        var isConflict = false;
+        for (var _team in _player) {
+          _team = String(_team);
+          for (var _agent in _player[_team]) {
+            _agent = String(_agent);
+            if ((team == _team) && (agent == _agent)) continue;
+            if (_player[_team][_agent].x == -1) continue;
+            if (equalsObject(_player[team][agent], _player[_team][_agent])) {
+              _player[_team][_agent] = {
+                x: history[_team][now_t-1][_agent].x,
+                y: history[_team][now_t-1][_agent].y
+              };
+              _player[_team][_agent].paintType = types.draw;
+              isConflict = true;
+            }
+          }
+        }
+        if (isConflict) {
+          _player[team][agent] = {
+            x: history[team][now_turn-1][agent].x,
+            y: history[team][now_turn-1][agent].y
+          };
+          _player[team][agent].paintType = types.draw;
+        }
+      }
+    }
+    return _player;
+  }
+
   function verifyConflict(data) {
     var _player = data.next;
     var flag = data.flag;
@@ -933,6 +988,41 @@ window.onload = function() {
       flag: flag
     };
   }
+
+  function beforeDraw() {
+    // やり直し用スタックの中身を削除
+    redoDataStack = [];
+    // 元に戻す用の配列が最大保持数より大きくなっているかどうか
+    if (undoDataStack.length >= STACK_MAX_SIZE) {
+      // 条件に該当する場合末尾の要素を削除
+      undoDataStack.pop();
+    }
+    // 元に戻す配列の先頭にcontextのImageDataを保持する
+    undoDataStack.unshift(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  }
+
+  function undo() {
+    // 戻す配列にスタックしているデータがなければ処理を終了する
+    if (undoDataStack.length <= 0) return;
+    // やり直し用の配列に元に戻す操作をする前のCanvasの状態をスタックしておく
+    redoDataStack.unshift(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    // 元に戻す配列の先頭からイメージデータを取得して
+    var imageData = undoDataStack.shift();
+    // 描画する
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  function redo() {
+    // やり直し用配列にスタックしているデータがなければ処理を終了する
+    if (redoDataStack.length <= 0) return;
+    // 元に戻す用の配列にやり直し操作をする前のCanvasの状態をスタックしておく
+    undoDataStack.unshift(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    // やり直す配列の先頭からイメージデータを取得して
+    var imageData = redoDataStack.shift();
+    // 描画する
+    ctx.putImageData(imageData, 0, 0);
+  }
+
 
   function isEmpty(obj) {
     return !Object.keys(obj).length;
