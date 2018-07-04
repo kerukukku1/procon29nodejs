@@ -30,11 +30,11 @@ window.onload = function() {
   var socket = io.connect("http://localhost:8888/");
   var canvas = document.getElementById("myCanvas");
   var ctx = canvas.getContext("2d");
-  var square_size = 50
+  var square_size = 50;
   var w;
   var h;
   var pos;
-  var now_turn = 0;
+  var now_turn = -1;
   var state = [];
   var isInit = false;
   var path = location.pathname;
@@ -83,8 +83,11 @@ window.onload = function() {
 
   jblue.onclick = function() {
     if (isFinished) {
-      if (now_turn == 0) return;
       now_turn--;
+      if (now_turn == -1){
+        now_turn++;
+        return;
+      }
       console.log(history["blue"][now_turn]);
       undo();
       return;
@@ -116,11 +119,15 @@ window.onload = function() {
   jred.onclick = function() {
     //console.log("red click");
     if (isFinished) {
-      if (now_turn == turn - 1) return;
       now_turn++;
+      if (now_turn == turn){
+        now_turn--;
+        return;
+      }
+      console.log(now_turn);
       console.log(history["red"][now_turn]);
       beforeDraw();
-      console.log(historyConflict(now_turn, historyConflict(now_turn)))
+      // console.log(historyConflict(now_turn, historyConflict(now_turn)))
       for (var team in {
           red: history["red"],
           blue: history["blue"]
@@ -132,8 +139,10 @@ window.onload = function() {
           console.log(agent)
           console.log(colors[team]);
           var now = history[team][now_turn][agent];
+          players[team][agent] = now;
           state[now.y][now.x].color = colors[team];
-          paintCell(now.x, now.y, state[now.y][now.x], agent, "white");
+          if(now.paintType == types.clear)state[now.y][now.x].color = "white";
+          paintCell(now.x, now.y, state[now.y][now.x], (now.paintType == types.clear)?"":agent, (state[now.y][now.x].color=="white")?"black":"white");
         }
       }
       return;
@@ -602,10 +611,6 @@ window.onload = function() {
       } else {
         socket.emit("getHistory", path);
       }
-    });
-
-    socket.on("setHistory", function(data) {
-
     });
   });
 

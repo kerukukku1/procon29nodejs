@@ -135,16 +135,16 @@ io.sockets.on('connection', function(socket) {
           // quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, getVerifyNextData(quest_manage_store[socket.data.roomId].next, quest_manage_store[socket.data.roomId].currentPlayerPosition));
           io.sockets.in(socket.data.roomId).emit("MapDataSync", quest_manage_store[socket.data.roomId]);
         }
-        quest_manage_store[socket.data.roomId].method = {
-          red: {
-            A: types.draw,
-            B: types.draw
-          },
-          blue: {
-            A: types.draw,
-            B: types.draw
-          }
-        }
+        // quest_manage_store[socket.data.roomId].method = {
+        //   red: {
+        //     A: types.draw,
+        //     B: types.draw
+        //   },
+        //   blue: {
+        //     A: types.draw,
+        //     B: types.draw
+        //   }
+        // }
       } catch (err) {
         console.log(err.name + ': ' + err.message);
         return;
@@ -180,6 +180,7 @@ io.sockets.on('connection', function(socket) {
           if (data.group == "B") quest_manage_store[socket.data.roomId].method.blue.B = data.paintType;
         }
       }
+      console.log(quest_manage_store[socket.data.roomId].method)
       io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
         status: data,
         player: player_user_store[data.userId]
@@ -379,7 +380,7 @@ io.sockets.on('connection', function(socket) {
     if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
-
+    if(quest_manage_store[socket.data.roomId])console.log("before : ", quest_manage_store[socket.data.roomId].method)
     //プレイ中のクエスト情報の保持
     if (!quest_manage_store[socket.data.roomId]) {
       quest_manage_store[socket.data.roomId] = {
@@ -404,6 +405,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
+    if(quest_manage_store[socket.data.roomId])console.log("after  : ", quest_manage_store[socket.data.roomId].method)
     // console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
@@ -431,6 +433,7 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         //データをmongodbに書き込み
         // console.log(tmp_moveplayer_store[socket.data.roomId]);
+        console.log(quest_manage_store[socket.data.roomId].method)
         pushMoveData(
           socket.data.roomId,
           copyExtendsObject(quest_manage_store[socket.data.roomId]),
@@ -438,6 +441,16 @@ io.sockets.on('connection', function(socket) {
           copyExtendsObject(playing_user_store[socket.data.roomId])
         );
         quest_manage_store[socket.data.roomId].turn++;
+        quest_manage_store[socket.data.roomId].method = {
+          red: {
+            A: types.draw,
+            B: types.draw
+          },
+          blue: {
+            A: types.draw,
+            B: types.draw
+          }
+        }
         io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
         delete tmp_moveplayer_store[socket.data.roomId]
       } else if (data.step == 3) {
@@ -552,8 +565,8 @@ var updateMapScore = function(roomId, score) {
 }
 
 var pushMoveData = function(roomId, questdata, position, playerdata) {
-  console.log(questdata);
-  console.log(playerdata);
+  // console.log(questdata);
+  // console.log(playerdata);
   History.find({
     roomid: roomId
   }, function(err, docs) {
@@ -625,6 +638,8 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         history[head] = (head == "red") ? position_red : position_blue;
         history.roomid = roomId;
       }
+      history.red = position_red;
+      history.blue = position_blue;
       console.log(history);
       history.save(function(err) {
         if (!err) {
