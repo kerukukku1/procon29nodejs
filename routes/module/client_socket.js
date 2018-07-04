@@ -90,6 +90,8 @@ window.onload = function() {
       }
       console.log(history["blue"][now_turn]);
       undo();
+      var ret = calcScore(state, w, h, colors);
+      drawScorebar(ret);
       return;
     }
     //console.log("blue click");
@@ -145,6 +147,8 @@ window.onload = function() {
           paintCell(now.x, now.y, state[now.y][now.x], (now.paintType == types.clear)?"":agent, (state[now.y][now.x].color=="white")?"black":"white");
         }
       }
+      var ret = calcScore(state, w, h, colors);
+      drawScorebar(ret);
       return;
     }
     if (jred.textContent == "Cancel") {
@@ -487,24 +491,7 @@ window.onload = function() {
       }
       var ret = calcScore(state, w, h, colors);
       if (user_status != "") socket.emit("SyncScoreData", ret);
-      var diff = ret.blue - ret.red;
-      var redpar = 50;
-      var bluepar = 50;
-      if (diff != 0) {
-        var bias = 0;
-        if (Math.min(ret.red, ret.blue) < 0) {
-          bias = Math.abs(Math.min(ret.red, ret.blue));
-        }
-        var _red = ret.red + bias;
-        var _blue = ret.blue + bias;
-        var sum = _red + _blue;
-        redpar = _red / sum;
-        bluepar = _blue / sum;
-      }
-      $('#blueScore').empty().text(String(ret.blue) + "pt");
-      $('#redScore').empty().text(String(ret.red) + "pt");
-      $('#blueBar').width(bluepar * 100 + "%").attr('aria-valuenow', bluepar * 100);
-      $('#redBar').width(redpar * 100 + "%").attr('aria-valuenow', redpar * 100);
+      drawScorebar(ret);
     });
 
     socket.on('client_gamestart', function(data) {
@@ -1003,7 +990,8 @@ window.onload = function() {
       undoDataStack.pop();
     }
     // 元に戻す配列の先頭にcontextのImageDataを保持する
-    undoDataStack.unshift(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    var _state = objectCopy(state);
+    undoDataStack.unshift({state:_state, cnv:ctx.getImageData(0, 0, canvas.width, canvas.height)});
   }
 
   function undo() {
@@ -1014,23 +1002,33 @@ window.onload = function() {
     // 元に戻す配列の先頭からイメージデータを取得して
     var imageData = undoDataStack.shift();
     // 描画する
-    ctx.putImageData(imageData, 0, 0);
+    ctx.putImageData(imageData.cnv, 0, 0);
+    state = imageData.state;
   }
-
-  function redo() {
-    // やり直し用配列にスタックしているデータがなければ処理を終了する
-    if (redoDataStack.length <= 0) return;
-    // 元に戻す用の配列にやり直し操作をする前のCanvasの状態をスタックしておく
-    undoDataStack.unshift(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    // やり直す配列の先頭からイメージデータを取得して
-    var imageData = redoDataStack.shift();
-    // 描画する
-    ctx.putImageData(imageData, 0, 0);
-  }
-
 
   function isEmpty(obj) {
     return !Object.keys(obj).length;
+  }
+
+  function drawScorebar(ret){
+    var diff = ret.blue - ret.red;
+    var redpar = 50;
+    var bluepar = 50;
+    if (diff != 0) {
+      var bias = 0;
+      if (Math.min(ret.red, ret.blue) < 0) {
+        bias = Math.abs(Math.min(ret.red, ret.blue));
+      }
+      var _red = ret.red + bias;
+      var _blue = ret.blue + bias;
+      var sum = _red + _blue;
+      redpar = _red / sum;
+      bluepar = _blue / sum;
+    }
+    $('#blueScore').empty().text(String(ret.blue) + "pt");
+    $('#redScore').empty().text(String(ret.red) + "pt");
+    $('#blueBar').width(bluepar * 100 + "%").attr('aria-valuenow', bluepar * 100);
+    $('#redBar').width(redpar * 100 + "%").attr('aria-valuenow', redpar * 100);
   }
   $('#WaitingModal').on('hidden.bs.modal', function() {
     if (isConfirm) socket.emit("disconfirm", user_status);
