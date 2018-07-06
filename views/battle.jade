@@ -45,7 +45,7 @@ block content
         var move_time = Number('#{move_time}');
         var strategy_time = Number('#{strategy_time}');
         var questid = '#{questId}';
-        var isFinished = '#{isFinished}';
+        var isFinished = JSON.parse('#{isFinished}');
         var turn = Number('#{turn}');
       script(src="/module/client_socket.js")
       script(src="/module/calcScore.js")

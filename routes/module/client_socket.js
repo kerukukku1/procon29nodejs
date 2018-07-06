@@ -251,6 +251,7 @@ window.onload = function() {
   socket.on('connect', function() {
     initCanvas();
     if (isFinished) {
+      console.log(isFinished)
       socket.emit("getGameHistory", path);
       jred.textContent = ">";
       jblue.textContent = "<";
