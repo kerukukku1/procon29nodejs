@@ -127,6 +127,8 @@ io.sockets.on('connection', function(socket) {
           } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
+          console.log("tmp : ", tmp_moveplayer_store[socket.data.roomId]);
+          console.log("pld  : ", data.playerdata);
           if (quest_manage_store[socket.data.roomId]) {
             quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
           }
@@ -380,7 +382,6 @@ io.sockets.on('connection', function(socket) {
     if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
     handshake_room_store[socket.data.roomId] += 1;
-    if(quest_manage_store[socket.data.roomId])console.log("before : ", quest_manage_store[socket.data.roomId].method)
     //プレイ中のクエスト情報の保持
     if (!quest_manage_store[socket.data.roomId]) {
       quest_manage_store[socket.data.roomId] = {
@@ -405,7 +406,6 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
-    if(quest_manage_store[socket.data.roomId])console.log("after  : ", quest_manage_store[socket.data.roomId].method)
     // console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
@@ -432,8 +432,8 @@ io.sockets.on('connection', function(socket) {
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
         //データをmongodbに書き込み
-        // console.log(tmp_moveplayer_store[socket.data.roomId]);
-        console.log(quest_manage_store[socket.data.roomId].method)
+        console.log("movement  : ", tmp_moveplayer_store[socket.data.roomId]);
+        // console.log(quest_manage_store[socket.data.roomId].method)
         pushMoveData(
           socket.data.roomId,
           copyExtendsObject(quest_manage_store[socket.data.roomId]),
@@ -567,6 +567,7 @@ var updateMapScore = function(roomId, score) {
 var pushMoveData = function(roomId, questdata, position, playerdata) {
   // console.log(questdata);
   // console.log(playerdata);
+
   History.find({
     roomid: roomId
   }, function(err, docs) {
@@ -596,6 +597,8 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         paintType: questdata.method.red.B
       }
     };
+    console.log("red : ", position_red);
+    console.log("blue : ", position_blue)
     if (docs.length) {
       console.log("find");
       docs[0].red.push(position_red);
@@ -635,12 +638,11 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         }
         var head = playerdata[id].team;
         history[head + "player"] = add_player;
-        history[head] = (head == "red") ? position_red : position_blue;
         history.roomid = roomId;
       }
       history.red = position_red;
       history.blue = position_blue;
-      console.log(history);
+      // console.log(history);
       history.save(function(err) {
         if (!err) {
           updateMapScore(roomId, questdata.score);

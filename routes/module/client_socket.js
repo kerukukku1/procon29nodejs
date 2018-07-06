@@ -40,6 +40,7 @@ window.onload = function() {
   var path = location.pathname;
   var enableClick = false;
   var history;
+  var isPlaying = false;
   const STACK_MAX_SIZE = 120;
   let undoDataStack = [];
   let redoDataStack = [];
@@ -126,8 +127,6 @@ window.onload = function() {
         now_turn--;
         return;
       }
-      console.log(now_turn);
-      console.log(history["red"][now_turn]);
       beforeDraw();
       // console.log(historyConflict(now_turn, historyConflict(now_turn)))
       for (var team in {
@@ -135,11 +134,8 @@ window.onload = function() {
           blue: history["blue"]
         }) {
         team = String(team);
-        console.log(team);
         for (var agent in history[team][now_turn]) {
           if (agent == "_id") continue;
-          console.log(agent)
-          console.log(colors[team]);
           var now = history[team][now_turn][agent];
           players[team][agent] = now;
           state[now.y][now.x].color = colors[team];
@@ -379,6 +375,7 @@ window.onload = function() {
     socket.on("reshake", function(data) {
       console.log("reshake");
       console.log(data);
+      isPlaying = true;
       var red_thumbnail, blue_thumbnail;
       for (p in data.player) {
         if (data.player[p].team == "red") red_thumbnail = data.player[p].thumbnail;
@@ -505,6 +502,7 @@ window.onload = function() {
         return data[key].team == "blue";
       });
       //console.log(data[team_red].userName, data[team_blu].userName);
+      isPlaying = true;
       battleStart({
         red: data[team_red].thumbnail,
         blue: data[team_blu].thumbnail
@@ -752,6 +750,19 @@ window.onload = function() {
     $("#joinRed").prop('disabled', true);
     $("#joinBlue").prop('disabled', true);
   };
+
+
+  (function($){
+    setInterval(function(){
+      if (document.hidden) {
+        if(isPlaying){
+          console.log("hide")
+          if(user_status!="")location.reload();
+        }
+      }
+    }, 5000);
+  })(jQuery);
+
   /*
     Author : @ksugimori
     https://codepen.io/ksugimori/pen/ORvgVq
@@ -806,6 +817,7 @@ window.onload = function() {
             } else if (step == 2) {} else if (step == 3) {
               return;
             }
+            // console.log("handshake data : " , sender.playerdata);
             socket.emit("handshake", sender);
             return;
           } else {
