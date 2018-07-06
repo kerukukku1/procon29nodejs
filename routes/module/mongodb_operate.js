@@ -53,7 +53,10 @@ const RoomData = new Schema({
   move_time: Number,
   declare_time: Number,
   turn: Number,
-  isFinished: Boolean,
+  isFinished: {
+    type : Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

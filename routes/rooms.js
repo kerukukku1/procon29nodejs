@@ -6,19 +6,27 @@ var Quest = mongo.Quest;
 const mongoose = require("mongoose");
 
 router.get('/:room_id', function(req, res, next) {
-  console.log(req.session);
   if (!req.session) return;
   var roomId = req.params.room_id;
-  console.log(roomId);
   mongoose.connect('mongodb://localhost/test');
   Quest.findOne({
     _id: roomId
   }, function(err, rows1) {
     if (rows1 != null) {
-      Room.find({}, function(err, rows2) {
-        res.render('rooms', {
-          room_id: roomId,
-          roomList: rows2,
+      var roomList, historyList;
+      Room.find({
+        createdAt: {
+          $gte: new Date(Date.now() - (24 * 60 * 60 * 1000)),
+          $lte: new Date(Date.now())
+        }
+      }, function(err, rows2) {
+        roomList = rows2
+        Room.find({}, function(err, rows2) {
+          res.render('rooms', {
+            room_id: roomId,
+            roomList: roomList,
+            historyList: rows2,
+          });
         });
       });
     } else {

@@ -23,13 +23,15 @@ block content
       //-     td def@somemail.com
       tbody
       - for (var i = 0; i < roomList.length; i++) {
-        tr(data-href="/battle/#{roomList[i]._id}")
-          th(scope='row')= roomList[i].room_id
-          td= roomList[i].room_name
-          td= roomList[i].comment
-          td= roomList[i].master
-          td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
-          td= roomList[i].createdAt
+          - if(!roomList[i].isFinished){
+            tr(data-href="/battle/#{roomList[i]._id}")
+              th(scope='row')= i+1
+              td= roomList[i].room_name
+              td= roomList[i].comment
+              td= roomList[i].master
+              td= roomList[i].strategy_time + ' / ' + roomList[i].declare_time + ' / ' + roomList[i].move_time
+              td= roomList[i].createdAt
+          - }
       - }
     hr
     h5 Chat
@@ -58,6 +60,34 @@ block content
 
     h5 Preview
     center: canvas(id="myCanvas", height="800", width="800")
+    hr
+    h5 Room History
+    table.table.table-striped.table-hover
+      thead.bg-success.text-white
+        tr
+          th(width="5%") #
+          th(width="25%") 部屋名
+          th(width="30%") 内容
+          th(width="5%") 作成者
+          th(width="20%") 作戦/意思表示/行動 (sec.)
+          th(width="15%") 作成日時
+      //- tbody
+      //-   tr
+      //-     td Default
+      //-     td Defaultson
+      //-     td def@somemail.com
+      tbody
+      - for (var i = 0; i < historyList.length; i++) {
+          - if(historyList[i].isFinished){
+            tr(data-href="/battle/#{historyList[i]._id}")
+              th(scope='row')= i+1
+              td= historyList[i].room_name
+              td= historyList[i].comment
+              td= historyList[i].master
+              td= historyList[i].strategy_time + ' / ' + historyList[i].declare_time + ' / ' + historyList[i].move_time
+              td= historyList[i].createdAt
+          - }
+      - }
     script(src="http://localhost:8888/socket.io/socket.io.js")
     script.
       window.onload = function() {
