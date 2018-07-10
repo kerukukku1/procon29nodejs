@@ -122,11 +122,14 @@ window.onload = function() {
   jred.onclick = function() {
     //console.log("red click");
     if (isFinished) {
+      console.log(now_turn);
+      console.log(history)
       now_turn++;
       if (now_turn == turn){
         now_turn--;
         return;
       }
+      console.log("next:",now_turn)
       beforeDraw();
       // console.log(historyConflict(now_turn, historyConflict(now_turn)))
       for (var team in {
@@ -818,7 +821,7 @@ window.onload = function() {
             } else if (step == 2) {} else if (step == 3) {
               return;
             }
-            // console.log("handshake data : " , sender.playerdata);
+            // console.log("handshake data : " , sender);
             socket.emit("handshake", sender);
             return;
           } else {

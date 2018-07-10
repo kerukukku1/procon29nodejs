@@ -117,7 +117,7 @@ io.sockets.on('connection', function(socket) {
   socket.on("SyncQuestData", function(data) {
     //step2(設置フェーズ)においてのプレイヤーの情報
     if (data.status.team == "") return;
-    if (typeof tmp_moveplayer_store[socket.data.roomId] == "undefined") {
+    if (!tmp_moveplayer_store[socket.data.roomId]) {
       tmp_moveplayer_store[socket.data.roomId] = data.playerdata;
     } else {
       try {
@@ -406,6 +406,19 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
+    console.log("playerdata : ", data.playerdata);
+    // try {
+    //   if (data.playerdata) {
+    //     if (data.status.team == "red" && !data.playerdata.red) {
+    //       tmp_moveplayer_store[socket.data.roomId].red = data.playerdata.red;
+    //     } else if (data.status.team == "blue" && !data.playerdata.blue) {
+    //       tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
+    //     }
+    //   }
+    // } catch (err) {
+    //   console.log(err.name + ': ' + err.message);
+    //   return;
+    // }
     // console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
@@ -431,6 +444,7 @@ io.sockets.on('connection', function(socket) {
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
+        console.log("next : ", quest_manage_store[socket.data.roomId].next);
         //データをmongodbに書き込み
         console.log("movement  : ", tmp_moveplayer_store[socket.data.roomId]);
         // console.log(quest_manage_store[socket.data.roomId].method)
@@ -597,13 +611,18 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
         paintType: questdata.method.red.B
       }
     };
-    console.log("red : ", position_red);
-    console.log("blue : ", position_blue)
+    // console.log("red : ", position_red);
+    // console.log("blue : ", position_blue)
     if (docs.length) {
       console.log("find");
       docs[0].red.push(position_red);
       docs[0].blue.push(position_blue);
-      if (questdata.turn != docs[0].red.length) return;
+      if (questdata.turn+1 != docs[0].red.length){
+        console.log(questdata.turn);
+        console.log(docs[0].red.length);
+        console.log("RETURN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        return;
+      }
       history = docs[0];
       History.update({
         roomid: roomId
