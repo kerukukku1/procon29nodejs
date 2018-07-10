@@ -34,7 +34,7 @@ window.onload = function() {
   var w;
   var h;
   var pos;
-  var now_turn = -1;
+  var now_turn = 0;
   var state = [];
   var isInit = false;
   var path = location.pathname;
@@ -125,7 +125,7 @@ window.onload = function() {
       console.log(now_turn);
       console.log(history)
       now_turn++;
-      if (now_turn == turn){
+      if (now_turn == turn+1){
         now_turn--;
         return;
       }
