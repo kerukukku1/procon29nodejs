@@ -16,7 +16,7 @@ router.post('/', function(req, res, next) {
   var email = req.body.email;
   var password = req.body.password;
   var query = 'SELECT * FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
-  console.log(query);
+  // console.log(query);
   connection.query(query, function(err, rows) {
     var userId = rows.length ? rows[0].userid : false;
     if (userId) {

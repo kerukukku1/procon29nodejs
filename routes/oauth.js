@@ -52,7 +52,7 @@ router.get('/callback', passport.authenticate('twitter', {
   User.find({
     userId: req.session.passport.user.id
   }, function(err, docs) {
-    console.log(docs.length);
+    // console.log(docs.length);
     if (docs.length) {
       for (var doc in docs) {
 

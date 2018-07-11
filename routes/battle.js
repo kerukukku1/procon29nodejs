@@ -14,7 +14,7 @@ router.get('/:room_id', function(req, res, next) {
     Room.findOne({
       _id: roomId
     }, function(err, row1) {
-      console.log(row1);
+      // console.log(row1);
       if (row1 != null) {
         Quest.findOne({
           _id: row1.org_quest_id
@@ -29,7 +29,7 @@ router.get('/:room_id', function(req, res, next) {
             turn : row1.turn
           });
         });
-        console.log(row1);
+        // console.log(row1);
       } else {
         res.render('error', {
           roomid_error: true

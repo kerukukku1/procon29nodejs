@@ -17,7 +17,7 @@ router.post('/', function(req, res, next) {
   var emailExistsQuery = 'SELECT * FROM users WHERE email = "' + email + '" LIMIT 1';
   var registerQuery = 'INSERT INTO users (username, email, password, createdAt) VALUES ("' +
     userName + '", ' + '"' + email + '", ' + '"' + password + '", ' + '"' + createdAt + '")';
-  console.log(registerQuery);
+  // console.log(registerQuery);
   connection.query(emailExistsQuery, function(err, email) {
     var emailExists = email.length;
     if (emailExists) {

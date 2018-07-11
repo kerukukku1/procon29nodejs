@@ -40,8 +40,8 @@ router.get('/:room_id', function(req, res, next) {
 router.post('/:room_id', function(req, res, next) {
   if (!req.session) return;
   if (!req.session.passport) return;
-  console.log(req.body);
-  console.log(req.session.passport);
+  // console.log(req.body);
+  // console.log(req.session.passport);
   var roomId = req.params.room_id;
   roomdata = new Room();
   roomdata.room_name = req.body.room_name
