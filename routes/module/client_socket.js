@@ -34,7 +34,7 @@ window.onload = function() {
   var w;
   var h;
   var pos;
-  var now_turn = 0;
+  var now_turn = -1;
   var state = [];
   var isInit = false;
   var path = location.pathname;
@@ -811,6 +811,7 @@ window.onload = function() {
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
+            console.log("player  : " , sender.playerdata);
             socket.emit("SyncQuestData", sender);
             isSync = true;
           }

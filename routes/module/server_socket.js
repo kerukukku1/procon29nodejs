@@ -7,7 +7,7 @@ var mongo = require('../module/mongodb_operate');
 var Room = mongo.Room;
 var History = mongo.History;
 var Quest = mongo.Quest;
-
+var debug = true;
 var types = {
   clear: 0,
   draw: 1
@@ -49,6 +49,7 @@ var timeout_store = {};
 io.sockets.on('connection', function(socket) {
   //退出処理
   socket.on('disconnect', function() {
+    if(debug)console.log("call disconnect socket")
     if (socket.chatdata && chatroom_user_store[socket.chatdata.userid]) {
       // chatroom_user_store[socket.chatdata.userid].comment = chatroom_user_store[socket.chatdata.userid].username + "さんが退出しました．";
       // chatroom_user_store[socket.chatdata.userid].label = "server";
@@ -70,7 +71,7 @@ io.sockets.on('connection', function(socket) {
     }
 
     delete join_user_store[socket.data.userId];
-    // console.log(join_user_store);
+    // if(debug)console.log(join_user_store);
 
     //退出時にプレイヤーが部屋に誰もいない場合その部屋のバトル情報を削除
     var cnt = 0;
@@ -103,18 +104,21 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("SyncScoreData", function(data) {
+    if(debug)console.log("call SyncScoreData socket")
     quest_manage_store[socket.data.roomId].score = data;
   });
 
   socket.on("MapDataSync", function(data) {
+    if(debug)console.log("call MapDataSync socket")
     if (data.status.team == "") return;
     if (!socket.data) return;
     quest_manage_store[socket.data.roomId].maps = data.maps;
     quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, data.currentPlayerPosition);
-    tmp_moveplayer_store[socket.data.roomId] = extend({}, data.currentPlayerPosition);
+    // tmp_moveplayer_store[socket.data.roomId] = extend({}, data.currentPlayerPosition);
   });
 
   socket.on("SyncQuestData", function(data) {
+    if(debug)console.log("call SyncQuestData socket")
     //step2(設置フェーズ)においてのプレイヤーの情報
     if (data.status.team == "") return;
     if (!tmp_moveplayer_store[socket.data.roomId]) {
@@ -127,13 +131,14 @@ io.sockets.on('connection', function(socket) {
           } else if (data.status.team == "blue" && !data.playerdata.blue) {
             tmp_moveplayer_store[socket.data.roomId].blue = data.playerdata.blue;
           }
-          console.log("tmp : ", tmp_moveplayer_store[socket.data.roomId]);
-          console.log("pld  : ", data.playerdata);
+          if(debug)console.log("playerdata : ", tmp_moveplayer_store[socket.data.roomId]);
+          // if(debug)console.log("pld  : ", data.playerdata);
           if (quest_manage_store[socket.data.roomId]) {
             quest_manage_store[socket.data.roomId].next = verifyConflict(tmp_moveplayer_store[socket.data.roomId]);
           }
           quest_manage_store[socket.data.roomId].maps = data.maps;
           quest_manage_store[socket.data.roomId].currentPlayerPosition = tmp_moveplayer_store[socket.data.roomId];
+          if(debug)console.log("playerdata_2 : ", tmp_moveplayer_store[socket.data.roomId]);
           // quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, getVerifyNextData(quest_manage_store[socket.data.roomId].next, quest_manage_store[socket.data.roomId].currentPlayerPosition));
           io.sockets.in(socket.data.roomId).emit("MapDataSync", quest_manage_store[socket.data.roomId]);
         }
@@ -148,7 +153,7 @@ io.sockets.on('connection', function(socket) {
         //   }
         // }
       } catch (err) {
-        console.log(err.name + ': ' + err.message);
+        if(debug)console.log(err.name + ': ' + err.message);
         return;
       }
     }
@@ -156,6 +161,7 @@ io.sockets.on('connection', function(socket) {
 
   //盤面情報の一時的な同期
   socket.on("tmp_MapDataSync", function(data) {
+    if(debug)console.log("call tmp_MapDataSync socket")
     // timeKeeper(3);
     if (!socket.data) return;
     if (join_user_store[data.userId]) {
@@ -182,35 +188,28 @@ io.sockets.on('connection', function(socket) {
           if (data.group == "B") quest_manage_store[socket.data.roomId].method.blue.B = data.paintType;
         }
       }
-      console.log(quest_manage_store[socket.data.roomId].method)
+      // if(debug)console.log(quest_manage_store[socket.data.roomId].method)
       io.sockets.in(join_user_store[data.userId].roomId).emit("tmp_movePlayer", {
         status: data,
         player: player_user_store[data.userId]
       });
-      // const kitty = new Cat({
-      //   mapdata: data.maps,
-      //   roomId: data.roomId
-      // });
-      // kitty.save(function(err) {
-      //   console.log('meow')
-      //   if (err) throw err;
-      // });
     }
   });
 
   //バトルにエントリー
   socket.on("Entry", function(data) {
+    if(debug)console.log("call Entry socket")
     if (!socket.data) return;
     //エントリー毎に承認をリセット
     confirm_room_store[socket.data.roomId] = 0;
-    // console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
+    // if(debug)console.log("Entry " + data.userName + " RoomID : " + socket.data.roomId);
     //
     if (!player_user_store[socket.data.userId]) {
       player_user_store[socket.data.userId] = data;
-      // console.log("write");
+      // if(debug)console.log("write");
     }
     socket.broadcast.to(socket.data.roomId).emit("Someone_Entried", data);
-    console.log(player_user_store);
+    // if(debug)console.log(player_user_store);
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
     });
@@ -222,15 +221,17 @@ io.sockets.on('connection', function(socket) {
 
   //エントリーをキャンセル
   socket.on("Cancel", function(data) {
+    if(debug)console.log("call Cancel socket")
     if (!socket.data) return;
-    // console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
+    // if(debug)console.log("Entry Cancel " + data.userName + " RoomID : " + socket.data.roomId);
     delete player_user_store[socket.data.userId];
     socket.broadcast.to(socket.data.roomId).emit("Someone_Canceled", data);
-    // console.log(player_user_store);
+    // if(debug)console.log(player_user_store);
   });
 
   //バトルルームに入った時の処理
   socket.on("join_to_room", function(data) {
+    if(debug)console.log("call join_to_room socket")
     socket.data = data;
     join_user_store[socket.data.userId] = data;
     socket.join(socket.data.roomId);
@@ -268,6 +269,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on("confirm", function(data) {
+    if(debug)console.log("call comfirm socket")
     if (!socket.data) return;
     confirm_room_store[data.roomId] += 1;
     //双方が承認した場合
@@ -288,14 +290,15 @@ io.sockets.on('connection', function(socket) {
       History.remove({
         roomid: socket.data.roomId
       }, function(err) {
-        if (!err) console.log("removed");
-        if (err) console.log("removed error : ", err);
+        if (!err) if(debug)console.log("removed");
+        if (err) if(debug)console.log("removed error : ", err);
       });
       io.sockets.in(socket.data.roomId).emit("client_gamestart", ret);
     };
   });
 
   socket.on("endBattle", function(data) {
+    if(debug)console.log("call endBattle socket")
     Room.findOne({
       _id: data
     }, function(err, row) {
@@ -309,20 +312,21 @@ io.sockets.on('connection', function(socket) {
         upsert: true
       }, function(err) {
         if (err) {
-          console.log("Update Database Error");
+          if(debug)console.log("Update Database Error");
         } else {
           delete playing_user_store[socket.data.roomId];
           delete player_user_store[socket.data.roomId];
           delete quest_manage_store[socket.data.roomId];
           delete turn_manage_store[socket.data.roomId];
           delete tmp_moveplayer_store[socket.data.roomId];
-          // console.log(rows);
+          // if(debug)console.log(rows);
         }
       });
     })
   });
 
   socket.on("getQuestData", function(data) {
+    if(debug)console.log("call getQuestData socket")
     Quest.findOne({
       _id: data.id
     }, function(err, docs) {
@@ -335,10 +339,11 @@ io.sockets.on('connection', function(socket) {
 
   //ファイル読み込み -> クライアントにデータを投げる
   socket.on("readfile", function(data) {
+    if(debug)console.log("call readFile socket")
     var dir = process.cwd() + '/questdata/' + data.filename;
     fs.readFile(dir, 'utf8', function(err, text) {
-      // console.log(text);
-      // console.log(err);
+      // if(debug)console.log(text);
+      // if(debug)console.log(err);
       var sender = {
         text: text,
         err: err
@@ -349,6 +354,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('join_chatroom', function(data) {
+    if(debug)console.log("call join_chatroom socket")
     socket.chatdata = data;
     socket.join(socket.chatdata.path);
     // pushMoveData();
@@ -359,6 +365,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('getGameHistory', function(roomId) {
+    if(debug)console.log("call getGameHistory socket")
     History.find({
       roomid: roomId
     }, function(err, docs) {
@@ -369,15 +376,17 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('send_chat', function(data) {
-    // console.log("receive");
+    if(debug)console.log("call send_chat socket")
+    // if(debug)console.log("receive");
     io.sockets.emit('refresh_chat', data);
   });
 
   socket.on("handshake", function(data) {
+    if(debug)console.log("call handshake socket")
     if (!socket.data) return;
     if (data.status.team == "") return;
-    // console.log("Handsheke : ");
-    // console.log("step : ", data.step);
+    // if(debug)console.log("Handsheke : ");
+    // if(debug)console.log("step : ", data.step);
     //正常にハンドシェイクが行われている場合巡回を停止
     if (timeout_store[socket.data.roomId]) clearTimeout(timeout_store[socket.data.roomId]);
     //クライアントとのハンドシェイク人数のカウント
@@ -406,7 +415,7 @@ io.sockets.on('connection', function(socket) {
       quest_manage_store[socket.data.roomId].step = data.step;
       quest_manage_store[socket.data.roomId].next = tmp_moveplayer_store[socket.data.roomId];
     }
-    console.log("playerdata : ", data.playerdata);
+    if(debug)console.log("playerdata_3 : ", tmp_moveplayer_store[socket.data.roomId]);
     // try {
     //   if (data.playerdata) {
     //     if (data.status.team == "red" && !data.playerdata.red) {
@@ -416,10 +425,10 @@ io.sockets.on('connection', function(socket) {
     //     }
     //   }
     // } catch (err) {
-    //   console.log(err.name + ': ' + err.message);
+    //   if(debug)console.log(err.name + ': ' + err.message);
     //   return;
     // }
-    // console.log(quest_manage_store[socket.data.roomId].turn);
+    // if(debug)console.log(quest_manage_store[socket.data.roomId].turn);
     //参加しているプレイヤーの人数で次のフェーズへ移行するかの閾値を決める
     const result = Object.keys(player_user_store).filter((key) => {
       return player_user_store[key].roomId === socket.data.roomId
@@ -444,10 +453,10 @@ io.sockets.on('connection', function(socket) {
         //extendを用いて複数階層の連想配列をコピー
         quest_manage_store[socket.data.roomId].maps = data.maps;
         quest_manage_store[socket.data.roomId].currentPlayerPosition = extend({}, tmp_moveplayer_store[socket.data.roomId]);
-        console.log("next : ", quest_manage_store[socket.data.roomId].next);
+        // if(debug)console.log("next : ", quest_manage_store[socket.data.roomId].next);
         //データをmongodbに書き込み
-        console.log("movement  : ", tmp_moveplayer_store[socket.data.roomId]);
-        // console.log(quest_manage_store[socket.data.roomId].method)
+        // if(debug)console.log("movement  : ", tmp_moveplayer_store[socket.data.roomId]);
+        // if(debug)console.log(quest_manage_store[socket.data.roomId].method)
         pushMoveData(
           socket.data.roomId,
           copyExtendsObject(quest_manage_store[socket.data.roomId]),
@@ -473,7 +482,7 @@ io.sockets.on('connection', function(socket) {
     }
     //10秒ごとに巡回．停止されているかどうかの確認
     // timeout_store[socket.data.roomId] = setTimeout((function(now) {
-    //   console.log("Handshake is mistake!! reshake.");
+    //   if(debug)console.log("Handshake is mistake!! reshake.");
     //   handshake_room_store[socket.data.roomId] = 0;
     //   io.sockets.in(socket.data.roomId).emit("client_handshake", quest_manage_store[socket.data.roomId]);
     // }).bind(null, data.step), (data.step == 1)?20000:10000);
@@ -510,7 +519,7 @@ io.sockets.on('connection', function(socket) {
         }
       }
     }
-    // console.log(_player);
+    // if(debug)console.log(_player);
     return _player;
   }
 });
@@ -574,13 +583,13 @@ var updateMapScore = function(roomId, score) {
   }, {
     upsert: true
   }, function(err) {
-    if (!err) console.log("score update");
+    // if (!err) if(debug)console.log("score update");
   });
 }
 
 var pushMoveData = function(roomId, questdata, position, playerdata) {
-  // console.log(questdata);
-  // console.log(playerdata);
+  // if(debug)console.log(questdata);
+  // if(debug)console.log(playerdata);
 
   History.find({
     roomid: roomId
@@ -588,39 +597,39 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
     var history;
     var position_red = {
       A: {
-        x: position.red.A.x,
-        y: position.red.A.y,
+        x: questdata.next.red.A.x,
+        y: questdata.next.red.A.y,
         paintType: questdata.method.red.A
       },
       B: {
-        x: position.red.B.x,
-        y: position.red.B.y,
+        x: questdata.next.red.B.x,
+        y: questdata.next.red.B.y,
         paintType: questdata.method.red.B
       }
     };
 
     var position_blue = {
       A: {
-        x: position.blue.A.x,
-        y: position.blue.A.y,
+        x: questdata.next.blue.A.x,
+        y: questdata.next.blue.A.y,
         paintType: questdata.method.blue.A
       },
       B: {
-        x: position.blue.B.x,
-        y: position.blue.B.y,
+        x: questdata.next.blue.B.x,
+        y: questdata.next.blue.B.y,
         paintType: questdata.method.red.B
       }
     };
-    // console.log("red : ", position_red);
-    // console.log("blue : ", position_blue)
+    // if(debug)console.log("red : ", position_red);
+    // if(debug)console.log("blue : ", position_blue)
     if (docs.length) {
-      console.log("find");
+      // if(debug)console.log("find");
       docs[0].red.push(position_red);
       docs[0].blue.push(position_blue);
       if (questdata.turn+1 != docs[0].red.length){
-        console.log(questdata.turn);
-        console.log(docs[0].red.length);
-        console.log("RETURN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        if(debug)console.log(questdata.turn);
+        if(debug)console.log(docs[0].red.length);
+        if(debug)console.log("RETURN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         return;
       }
       history = docs[0];
@@ -636,13 +645,13 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
       }, function(err) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
-          console.log("upsert");
+          if(debug)console.log("upsert");
         } else {
-          console.log(err);
+          if(debug)console.log(err);
         }
       });
     } else {
-      console.log("not find");
+      // if(debug)console.log("not find");
       history = new History({
         score: {
           red: 0,
@@ -661,13 +670,13 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
       }
       history.red = position_red;
       history.blue = position_blue;
-      // console.log(history);
+      // if(debug)console.log(history);
       history.save(function(err) {
         if (!err) {
           updateMapScore(roomId, questdata.score);
-          console.log("push");
+          // if(debug)console.log("push");
         } else {
-          console.log(err);
+          if(debug)console.log(err);
         }
       })
     }
@@ -677,7 +686,7 @@ var pushMoveData = function(roomId, questdata, position, playerdata) {
   // }, history, {
   //   upsert: true
   // }, function(err) {
-  //   if (!err) console.log("saved");
+  //   if (!err) if(debug)console.log("saved");
   // });
 }
 
@@ -688,7 +697,7 @@ function copyExtendsObject(obj) {
 function timeKeeper(depth, span) {
   if (depth == 0) return;
   setTimeout(function() {
-    console.log(depth);
+    if(debug)console.log(depth);
     timeKeeper(depth - 1, span);
   }, span);
 }
