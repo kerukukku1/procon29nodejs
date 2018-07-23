@@ -34,7 +34,7 @@ window.onload = function() {
   var w;
   var h;
   var pos;
-  var now_turn = -1;
+  var now_turn = 0;
   var state = [];
   var isInit = false;
   var path = location.pathname;
@@ -85,11 +85,11 @@ window.onload = function() {
   jblue.onclick = function() {
     if (isFinished) {
       now_turn--;
-      if (now_turn == -1){
+      if (now_turn == -1) {
         now_turn++;
         return;
       }
-      console.log(history["blue"][now_turn]);
+      // console.log(history["blue"][now_turn]);
       undo();
       var ret = calcScore(state, w, h, colors);
       drawScorebar(ret);
@@ -121,17 +121,27 @@ window.onload = function() {
   };
   jred.onclick = function() {
     //console.log("red click");
+    // console.log(history)
     if (isFinished) {
-      console.log(now_turn);
-      console.log(history)
       now_turn++;
-      if (now_turn == turn+1){
+      if (now_turn == turn + 1) {
         now_turn--;
         return;
       }
-      console.log("next:",now_turn)
       beforeDraw();
-      // console.log(historyConflict(now_turn, historyConflict(now_turn)))
+      /*
+      TODO:
+      まずコンフリクトがないか確認、ある場合は位置の変更は無し（clearで衝突時はdrawに変更）
+      次に侵攻方向にほかエージェントがいないかの確認、いた場合変更無し
+      実行
+      */
+      var _ = historyConflict(history)
+      var _verifyCheck = getVerifyNextData3({
+        red: history.red[now_turn],
+        blue: history.blue[now_turn]
+      });
+      console.log(_verifyCheck);
+      var _p = objectCopy(players)
       for (var team in {
           red: history["red"],
           blue: history["blue"]
@@ -139,11 +149,36 @@ window.onload = function() {
         team = String(team);
         for (var agent in history[team][now_turn]) {
           if (agent == "_id") continue;
+          //削除でコンフリクトのときは無効
+          // if (_verifyCheck.flag[team][agent]) {
+          //   data.method[team][agent] = types.draw;
+          //   console.log("conflict");
+          // } else {
+          //   //次のパネルをセット
+          //   state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
+          // }
+          // //削除があった場合の対策
+          // if (data.method[team][agent] == types.clear) {
+          //   state[data.next[team][agent].y][data.next[team][agent].x].color = colors.white;
+          //   paintCell(data.next[team][agent].x, data.next[team][agent].y, state[data.next[team][agent].y][data.next[team][agent].x], "", "black");
+          // }
           var now = history[team][now_turn][agent];
-          players[team][agent] = now;
+          var tmp = _p[team][agent];
+          players[team][agent].x = now.x;
+          players[team][agent].y = now.y;
+          paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], "", "white");
           state[now.y][now.x].color = colors[team];
-          if(now.paintType == types.clear)state[now.y][now.x].color = "white";
-          paintCell(now.x, now.y, state[now.y][now.x], (now.paintType == types.clear)?"":agent, (state[now.y][now.x].color=="white")?"black":"white");
+          if (now.paintType == types.clear) state[now.y][now.x].color = "white";
+          paintCell(now.x, now.y, state[now.y][now.x], (now.paintType == types.clear) ? "" : agent, (state[now.y][now.x].color == "white") ? "black" : "white");
+        }
+      }
+
+      for (var team in players) {
+        team = String(team);
+        for (var agent in players[team]) {
+          var n = players[team][agent];
+          state[n.y][n.x].color = colors[team];
+          paintCell(n.x, n.y, state[n.y][n.x], agent, "white");
         }
       }
       var ret = calcScore(state, w, h, colors);
@@ -638,6 +673,19 @@ window.onload = function() {
     return next;
   }
 
+  function getVerifyNextData3(next) {
+    for (team in next) {
+      for (agent in next[team]) {
+        if (agent == "_id") continue;
+        if (next[team][agent].paintType == types.clear) {
+          next[team][agent].x = players[team][agent].x;
+          next[team][agent].y = players[team][agent].y;
+        }
+      }
+    }
+    return next;
+  }
+
   function getVerifyNextData(next) {
     var flag = {
       red: {
@@ -756,12 +804,12 @@ window.onload = function() {
   };
 
 
-  (function($){
-    setInterval(function(){
+  (function($) {
+    setInterval(function() {
       if (document.hidden) {
-        if(isPlaying){
+        if (isPlaying) {
           console.log("hide")
-          if(user_status!="")location.reload();
+          if (user_status != "") location.reload();
         }
       }
     }, 5000);
@@ -811,7 +859,7 @@ window.onload = function() {
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
-            console.log("player  : " , sender.playerdata);
+            console.log("player  : ", sender.playerdata);
             socket.emit("SyncQuestData", sender);
             isSync = true;
           }
@@ -919,43 +967,59 @@ window.onload = function() {
     ctx.fillText(player, posx + square_size - 10, posy + square_size - 5, 1000);
   }
 
-  function historyConflict(now_t, _player){
-    if(!_player){
-      _player = {};
-      _player.red = history.red[now_t];
-      _player.blue = history.blue[now_t];
-    }
-    for (var team in _player) {
+  function historyConflict(_his) {
+    console.log(_his)
+    for (var team in _his) {
       team = String(team);
-      for (var agent in _player[team]) {
+      if(team != "red" && team != "blue")continue;
+      for (var agent in _his[team][now_turn]) {
         agent = String(agent);
         var isConflict = false;
-        for (var _team in _player) {
+        for (var _team in _his) {
           _team = String(_team);
-          for (var _agent in _player[_team]) {
-            _agent = String(_agent);
+          if(_team != "red" && _team != "blue")continue;
+          for (var _agent in _his[_team][now_turn]) {
+            // _agent = String(_agent);
+            if(_agent == "_id" || agent == "_id")continue;
             if ((team == _team) && (agent == _agent)) continue;
-            if (_player[_team][_agent].x == -1) continue;
-            if (equalsObject(_player[team][agent], _player[_team][_agent])) {
-              _player[_team][_agent] = {
-                x: history[_team][now_t-1][_agent].x,
-                y: history[_team][now_t-1][_agent].y
-              };
-              _player[_team][_agent].paintType = types.draw;
+            if (_his[_team][now_turn][_agent].x == -1) continue;
+            var A = {
+              x: _his[team][now_turn][agent].x,
+              y: _his[team][now_turn][agent].y
+            }
+            var B = {
+              x: _his[_team][now_turn][_agent].x,
+              y: _his[_team][now_turn][_agent].y
+            }
+            // console.log(team, _team)
+            // console.log(agent, _agent)
+            console.log("A : ", A);
+            console.log("B : ", B);
+            if (equalsObject(A, B)) {
+              console.log("conflict")
+              console.log("A",A)
+              console.log("B",B)
+              // _his[_team][_agent] = {
+              //   x: players[_team][_agent].x,
+              //   y: players[_team][_agent].y
+              // };
               isConflict = true;
             }
           }
         }
-        if (isConflict) {
-          _player[team][agent] = {
-            x: history[team][now_turn-1][agent].x,
-            y: history[team][now_turn-1][agent].y
-          };
-          _player[team][agent].paintType = types.draw;
-        }
+        // if (isConflict) {
+        //   console.log("conflict");
+        //   _player[team][agent] = {
+        //     x: players[team][agent].x,
+        //     y: players[team][agent].y
+        //   };
+        // }
       }
     }
-    return _player;
+    // console.log(_player);
+    return {
+      // next: _player,
+    };
   }
 
   function verifyConflict(data) {
@@ -1008,7 +1072,12 @@ window.onload = function() {
     }
     // 元に戻す配列の先頭にcontextのImageDataを保持する
     var _state = objectCopy(state);
-    undoDataStack.unshift({state:_state, cnv:ctx.getImageData(0, 0, canvas.width, canvas.height)});
+    var _players = objectCopy(players);
+    undoDataStack.unshift({
+      players: _players,
+      state: _state,
+      cnv: ctx.getImageData(0, 0, canvas.width, canvas.height)
+    });
   }
 
   function undo() {
@@ -1021,13 +1090,14 @@ window.onload = function() {
     // 描画する
     ctx.putImageData(imageData.cnv, 0, 0);
     state = imageData.state;
+    players = imageData.players;
   }
 
   function isEmpty(obj) {
     return !Object.keys(obj).length;
   }
 
-  function drawScorebar(ret){
+  function drawScorebar(ret) {
     var diff = ret.blue - ret.red;
     var redpar = 50;
     var bluepar = 50;
