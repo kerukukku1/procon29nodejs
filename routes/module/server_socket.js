@@ -7,7 +7,7 @@ var mongo = require('../module/mongodb_operate');
 var Room = mongo.Room;
 var History = mongo.History;
 var Quest = mongo.Quest;
-var debug = true;
+var debug = false;
 var types = {
   clear: 0,
   draw: 1
