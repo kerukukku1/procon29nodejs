@@ -34,7 +34,7 @@ passport.use(new TwitterStrategy({
         callbackURL: "http://127.0.0.1:3000/oauth/callback/" //Twitterログイン後、遷移するURL
     },
     function (token, tokenSecret, profile, done) {
-        console.log(token, tokenSecret, profile);
+        // console.log(token, tokenSecret, profile);
         process.nextTick(function () {
             return done(null, profile);
         });

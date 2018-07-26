@@ -8,7 +8,7 @@ var router = express.Router();
 router.get('/', function(req, res, next) {
   mongoose.connect('mongodb://localhost/test');
   Quest.find({},function(err,rows){
-    console.log(rows);
+    // console.log(rows);
     res.render('questboard', {
        title: 'questboard',
        boardList: rows
