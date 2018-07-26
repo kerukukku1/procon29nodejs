@@ -97,6 +97,7 @@ block content
           blue: "#03A9F4",
           white: "white",
         };
+        var debug = false;
         var socket = io.connect("http://localhost:8888/");
         var state = [];
         var canvas = document.getElementById("myCanvas");
@@ -127,7 +128,7 @@ block content
           socket.on('refresh_chat', function(data){
             if(data.path != location.pathname)return;
             data.comment = htmlEntities(data.comment, 'encode');
-            console.log(data.username);
+            if(debug)console.log(data.username);
             var option = (!data.label)?"":'class="bg-primary text-white"';
             var _username = (!data.label)?data.username:"admin";
             var thumbnail = (!data.label)?`<img src="${data.thumbnail}" class="thumbnail"></img>`:"";
@@ -146,9 +147,9 @@ block content
             //- $textarea.scrollTop($textarea[0].scrollHeight);
           });
           socket.on("setQuestData", function(data){
-            console.log(data);
+            if(debug)console.log(data);
             var arr = data.docs.filedata.red.split(':');
-            //- console.log(arr);
+            //- if(debug)console.log(arr);
             [h, w] = arr[0].split(' ');
             _w = w * square_size + 1.5;
             _h = h * square_size + 1;
@@ -231,7 +232,7 @@ block content
         $('#RoomMakeModal').modal('show');
       });
       $('#ChatForm').submit(function(){
-        console.log("HELLO");
+        if(debug)console.log("HELLO");
       });
       jQuery( function($) {
         $('tbody tr[data-href]').addClass('clickable').click( function() {

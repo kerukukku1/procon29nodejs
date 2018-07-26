@@ -24,6 +24,7 @@ window.onload = function() {
       }
     }
   };
+  var debug = false;
   var move_players = objectCopy(players);
   var org_move_players = objectCopy(players);
   var isConfirm = false;
@@ -89,13 +90,13 @@ window.onload = function() {
         now_turn++;
         return;
       }
-      // console.log(history["blue"][now_turn]);
+      // if(debug)console.log(history["blue"][now_turn]);
       undo();
       var ret = calcScore(state, w, h, colors);
       drawScorebar(ret);
       return;
     }
-    //console.log("blue click");
+    //if(debug)console.log("blue click");
     if (jblue.textContent == "Cancel") {
       jblue.textContent = "Join Blue";
       user_status.team = "blue";
@@ -120,8 +121,8 @@ window.onload = function() {
     }
   };
   jred.onclick = function() {
-    //console.log("red click");
-    // console.log(history)
+    //if(debug)console.log("red click");
+    // if(debug)console.log(history)
     if (isFinished) {
       now_turn++;
       if (now_turn == turn + 1) {
@@ -135,12 +136,7 @@ window.onload = function() {
       次に侵攻方向にほかエージェントがいないかの確認、いた場合変更無し
       実行
       */
-      var _ = historyConflict(history)
-      var _verifyCheck = getVerifyNextData3({
-        red: history.red[now_turn],
-        blue: history.blue[now_turn]
-      });
-      console.log(_verifyCheck);
+      historyConflict(history)
       var _p = objectCopy(players)
       for (var team in {
           red: history["red"],
@@ -149,36 +145,28 @@ window.onload = function() {
         team = String(team);
         for (var agent in history[team][now_turn]) {
           if (agent == "_id") continue;
-          //削除でコンフリクトのときは無効
-          // if (_verifyCheck.flag[team][agent]) {
-          //   data.method[team][agent] = types.draw;
-          //   console.log("conflict");
-          // } else {
-          //   //次のパネルをセット
-          //   state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
-          // }
-          // //削除があった場合の対策
-          // if (data.method[team][agent] == types.clear) {
-          //   state[data.next[team][agent].y][data.next[team][agent].x].color = colors.white;
-          //   paintCell(data.next[team][agent].x, data.next[team][agent].y, state[data.next[team][agent].y][data.next[team][agent].x], "", "black");
-          // }
+          //削除があった場合の対策
           var now = history[team][now_turn][agent];
           var tmp = _p[team][agent];
-          players[team][agent].x = now.x;
-          players[team][agent].y = now.y;
+          if(now.paintType != types.clear){
+            players[team][agent].x = now.x;
+            players[team][agent].y = now.y;
+          }
           paintCell(tmp.x, tmp.y, state[tmp.y][tmp.x], "", "white");
           state[now.y][now.x].color = colors[team];
           if (now.paintType == types.clear) state[now.y][now.x].color = "white";
           paintCell(now.x, now.y, state[now.y][now.x], (now.paintType == types.clear) ? "" : agent, (state[now.y][now.x].color == "white") ? "black" : "white");
         }
       }
-
       for (var team in players) {
         team = String(team);
         for (var agent in players[team]) {
           var n = players[team][agent];
           state[n.y][n.x].color = colors[team];
           paintCell(n.x, n.y, state[n.y][n.x], agent, "white");
+          var n2 = history[team][now_turn][agent];
+          if (n2.paintType == types.clear) state[n2.y][n2.x].color = "white";
+          paintCell(n2.x, n2.y, state[n2.y][n2.x], (n2.paintType == types.clear) ? "" : agent, (state[n2.y][n2.x].color == "white") ? "black" : "white");
         }
       }
       var ret = calcScore(state, w, h, colors);
@@ -224,7 +212,7 @@ window.onload = function() {
     if (user_status.team == "") return;
     if (!enableClick) return;
     d = getData(event);
-    //console.log(state[d.y][d.x].color);
+    //if(debug)console.log(state[d.y][d.x].color);
     //自陣以外は入れない
     var check = {
       x: d.x,
@@ -252,12 +240,12 @@ window.onload = function() {
       mytar = targets.A;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      //console.log("TARGET : A");
+      //if(debug)console.log("TARGET : A");
     } else if (equalsObject(check, me.B)) {
       mytar = targets.B;
       paintCell(me.A.x, me.A.y, state[me.A.y][me.A.x], "A", "white");
       paintCell(me.B.x, me.B.y, state[me.B.y][me.B.x], "B", "white");
-      //console.log("TARGET : B");
+      //if(debug)console.log("TARGET : B");
     }
     if (mytar == targets.NONE) return;
     var _check = getVerifyNextData(move_players).next
@@ -289,13 +277,13 @@ window.onload = function() {
   socket.on('connect', function() {
     initCanvas();
     if (isFinished) {
-      console.log(isFinished)
+      if(debug)console.log(isFinished)
       socket.emit("getGameHistory", path);
       jred.textContent = ">";
       jblue.textContent = "<";
     }
     socket.on('setGameHistory', function(data) {
-      console.log(data);
+      if(debug)console.log(data);
       var redtext = (data.score.red < data.score.blue) ? "LOSE" : (data.score.red > data.score.blue) ? "WIN" : "DRAW";
       var bluetext = (data.score.red < data.score.blue) ? "WIN" : (data.score.red > data.score.blue) ? "LOSE" : "DRAW";
       $('#redResult').empty().html("Score:" + data.score.red +
@@ -307,7 +295,7 @@ window.onload = function() {
 
     socket.on('cancel_confirm', function(data) {
       isConfirm = false;
-      console.log("Call CancelConfirm");
+      if(debug)console.log("Call CancelConfirm");
       if (data.team == user_status.team) {
         if (user_status.team == "red") {
           jred.onclick();
@@ -323,15 +311,15 @@ window.onload = function() {
       if (!data.player) return;
       var _paintflag = true;
       if (user_status.team != "") {
-        // console.log(data.player.team);
+        // if(debug)console.log(data.player.team);
       }
-      // console.log(user_status.team);
+      // if(debug)console.log(user_status.team);
       _paintflag = (user_status.team == data.player.team);
       var coord = {
         x: data.status.x,
         y: data.status.y
       };
-      console.log(state[data.status.y][data.status.x].color);
+      if(debug)console.log(state[data.status.y][data.status.x].color);
 
       var group = data.status.group;
       //一回前の描画を消すための処理
@@ -412,8 +400,8 @@ window.onload = function() {
     });
 
     socket.on("reshake", function(data) {
-      console.log("reshake");
-      console.log(data);
+      if(debug)console.log("reshake");
+      if(debug)console.log(data);
       isPlaying = true;
       var red_thumbnail, blue_thumbnail;
       for (p in data.player) {
@@ -421,7 +409,7 @@ window.onload = function() {
         else if (data.player[p].team == "blue") blue_thumbnail = data.player[p].thumbnail;
       }
       var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
-      console.log(qrpath);
+      if(debug)console.log(qrpath);
       if (user_status.team != "") $("#qrcode-img").append(qrpath);
       document.getElementById('playername').innerHTML =
         `<img src="${blue_thumbnail}" class="thumbnail-md"></img>　vs.　<img src="${red_thumbnail}" class="thumbnail-md"></img>`;
@@ -436,7 +424,7 @@ window.onload = function() {
     });
 
     socket.on('client_handshake', function(data) {
-      //console.log("next : ", data.next);
+      //if(debug)console.log("next : ", data.next);
       if (data.step == 1) {
         $('#progress-timer').timer(strategy_time, 'Strategy Phase', 1);
         // $('#progress-timer').timer(3, 'Strategy Phase', 1);
@@ -475,7 +463,7 @@ window.onload = function() {
           }
         }
         var _verifyCheck = verifyConflict(getVerifyNextData(data.next));
-        console.log(_verifyCheck.flag);
+        if(debug)console.log(_verifyCheck.flag);
         data.next = _verifyCheck.next;
         // if (players.red.A.x == -1) {
         //   players = objectCopy(data.currentPlayerPosition);
@@ -493,7 +481,7 @@ window.onload = function() {
             //削除でコンフリクトのときは無効
             if (_verifyCheck.flag[team][agent]) {
               data.method[team][agent] = types.draw;
-              console.log("conflict");
+              if(debug)console.log("conflict");
             } else {
               //次のパネルをセット
               state[data.next[team][agent].y][data.next[team][agent].x].color = (data.method[team][agent] != types.clear) ? colors[team] : colors.white;
@@ -531,7 +519,7 @@ window.onload = function() {
     });
 
     socket.on('client_gamestart', function(data) {
-      //console.log(data);
+      //if(debug)console.log(data);
       isConfirm = false;
       $("#WaitingModal").modal('hide');
       const team_red = Object.keys(data).filter((key) => {
@@ -540,7 +528,7 @@ window.onload = function() {
       const team_blu = Object.keys(data).filter((key) => {
         return data[key].team == "blue";
       });
-      //console.log(data[team_red].userName, data[team_blu].userName);
+      //if(debug)console.log(data[team_red].userName, data[team_blu].userName);
       isPlaying = true;
       battleStart({
         red: data[team_red].thumbnail,
@@ -619,13 +607,14 @@ window.onload = function() {
       state[players.blue.A.y][players.blue.A.x].color = colors.blue;
       state[players.blue.B.y][players.blue.B.x].color = colors.blue;
       isInit = true;
-      //console.log(players);
+      //if(debug)console.log(players);
       //全プレーヤーの位置を描画
       paintCell(players.red.A.x, players.red.A.y, state[players.red.A.y][players.red.A.x], "A", "white");
       paintCell(players.red.B.x, players.red.B.y, state[players.red.B.y][players.red.B.x], "B", "white");
       paintCell(players.blue.A.x, players.blue.A.y, state[players.blue.A.y][players.blue.A.x], "A", "white");
       paintCell(players.blue.B.x, players.blue.B.y, state[players.blue.B.y][players.blue.B.x], "B", "white");
       //全処理が完了したのち、部屋へ入る。完了済みの場合は入らない
+      if(debug)console.log("PLAYER",players);
       if (!isFinished) {
         socket.emit("join_to_room", {
           roomId: path,
@@ -640,14 +629,14 @@ window.onload = function() {
 
   window.document.onkeydown = function() {
     if (event.key == "Shift") {
-      // console.log("down");
+      // if(debug)console.log("down");
       paintType = types.clear;
     }
   };
 
   window.document.onkeyup = function() {
     if (event.key == "Shift") {
-      // console.log("up");
+      // if(debug)console.log("up");
       paintType = types.draw;
     }
   };
@@ -797,7 +786,7 @@ window.onload = function() {
     });
 
     var qrpath = `<img src="${qrpath_template + filedata[user_status.team]}"></img>`
-    console.log(qrpath);
+    if(debug)console.log(qrpath);
     if (user_status.team != "") $("#qrcode-img").append(qrpath);
     $("#joinRed").prop('disabled', true);
     $("#joinBlue").prop('disabled', true);
@@ -808,7 +797,7 @@ window.onload = function() {
     setInterval(function() {
       if (document.hidden) {
         if (isPlaying) {
-          console.log("hide")
+          if(debug)console.log("hide")
           if (user_status != "") location.reload();
         }
       }
@@ -859,7 +848,7 @@ window.onload = function() {
           };
           sender.playerdata = getVerifyNextData(move_players).next;
           if (!isSync) {
-            console.log("player  : ", sender.playerdata);
+            if(debug)console.log("player  : ", sender.playerdata);
             socket.emit("SyncQuestData", sender);
             isSync = true;
           }
@@ -870,7 +859,7 @@ window.onload = function() {
             } else if (step == 2) {} else if (step == 3) {
               return;
             }
-            // console.log("handshake data : " , sender);
+            // if(debug)console.log("handshake data : " , sender);
             socket.emit("handshake", sender);
             return;
           } else {
@@ -939,14 +928,14 @@ window.onload = function() {
       }
     }
     if (user_status.team != "") {
-      //console.log("player fill");
+      //if(debug)console.log("player fill");
       var me = (user_status.team == "red") ? players.red : players.blue;
       var check1 = (mytar == targets.A) ? me.A : (mytar == targets.B) ? me.B : {};
       var check2 = {
         x: nowx,
         y: nowy
       };
-      //console.log(check1);
+      //if(debug)console.log(check1);
       if (equalsObject(check1, check2)) {
         ctx.strokeStyle = (user_status.team == "red") ? "#1AFF8C" : (user_status.team == "blue") ? "#FFB31A" : "#757575";
         ctx.lineWidth = 3;
@@ -968,7 +957,7 @@ window.onload = function() {
   }
 
   function historyConflict(_his) {
-    console.log(_his)
+    if(debug)console.log(_his)
     for (var team in _his) {
       team = String(team);
       if(team != "red" && team != "blue")continue;
@@ -983,6 +972,7 @@ window.onload = function() {
             if(_agent == "_id" || agent == "_id")continue;
             if ((team == _team) && (agent == _agent)) continue;
             if (_his[_team][now_turn][_agent].x == -1) continue;
+            if (_his[team][now_turn][agent].x == -1) continue;
             var A = {
               x: _his[team][now_turn][agent].x,
               y: _his[team][now_turn][agent].y
@@ -991,32 +981,26 @@ window.onload = function() {
               x: _his[_team][now_turn][_agent].x,
               y: _his[_team][now_turn][_agent].y
             }
-            // console.log(team, _team)
-            // console.log(agent, _agent)
-            console.log("A : ", A);
-            console.log("B : ", B);
             if (equalsObject(A, B)) {
-              console.log("conflict")
-              console.log("A",A)
-              console.log("B",B)
-              // _his[_team][_agent] = {
-              //   x: players[_team][_agent].x,
-              //   y: players[_team][_agent].y
-              // };
+              if(debug)console.log("conflict")
+              if(debug)console.log("A",A)
+              if(debug)console.log("B",B)
+              _his[_team][now_turn][_agent].x = players[_team][_agent].x;
+              _his[_team][now_turn][_agent].y = players[_team][_agent].y;
+              _his[_team][now_turn][_agent].paintType = types.draw;
               isConflict = true;
             }
           }
         }
-        // if (isConflict) {
-        //   console.log("conflict");
-        //   _player[team][agent] = {
-        //     x: players[team][agent].x,
-        //     y: players[team][agent].y
-        //   };
-        // }
+        if (isConflict) {
+          if(debug)console.log("conflict");
+          _his[team][now_turn][agent].x = players[team][agent].x;
+          _his[team][now_turn][agent].y = players[team][agent].y;
+          _his[team][now_turn][agent].paintType = types.draw;
+        }
       }
     }
-    // console.log(_player);
+    // if(debug)console.log(_player);
     return {
       // next: _player,
     };
@@ -1055,7 +1039,7 @@ window.onload = function() {
         }
       }
     }
-    // console.log(_player);
+    // if(debug)console.log(_player);
     return {
       next: _player,
       flag: flag
@@ -1119,12 +1103,12 @@ window.onload = function() {
   }
   $('#WaitingModal').on('hidden.bs.modal', function() {
     if (isConfirm) socket.emit("disconfirm", user_status);
-    console.log("Waiting");
+    if(debug)console.log("Waiting");
   });
   $('#ConfirmModal').on('hidden.bs.modal', function() {
     if (isConfirm) return;
     socket.emit("disconfirm", user_status);
-    console.log("Confirm");
+    if(debug)console.log("Confirm");
   });
   $('#GameForceShutdown').on('hidden.bs.modal', function() {
     window.location.reload();
@@ -1133,4 +1117,4 @@ window.onload = function() {
     window.location.reload();
   });
 };
-// //console.log(dir);
+// //if(debug)console.log(dir);
