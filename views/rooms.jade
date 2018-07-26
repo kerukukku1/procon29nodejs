@@ -4,7 +4,7 @@ block content
     h1 Quest Room
     hr
     include includes/confirm_modal.jade
-    button.btn.btn-success(type='button', id="MakeRoom").float-right: strong Make
+    button.btn.btn-danger(type='button', id="MakeRoom").float-right: strong > Make
     .text-danger ※注意 1日以上試合が行われない部屋は自動的に一覧から削除されます．
     br
     table.table.table-striped.table-hover
@@ -34,7 +34,7 @@ block content
           - }
       - }
     hr
-    h5 Chat
+    h5 Temporary Chat
     .chatbox1
       .table-scroll-wrapper#myChat
         table#chatComment.table.table-hover.table-striped.table-bordered 
