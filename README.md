@@ -8,9 +8,12 @@ node bin/www
 
 ## 要求ポート
 socket.ioポート(8888)
+
 Expressポート(3000)
 
 ## 使用技術
 Node.js (v10.9.0)
+
 mongodb (git version: a20ecd3e3a174162052ff99913bc2ca9a839d618)
+
 socket.io (v2.1.1)
